@@ -76,7 +76,7 @@ function App() {
   }
 
   if (mode === 'random') {
-    return <RandomGenerator onBack={handleBack} />
+    return <RandomGenerator type={selectedType} onBack={handleBack} />
   }
 
   if (mode === 'custom') {
