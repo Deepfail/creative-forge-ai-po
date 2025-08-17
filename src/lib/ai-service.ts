@@ -119,64 +119,106 @@ export class AIService {
   }
 
   private generatePlaceholderImage(prompt: string, width: number, height: number): string {
-    // Generate a colorful gradient placeholder based on the prompt
-    const colors = [
-      '#ff6b9d', '#ffa726', '#66bb6a', '#42a5f5', 
-      '#ab47bc', '#ef5350', '#26c6da', '#9ccc65'
-    ]
-    
-    const hash = prompt.split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0)
-      return a & a
-    }, 0)
-    
-    const color1 = colors[Math.abs(hash) % colors.length]
-    const color2 = colors[Math.abs(hash + 1) % colors.length]
-    
+    // Generate a portrait-style placeholder based on the character description
     const canvas = document.createElement('canvas')
     canvas.width = width
     canvas.height = height
     const ctx = canvas.getContext('2d')!
     
-    // Create gradient
-    const gradient = ctx.createLinearGradient(0, 0, width, height)
-    gradient.addColorStop(0, color1)
-    gradient.addColorStop(1, color2)
+    // Parse prompt for character features to determine colors
+    const lowerPrompt = prompt.toLowerCase()
     
-    ctx.fillStyle = gradient
+    // Determine hair color
+    let hairColor = '#8B4513' // Default brown
+    if (lowerPrompt.includes('blonde') || lowerPrompt.includes('golden')) hairColor = '#FFD700'
+    else if (lowerPrompt.includes('black') || lowerPrompt.includes('dark')) hairColor = '#2F2F2F'
+    else if (lowerPrompt.includes('red') || lowerPrompt.includes('ginger')) hairColor = '#B22222'
+    else if (lowerPrompt.includes('silver') || lowerPrompt.includes('white')) hairColor = '#C0C0C0'
+    else if (lowerPrompt.includes('pink')) hairColor = '#FF69B4'
+    else if (lowerPrompt.includes('blue')) hairColor = '#4169E1'
+    else if (lowerPrompt.includes('green')) hairColor = '#228B22'
+    else if (lowerPrompt.includes('purple')) hairColor = '#8A2BE2'
+    
+    // Determine skin tone
+    let skinColor = '#FDBCB4' // Default light
+    if (lowerPrompt.includes('tan') || lowerPrompt.includes('olive')) skinColor = '#DEB887'
+    else if (lowerPrompt.includes('dark') || lowerPrompt.includes('black')) skinColor = '#8D5524'
+    else if (lowerPrompt.includes('pale') || lowerPrompt.includes('fair')) skinColor = '#FFDBAC'
+    
+    // Determine outfit color
+    let outfitColor = '#FF1493' // Default pink
+    if (lowerPrompt.includes('cheerleader')) outfitColor = '#FF4500'
+    else if (lowerPrompt.includes('emo') || lowerPrompt.includes('goth')) outfitColor = '#2F2F2F'
+    else if (lowerPrompt.includes('schoolgirl') || lowerPrompt.includes('uniform')) outfitColor = '#000080'
+    else if (lowerPrompt.includes('casual')) outfitColor = '#87CEEB'
+    
+    // Create background gradient
+    const bgGradient = ctx.createRadialGradient(width/2, height/3, 0, width/2, height/3, width/2)
+    bgGradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)')
+    bgGradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)')
+    ctx.fillStyle = bgGradient
     ctx.fillRect(0, 0, width, height)
     
-    // Add some texture
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'
-    for (let i = 0; i < 50; i++) {
-      const x = Math.random() * width
-      const y = Math.random() * height
-      const size = Math.random() * 20 + 5
+    // Draw simple portrait silhouette
+    const centerX = width / 2
+    const centerY = height * 0.6
+    
+    // Body/shoulders
+    ctx.fillStyle = outfitColor
+    ctx.beginPath()
+    ctx.ellipse(centerX, centerY + height * 0.25, width * 0.4, height * 0.2, 0, 0, Math.PI * 2)
+    ctx.fill()
+    
+    // Neck
+    ctx.fillStyle = skinColor
+    ctx.fillRect(centerX - width * 0.05, centerY, width * 0.1, height * 0.15)
+    
+    // Head
+    ctx.beginPath()
+    ctx.ellipse(centerX, centerY - height * 0.1, width * 0.18, height * 0.22, 0, 0, Math.PI * 2)
+    ctx.fill()
+    
+    // Hair
+    ctx.fillStyle = hairColor
+    ctx.beginPath()
+    ctx.ellipse(centerX, centerY - height * 0.2, width * 0.22, height * 0.2, 0, 0, Math.PI * 2)
+    ctx.fill()
+    
+    // Add some hair texture
+    ctx.fillStyle = hairColor + '80' // Semi-transparent
+    for (let i = 0; i < 15; i++) {
+      const x = centerX + (Math.random() - 0.5) * width * 0.4
+      const y = centerY - height * 0.3 + Math.random() * height * 0.25
+      const size = Math.random() * 8 + 2
       ctx.beginPath()
       ctx.arc(x, y, size, 0, Math.PI * 2)
       ctx.fill()
     }
     
-    // Add text overlay
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
-    ctx.font = `${Math.min(width, height) / 15}px Inter, sans-serif`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
+    // Eyes
+    ctx.fillStyle = '#2F2F2F'
+    ctx.beginPath()
+    ctx.arc(centerX - width * 0.07, centerY - height * 0.12, width * 0.02, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.arc(centerX + width * 0.07, centerY - height * 0.12, width * 0.02, 0, Math.PI * 2)
+    ctx.fill()
     
-    const lines = prompt.split(' ').reduce((acc: string[], word, i) => {
-      if (i === 0) {
-        acc.push(word)
-      } else if (acc[acc.length - 1].length + word.length < 15) {
-        acc[acc.length - 1] += ' ' + word
-      } else {
-        acc.push(word)
-      }
-      return acc
-    }, [])
+    // Eye highlights
+    ctx.fillStyle = '#FFFFFF'
+    ctx.beginPath()
+    ctx.arc(centerX - width * 0.065, centerY - height * 0.125, width * 0.008, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.arc(centerX + width * 0.075, centerY - height * 0.125, width * 0.008, 0, Math.PI * 2)
+    ctx.fill()
     
-    lines.slice(0, 3).forEach((line, i) => {
-      ctx.fillText(line, width / 2, height / 2 + (i - 1) * (Math.min(width, height) / 12))
-    })
+    // Mouth
+    ctx.strokeStyle = '#FF69B4'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.arc(centerX, centerY - height * 0.05, width * 0.03, 0, Math.PI)
+    ctx.stroke()
     
     return canvas.toDataURL()
   }
