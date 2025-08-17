@@ -48,22 +48,17 @@ const femaleNames = [
   'Stella', 'Hazel', 'Ellie', 'Paisley', 'Audrey', 'Skylar', 'Violet', 'Claire'
 ]
 
-// Generate placeholder image with AI service
+// Generate portrait placeholder - Venice AI doesn't support image generation yet
 const generatePlaceholderImage = async (name: string, type: string, physicalDescription?: string): Promise<string> => {
-  try {
-    const prompt = `Portrait of ${name}, a ${type}, ${physicalDescription || 'attractive young woman'}`
-    return await aiService.generateImage(prompt, { 
-      width: 300, 
-      height: 400, 
-      style: 'realistic portrait, detailed, high quality' 
-    })
-  } catch (error) {
-    console.warn('AI image generation failed, using placeholder')
-    const seed = name + type
-    const colors = ['ff6b9d', '45b7d1', '96ceb4', 'feca57', 'ff9ff3', '54a0ff']
-    const color = colors[seed.length % colors.length]
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${color}&color=fff&size=300&rounded=true&bold=true`
-  }
+  console.log('Generating portrait placeholder for:', name, type)
+  
+  // Use AI service to generate a canvas-based placeholder that reflects character traits
+  const prompt = `Portrait of ${name}, a ${type}, ${physicalDescription || 'attractive young woman'}`
+  return await aiService.generateImage(prompt, { 
+    width: 300, 
+    height: 400, 
+    style: 'realistic portrait, detailed, high quality' 
+  })
 }
 
 const generateRandomGirl = async (): Promise<GeneratedGirl> => {
