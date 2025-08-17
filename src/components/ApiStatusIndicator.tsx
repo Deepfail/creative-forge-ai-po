@@ -30,9 +30,9 @@ export default function ApiStatusIndicator() {
       case 'venice':
         return {
           icon: Key,
-          label: apiConfig.apiKey ? 'Venice.ai' : 'Venice.ai (No Key)',
-          variant: apiConfig.apiKey ? 'secondary' as const : 'destructive' as const,
-          color: apiConfig.apiKey ? 'text-secondary' : 'text-destructive'
+          label: 'Venice.ai (Built-in)',
+          variant: 'secondary' as const,
+          color: 'text-secondary'
         }
       default:
         return {

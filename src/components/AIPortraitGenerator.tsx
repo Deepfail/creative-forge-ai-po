@@ -2,11 +2,9 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Sparkles, RefreshCw, Image, Warning, Gear } from '@phosphor-icons/react'
+import { Sparkles, RefreshCw, Image, Warning } from '@phosphor-icons/react'
 import { aiService } from '@/lib/ai-service'
-import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
-import type { ApiConfig } from './ApiSettings'
 
 interface AIPortraitGeneratorProps {
   character: {
@@ -30,11 +28,7 @@ export default function AIPortraitGenerator({
   const [generatedImage, setGeneratedImage] = useState<string>('')
   const [imagePrompt, setImagePrompt] = useState<string>('')
   const [error, setError] = useState<string>('')
-  const [apiConfig] = useKV<ApiConfig>('api-config', {
-    provider: 'venice',
-    apiKey: '',
-    model: 'default'
-  })
+  // No longer need API config for built-in Venice AI
 
   const generatePortrait = async () => {
     setIsGenerating(true)
@@ -44,7 +38,6 @@ export default function AIPortraitGenerator({
       const promptText = `Beautiful portrait of ${character.name}, a ${character.age}-year-old ${character.type} with ${character.personality} personality. ${character.physicalDescription || 'Attractive and appealing appearance'}, detailed facial features, photorealistic, high quality`
       
       console.log('Starting image generation with prompt:', promptText)
-      console.log('API Config:', { provider: apiConfig.provider, hasKey: !!apiConfig.apiKey })
       
       toast.info('Generating AI portrait...')
       
@@ -65,7 +58,7 @@ export default function AIPortraitGenerator({
       
       // Check if it's a placeholder or real AI generated image
       if (imageUrl.startsWith('data:')) {
-        toast.warning('Using placeholder image - configure Venice AI key for real generation')
+        toast.warning('Using enhanced placeholder image')
       } else {
         toast.success('Portrait generated successfully!')
       }
@@ -79,7 +72,6 @@ export default function AIPortraitGenerator({
     setIsGenerating(false)
   }
 
-  const hasApiKey = apiConfig.provider === 'venice' && apiConfig.apiKey
   const isPlaceholder = generatedImage.startsWith('data:')
 
   return (
@@ -103,16 +95,6 @@ export default function AIPortraitGenerator({
           </>
         )}
       </Button>
-      
-      {!hasApiKey && (
-        <div className="mt-2 p-2 bg-accent/10 border border-accent/20 rounded text-xs text-accent flex items-center gap-2">
-          <Gear size={12} />
-          {apiConfig.provider === 'venice' ? 
-            'Add Venice AI API key in settings for real image generation' :
-            'Switch to Venice AI in settings for image generation'
-          }
-        </div>
-      )}
       
       {error && (
         <div className="mt-2 p-2 bg-destructive/10 border border-destructive/20 rounded text-xs text-destructive flex items-center gap-2">

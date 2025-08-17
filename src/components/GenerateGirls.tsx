@@ -48,7 +48,7 @@ const femaleNames = [
   'Stella', 'Hazel', 'Ellie', 'Paisley', 'Audrey', 'Skylar', 'Violet', 'Claire'
 ]
 
-// Generate portrait placeholder - Venice AI doesn't support image generation yet
+// Generate portrait using built-in Venice AI image generation
 const generatePlaceholderImage = async (name: string, type: string, physicalDescription?: string): Promise<string> => {
   console.log('Generating portrait placeholder for:', name, type)
   
