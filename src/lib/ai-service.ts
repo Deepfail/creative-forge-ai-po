@@ -75,8 +75,49 @@ export class AIService {
     height?: number
     style?: string
   }): Promise<string> {
-    // Venice AI doesn't support image generation, so we'll use placeholder generation directly
-    console.log('Venice AI does not support image generation, using placeholder for:', prompt)
+    if (!this.config || !this.config.apiKey) {
+      console.log('No API config found, using placeholder for:', prompt)
+      return this.generatePlaceholderImage(prompt, options?.width || 400, options?.height || 400)
+    }
+
+    if (this.config.provider === 'venice') {
+      try {
+        // Venice AI image generation endpoint
+        const imagePrompt = `${prompt}. ${options?.style || 'realistic portrait, detailed, high quality'}`
+        
+        const response = await fetch('https://api.venice.ai/api/v1/images/generations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.config.apiKey}`
+          },
+          body: JSON.stringify({
+            prompt: imagePrompt,
+            model: 'default', // Venice auto model for images
+            width: options?.width || 512,
+            height: options?.height || 512,
+            n: 1
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error(`Venice AI image generation failed: ${response.statusText}`)
+        }
+
+        const data = await response.json()
+        if (data.data && data.data[0] && data.data[0].url) {
+          return data.data[0].url
+        } else {
+          throw new Error('Invalid response format from Venice AI')
+        }
+      } catch (error) {
+        console.warn('Venice AI image generation failed, using placeholder:', error)
+        return this.generatePlaceholderImage(prompt, options?.width || 400, options?.height || 400)
+      }
+    }
+
+    // For other providers, use placeholder for now
+    console.log('Image generation not supported for provider:', this.config.provider)
     return this.generatePlaceholderImage(prompt, options?.width || 400, options?.height || 400)
   }
 
