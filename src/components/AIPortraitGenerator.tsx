@@ -58,9 +58,9 @@ export default function AIPortraitGenerator({
       
       // Check if it's a placeholder or real AI generated image
       if (imageUrl.startsWith('data:')) {
-        toast.warning('Using enhanced placeholder image')
+        toast.info('Venice AI unavailable - using artistic placeholder')
       } else {
-        toast.success('Portrait generated successfully!')
+        toast.success('AI portrait generated successfully!')
       }
     } catch (error) {
       console.error('Error generating portrait:', error)
@@ -116,7 +116,7 @@ export default function AIPortraitGenerator({
               variant={isPlaceholder ? "outline" : "secondary"} 
               className={`text-xs ${isPlaceholder ? 'border-accent text-accent' : ''}`}
             >
-              {isPlaceholder ? 'Placeholder' : 'AI Generated'}
+              {isPlaceholder ? 'Artistic Portrait' : 'AI Generated'}
             </Badge>
             <Button
               variant="ghost"

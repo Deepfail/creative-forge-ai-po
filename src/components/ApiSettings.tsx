@@ -346,6 +346,14 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
               Save Settings
             </Button>
           </div>
+          
+          <div className="mt-4 text-xs text-muted-foreground p-3 bg-muted/30 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles size={14} className="text-primary" />
+              <span className="font-medium">Image Generation</span>
+            </div>
+            <p>Venice AI image generation is integrated and will attempt to create real AI portraits. If the service is unavailable, artistic SVG placeholders will be used instead.</p>
+          </div>
         </CardContent>
       </div>
     </div>
