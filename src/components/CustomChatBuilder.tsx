@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
-import { getAIService } from '@/lib/aiService'
+import { aiService } from '@/lib/ai-service'
 
 interface Message {
   id: string
@@ -110,7 +110,6 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
         
         Respond as Luna in character, keeping the conversation flowing and helping them discover exactly what kind of adult content they want to create. Be specific with follow-up questions.`
       
-      const aiService = await getAIService()
       const response = await aiService.generateText(prompt, {
         systemPrompt: "You are Luna, a flirty AI assistant specialized in adult content creation. Be playful, suggestive, and encouraging while guiding users to create their perfect NSFW characters or scenarios.",
         temperature: 0.9,
@@ -209,7 +208,6 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
         
         Make it detailed, engaging, and ready to use. Format with clear sections and include content warnings.`
       
-      const aiService = await getAIService()
       const generatedContent = await aiService.generateText(prompt, {
         systemPrompt: "You are an expert at creating high-quality adult content. Your responses should be detailed, creative, and professionally written while being explicit when appropriate.",
         temperature: 0.8,

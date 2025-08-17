@@ -7,7 +7,7 @@ import { ArrowLeft, Sparkles, Dice1, Download, Copy, RefreshCw } from '@phosphor
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
-import { getAIService } from '@/lib/aiService'
+import { aiService } from '@/lib/ai-service'
 
 type CreationType = 'character' | 'scenario'
 
@@ -124,7 +124,6 @@ export default function RandomGenerator({ type, onBack }: RandomGeneratorProps) 
         
         Format the output with clear sections and include content warnings at the beginning.`
       
-      const aiService = await getAIService()
       const content = await aiService.generateText(prompt, {
         systemPrompt: "You are an expert at creating high-quality adult content. Generate creative, detailed NSFW characters and scenarios with explicit sexual themes. Be creative and unexpected while maintaining quality.",
         temperature: 0.9,
