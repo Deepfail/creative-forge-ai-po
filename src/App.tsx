@@ -3,15 +3,16 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Sparkles, Zap, User, GameController2, Dice6, Chat, Users } from '@phosphor-icons/react'
+import { Sparkles, Zap, User, GameController2, Dice6, Chat, Users, Gear } from '@phosphor-icons/react'
 import SimpleMode from './components/SimpleMode'
 import InteractiveMode from './components/InteractiveMode'
 import RandomGenerator from './components/RandomGenerator'
 import CustomChatBuilder from './components/CustomChatBuilder'
 import GenerateGirls from './components/GenerateGirls'
+import ApiSettings from './components/ApiSettings'
 
 type CreationType = 'character' | 'scenario'
-type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls'
+type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings'
 
 const creationTypes: Array<{
   id: CreationType
@@ -39,6 +40,7 @@ const creationTypes: Array<{
 function App() {
   const [mode, setMode] = useState<AppMode>('home')
   const [selectedType, setSelectedType] = useState<CreationType>('character')
+  const [showSettings, setShowSettings] = useState(false)
 
   const handleModeSelect = (newMode: AppMode, type?: CreationType) => {
     if (type) setSelectedType(type)
@@ -69,16 +71,34 @@ function App() {
     return <GenerateGirls onBack={handleBack} />
   }
 
+  if (showSettings) {
+    return <ApiSettings onClose={() => setShowSettings(false)} />
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Sparkles className="text-primary" size={40} weight="fill" />
-            <h1 className="text-5xl font-bold text-foreground bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              NSFW AI Generator
-            </h1>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1" />
+            <div className="flex items-center gap-3">
+              <Sparkles className="text-primary" size={40} weight="fill" />
+              <h1 className="text-5xl font-bold text-foreground bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                NSFW AI Generator
+              </h1>
+            </div>
+            <div className="flex-1 flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSettings(true)}
+                className="border-primary/30 hover:bg-primary/10"
+              >
+                <Gear size={16} className="mr-2" />
+                API Settings
+              </Button>
+            </div>
           </div>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Create amazing NSFW characters, scenarios, and interactive experiences with AI. 

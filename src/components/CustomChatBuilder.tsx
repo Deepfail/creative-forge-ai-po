@@ -11,13 +11,6 @@ import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
 import { getAIService } from '@/lib/aiService'
 
-type CreationType = 'character' | 'scenario'
-
-interface ChatModeProps {
-  type: CreationType
-  onBack: () => void
-}
-
 interface Message {
   id: string
   role: 'user' | 'ai'
@@ -45,7 +38,7 @@ const aiPersonality = {
   style: "playful, flirty, encouraging, uses emojis and suggestive language"
 }
 
-export default function ChatMode({ type, onBack }: ChatModeProps) {
+export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [currentInput, setCurrentInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
@@ -95,9 +88,8 @@ export default function ChatMode({ type, onBack }: ChatModeProps) {
       // Build context from conversation history
       const conversationContext = messages.map(m => `${m.role}: ${m.content}`).join('\n')
       
-      const prompt = `You are Luna, a playful, flirty, and encouraging AI assistant helping users create NSFW ${type} content. You have a seductive personality and use emojis and suggestive language.
+      const prompt = `You are Luna, a playful, flirty, and encouraging AI assistant helping users create NSFW content (characters, scenarios, games, etc.). You have a seductive personality and use emojis and suggestive language.
         
-        Current creation type: ${type}
         Current stage: ${creationState.stage}
         Current preferences: ${JSON.stringify(creationState.preferences)}
         
@@ -108,14 +100,15 @@ export default function ChatMode({ type, onBack }: ChatModeProps) {
         
         Guidelines:
         - Be flirty, playful, and encouraging
-        - Ask leading questions to understand what they want
+        - Ask leading questions to understand what they want to create
         - Use suggestive language and emojis
         - Guide them through discovering their preferences
         - React positively to their ideas
         - Make suggestions based on their responses
-        - If they seem ready, offer to generate their ${type}
+        - Help them decide between characters, scenarios, or games
+        - If they seem ready, offer to generate their content
         
-        Respond as Luna in character, keeping the conversation flowing and helping them discover exactly what kind of ${type} they want to create. Be specific with follow-up questions.`
+        Respond as Luna in character, keeping the conversation flowing and helping them discover exactly what kind of adult content they want to create. Be specific with follow-up questions.`
       
       const aiService = await getAIService()
       const response = await aiService.generateText(prompt, {
