@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Shuffle, Sparkles, Heart, Download } from '@phosphor-icons/react'
+import { Shuffle, Sparkles, Heart, Download, Crown, ArrowLeft } from '@phosphor-icons/react'
 import AIPortraitGenerator from './AIPortraitGenerator'
 import ExportDialog from './ExportDialog'
-import { getAIService } from '@/lib/aiService'
+import { aiService } from '@/lib/ai-service'
+import { useKV } from '@github/spark/hooks'
+import { toast } from 'sonner'
+import type { SavedGirl } from './Harem'
 
 interface GeneratedGirl {
   id: string
@@ -17,6 +20,10 @@ interface GeneratedGirl {
   imageUrl: string
   aiPortraitPrompt?: string
   physicalDescription?: string
+}
+
+interface GenerateGirlsProps {
+  onBack: () => void
 }
 
 const girlTypes = [
@@ -41,12 +48,22 @@ const femaleNames = [
   'Stella', 'Hazel', 'Ellie', 'Paisley', 'Audrey', 'Skylar', 'Violet', 'Claire'
 ]
 
-// Placeholder image generator for now - will be replaced with AI generation
-const generatePlaceholderImage = (name: string, type: string): string => {
-  const seed = name + type
-  const colors = ['ff6b9d', '45b7d1', '96ceb4', 'feca57', 'ff9ff3', '54a0ff']
-  const color = colors[seed.length % colors.length]
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${color}&color=fff&size=300&rounded=true&bold=true`
+// Generate placeholder image with AI service
+const generatePlaceholderImage = async (name: string, type: string, physicalDescription?: string): Promise<string> => {
+  try {
+    const prompt = `Portrait of ${name}, a ${type}, ${physicalDescription || 'attractive young woman'}`
+    return await aiService.generateImage(prompt, { 
+      width: 300, 
+      height: 400, 
+      style: 'realistic portrait, detailed, high quality' 
+    })
+  } catch (error) {
+    console.warn('AI image generation failed, using placeholder')
+    const seed = name + type
+    const colors = ['ff6b9d', '45b7d1', '96ceb4', 'feca57', 'ff9ff3', '54a0ff']
+    const color = colors[seed.length % colors.length]
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${color}&color=fff&size=300&rounded=true&bold=true`
+  }
 }
 
 const generateRandomGirl = async (): Promise<GeneratedGirl> => {
@@ -55,15 +72,17 @@ const generateRandomGirl = async (): Promise<GeneratedGirl> => {
   const type = girlTypes[Math.floor(Math.random() * girlTypes.length)]
   const personality = personalities[Math.floor(Math.random() * personalities.length)]
   
-  // Generate AI summary and physical description using the configured AI service
+  // Generate AI summary and physical description using Venice AI
   const summaryPrompt = `Create a brief, engaging character summary for an adult character named ${name}, age ${age}, who is a ${type} with a ${personality} personality. Make it intriguing and hint at her appeal and backstory. Keep it under 50 words and make it slightly suggestive but tasteful.`
   
   const physicalPrompt = `Describe the physical appearance of ${name}, a ${age}-year-old ${type} with a ${personality} personality. Include details about her hair, eyes, body type, style, and any distinctive features. Keep it detailed but appropriate, focusing on what makes her attractive and memorable. About 2-3 sentences.`
   
   let summary = ''
   let physicalDescription = ''
+  let imageUrl = ''
+  
   try {
-    const aiService = await getAIService()
+    // Generate text descriptions
     summary = await aiService.generateText(summaryPrompt, {
       systemPrompt: "You are an expert at creating engaging character descriptions for adult content. Be creative and slightly suggestive while remaining tasteful.",
       temperature: 0.8,
@@ -74,7 +93,11 @@ const generateRandomGirl = async (): Promise<GeneratedGirl> => {
       temperature: 0.8,
       maxTokens: 150
     })
+    
+    // Generate image
+    imageUrl = await generatePlaceholderImage(name, type, physicalDescription)
   } catch (error) {
+    console.warn('AI generation failed, using fallback:', error)
     // Fallback to predefined summaries if AI fails
     const fallbackSummaries = [
       `${name} is a ${age}-year-old ${type.toLowerCase()} who captivates everyone with her ${personality.toLowerCase()} nature. She has secrets behind those eyes that make people want to know more.`,
@@ -84,6 +107,7 @@ const generateRandomGirl = async (): Promise<GeneratedGirl> => {
     ]
     summary = fallbackSummaries[Math.floor(Math.random() * fallbackSummaries.length)]
     physicalDescription = `${name} has an alluring presence that perfectly matches her ${personality.toLowerCase()} personality. Her style reflects her ${type.toLowerCase()} nature, with features that are both striking and memorable.`
+    imageUrl = await generatePlaceholderImage(name, type, physicalDescription)
   }
   
   return {
@@ -94,15 +118,16 @@ const generateRandomGirl = async (): Promise<GeneratedGirl> => {
     personality,
     summary: summary.replace(/"/g, ''), // Clean up any quotes
     physicalDescription: physicalDescription.replace(/"/g, ''),
-    imageUrl: generatePlaceholderImage(name, type)
+    imageUrl
   }
 }
 
-export default function GenerateGirls() {
+export default function GenerateGirls({ onBack }: GenerateGirlsProps) {
   const [girls, setGirls] = useState<GeneratedGirl[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [selectedGirl, setSelectedGirl] = useState<GeneratedGirl | null>(null)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
+  const [savedGirls, setSavedGirls] = useKV<SavedGirl[]>('saved-girls', [])
 
   const generateNewGirls = async () => {
     setIsGenerating(true)
@@ -147,7 +172,37 @@ export default function GenerateGirls() {
     ))
   }
 
-  const formatCharacterForExport = (girl: GeneratedGirl): string => {
+  const saveToHarem = (girl: GeneratedGirl) => {
+    const savedGirl: SavedGirl = {
+      id: girl.id,
+      name: girl.name,
+      age: girl.age,
+      type: girl.type,
+      personality: girl.personality,
+      summary: girl.summary,
+      image: girl.imageUrl,
+      createdAt: Date.now(),
+      roles: [],
+      tags: [],
+      tasks: [],
+      favorited: false,
+      rating: 0
+    }
+    
+    setSavedGirls(current => {
+      const exists = current.some(g => g.id === girl.id)
+      if (exists) {
+        toast.error('Girl already in harem')
+        return current
+      }
+      toast.success(`${girl.name} added to harem!`)
+      return [...current, savedGirl]
+    })
+  }
+
+  const isInHarem = (girlId: string) => {
+    return savedGirls.some(g => g.id === girlId)
+  }
     return `# ${girl.name}
 
 **Age:** ${girl.age}
@@ -175,7 +230,7 @@ This character was designed for adult interactive experiences and can be adapted
 *Generated by AI Creative Generator*`
   }
 
-  const handleExportCharacter = (girl: GeneratedGirl) => {
+  const formatCharacterForExport = (girl: GeneratedGirl): string => {
     setSelectedGirl(girl)
     setExportDialogOpen(true)
   }
@@ -185,27 +240,41 @@ This character was designed for adult interactive experiences and can be adapted
   }, [])
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <Heart className="text-secondary" size={32} weight="fill" />
-          <h2 className="text-3xl font-bold text-foreground">Generate Girls</h2>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onBack}
+            className="border-primary/30 hover:bg-primary/10"
+          >
+            <ArrowLeft size={16} className="mr-2" />
+            Back
+          </Button>
+          <div className="flex items-center gap-3">
+            <Heart className="text-secondary" size={32} weight="fill" />
+            <h1 className="text-3xl font-bold text-foreground">Generate Girls</h1>
+          </div>
+          <div className="ml-auto">
+            <Button 
+              onClick={generateNewGirls}
+              disabled={isGenerating}
+              className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+            >
+              <Shuffle size={20} className="mr-2" />
+              {isGenerating ? 'Generating...' : 'Generate New'}
+            </Button>
+          </div>
         </div>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
-          Discover randomly generated characters with unique personalities and traits. 
-          Each girl is created with detailed characteristics perfect for your scenarios.
-        </p>
-        <Button 
-          onClick={generateNewGirls}
-          disabled={isGenerating}
-          className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-          size="lg"
-        >
-          <Shuffle size={20} className="mr-2" />
-          {isGenerating ? 'Generating...' : 'Generate New Girls'}
-        </Button>
-      </div>
+
+        <div className="text-center mb-8">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Discover randomly generated characters with unique personalities and traits. 
+            Each girl is created with detailed characteristics perfect for your scenarios.
+          </p>
+        </div>
 
       {/* Girls Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -271,7 +340,7 @@ This character was designed for adult interactive experiences and can be adapted
                 className="mt-4"
               />
               
-              <div className="grid grid-cols-2 gap-2 mt-4">
+              <div className="grid grid-cols-3 gap-2 mt-4">
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -282,35 +351,49 @@ This character was designed for adult interactive experiences and can be adapted
                   Export
                 </Button>
                 <Button 
+                  variant={isInHarem(girl.id) ? "default" : "outline"}
+                  size="sm" 
+                  className={isInHarem(girl.id) 
+                    ? "bg-accent text-accent-foreground" 
+                    : "border-accent text-accent hover:bg-accent/10"
+                  }
+                  onClick={() => saveToHarem(girl)}
+                  disabled={isInHarem(girl.id)}
+                >
+                  <Crown size={14} className="mr-1" />
+                  {isInHarem(girl.id) ? 'Saved' : 'Harem'}
+                </Button>
+                <Button 
                   variant="outline" 
                   size="sm" 
                   className="border-secondary text-secondary hover:bg-secondary/10"
                 >
                   <Sparkles size={14} className="mr-1" />
-                  Scenario
+                  Scene
                 </Button>
               </div>
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      {isGenerating && (
-        <div className="flex justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary"></div>
         </div>
-      )}
 
-      {/* Export Dialog */}
-      {selectedGirl && (
-        <ExportDialog
-          open={exportDialogOpen}
-          onOpenChange={setExportDialogOpen}
-          content={formatCharacterForExport(selectedGirl)}
-          type="character"
-          title={selectedGirl.name}
-        />
-      )}
+        {isGenerating && (
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary"></div>
+          </div>
+        )}
+
+        {/* Export Dialog */}
+        {selectedGirl && (
+          <ExportDialog
+            open={exportDialogOpen}
+            onOpenChange={setExportDialogOpen}
+            content={formatCharacterForExport(selectedGirl)}
+            type="character"
+            title={selectedGirl.name}
+          />
+        )}
+      </div>
     </div>
   )
 }

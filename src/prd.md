@@ -47,19 +47,33 @@ A comprehensive AI-powered tool that helps users create NSFW characters and scen
 - **Progression**: Collect inputs → Generate NSFW AI prompt → Process with configured AI provider → Present results with content warnings → Allow refinement
 - **Success criteria**: Generated content feels personal, appropriately explicit, and usable across different adult platforms
 
-### API Configuration System
-- **Functionality**: Users can configure their preferred AI provider from Internal (free), OpenRouter (multiple models), or Venice.ai (uncensored models)
-- **Purpose**: Allows users to choose their preferred AI service based on quality needs, budget, and content restrictions
-- **Trigger**: User clicks "API Settings" button in header
-- **Progression**: Open settings → Select provider → Enter API key if required → Test connection → Save configuration
-- **Success criteria**: Users can seamlessly switch between AI providers and maintain their preferred setup across sessions
-
 ### Multi-Platform Export
 - **Functionality**: Formats and exports created content for different platforms (SillyTavern for characters, prompt instructions for scenarios)
 - **Purpose**: Ensures users can immediately use their creations in their preferred adult entertainment tools
 - **Trigger**: User clicks export after reviewing generated content
 - **Progression**: Select target platform → Format content → Generate export file/text → Provide download/copy
 - **Success criteria**: Exported content works seamlessly in target adult platforms
+
+### API Configuration System
+- **Functionality**: Users can configure their preferred AI provider from Internal (free), OpenRouter (multiple models), or Venice.ai (uncensored models) with Venice as default
+- **Purpose**: Allows users to choose their preferred AI service, with Venice AI auto model providing optimal uncensored content generation
+- **Trigger**: User clicks "API Settings" button in header
+- **Progression**: Open settings → Select provider (Venice default) → Enter API key if required → Test connection → Save configuration
+- **Success criteria**: Users can seamlessly use Venice AI for optimal adult content generation or switch providers as needed
+
+### Harem Management System
+- **Functionality**: Save, organize, and manage generated female characters with roles, tags, tasks, ratings, and favorites
+- **Purpose**: Allows users to build and maintain a persistent collection of favorite characters with detailed metadata
+- **Trigger**: User clicks "Save to Harem" on any generated girl or accesses "My Harem" from main menu
+- **Progression**: Save characters → Assign roles/tags/tasks → Rate and favorite → Filter and search collection → Edit details
+- **Success criteria**: Users can effectively organize and retrieve their favorite characters with rich metadata for different scenarios
+
+### Venice AI Integration
+- **Functionality**: Built-in Venice AI for uncensored image generation using auto model selection, integrated text and image generation pipeline
+- **Purpose**: Provides high-quality, uncensored AI content generation specifically optimized for adult content creation
+- **Trigger**: Automatic for all AI generation, uses Venice "default" model for optimal results
+- **Progression**: User input → Venice AI generation (text and images) → Display results → Save to harem if character
+- **Success criteria**: Seamless AI generation with appropriate adult content quality using Venice auto model selection
 
 ### Progress Persistence
 - **Functionality**: Saves work-in-progress adult creations so users can return and continue later

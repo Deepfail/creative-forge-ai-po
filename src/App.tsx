@@ -1,18 +1,22 @@
 import React from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Sparkles, Zap, User, GameController2, Dice6, Chat, Users, Gear } from '@phosphor-icons/react'
+import { Sparkles, Zap, User, GameController2, Dice6, Chat, Users, Gear, Crown } from '@phosphor-icons/react'
 import SimpleMode from './components/SimpleMode'
 import InteractiveMode from './components/InteractiveMode'
 import RandomGenerator from './components/RandomGenerator'
 import CustomChatBuilder from './components/CustomChatBuilder'
 import GenerateGirls from './components/GenerateGirls'
 import ApiSettings from './components/ApiSettings'
+import Harem from './components/Harem'
+import { aiService } from './lib/ai-service'
+import { useKV } from '@github/spark/hooks'
+import type { ApiConfig } from './components/ApiSettings'
 
 type CreationType = 'character' | 'scenario'
-type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings'
+type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem'
 
 const creationTypes: Array<{
   id: CreationType
@@ -41,6 +45,18 @@ function App() {
   const [mode, setMode] = useState<AppMode>('home')
   const [selectedType, setSelectedType] = useState<CreationType>('character')
   const [showSettings, setShowSettings] = useState(false)
+  const [apiConfig] = useKV<ApiConfig>('api-config', {
+    provider: 'venice',
+    apiKey: '',
+    model: 'default'
+  })
+
+  // Initialize AI service with saved config
+  useEffect(() => {
+    if (apiConfig.apiKey || apiConfig.provider === 'internal') {
+      aiService.setConfig(apiConfig)
+    }
+  }, [apiConfig])
 
   const handleModeSelect = (newMode: AppMode, type?: CreationType) => {
     if (type) setSelectedType(type)
@@ -71,8 +87,18 @@ function App() {
     return <GenerateGirls onBack={handleBack} />
   }
 
+  if (mode === 'harem') {
+    return <Harem onBack={handleBack} />
+  }
+
   if (showSettings) {
-    return <ApiSettings onClose={() => setShowSettings(false)} />
+    return <ApiSettings 
+      onClose={() => setShowSettings(false)} 
+      onSave={(config) => {
+        aiService.setConfig(config)
+        setShowSettings(false)
+      }}
+    />
   }
 
   return (
@@ -110,7 +136,7 @@ function App() {
         </div>
 
         {/* Quick Access Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
           <Card className="bg-gradient-to-br from-primary/20 to-primary/5 border-primary/30 hover:shadow-lg hover:shadow-primary/10 transition-all cursor-pointer group"
                 onClick={() => handleModeSelect('random')}>
             <CardContent className="p-6 text-center">
@@ -135,6 +161,15 @@ function App() {
               <Users className="mx-auto mb-3 text-accent group-hover:scale-110 transition-transform" size={32} weight="duotone" />
               <h3 className="text-lg font-semibold text-foreground mb-2">Generate Girls</h3>
               <p className="text-sm text-muted-foreground">Create random female characters</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-pink-500/20 to-pink-500/5 border-pink-500/30 hover:shadow-lg hover:shadow-pink-500/10 transition-all cursor-pointer group"
+                onClick={() => handleModeSelect('harem')}>
+            <CardContent className="p-6 text-center">
+              <Crown className="mx-auto mb-3 text-pink-500 group-hover:scale-110 transition-transform" size={32} weight="duotone" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">My Harem</h3>
+              <p className="text-sm text-muted-foreground">Manage your saved girls collection</p>
             </CardContent>
           </Card>
         </div>

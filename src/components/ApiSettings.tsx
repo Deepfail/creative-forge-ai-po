@@ -57,8 +57,9 @@ const apiProviders = [
     description: 'Uncensored AI models for adult content',
     baseUrl: 'https://api.venice.ai/api/v1',
     models: [
+      'default',
       'venice-uncensored',
-      'qwen-2.5-qwq-32b',
+      'qwen-2.5-qwq-32b', 
       'qwen3-4b',
       'mistral-32-24b',
       'mistral-31-24b',
@@ -79,9 +80,9 @@ const apiProviders = [
 
 export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
   const [apiConfig, setApiConfig] = useKV<ApiConfig>('api-config', {
-    provider: 'internal',
+    provider: 'venice',
     apiKey: '',
-    model: 'gpt-4o'
+    model: 'default'
   })
 
   const [showKey, setShowKey] = useState(false)
