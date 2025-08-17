@@ -43,6 +43,9 @@ export default function AIPortraitGenerator({
     try {
       const promptText = `Beautiful portrait of ${character.name}, a ${character.age}-year-old ${character.type} with ${character.personality} personality. ${character.physicalDescription || 'Attractive and appealing appearance'}, detailed facial features, photorealistic, high quality`
       
+      console.log('Starting image generation with prompt:', promptText)
+      console.log('API Config:', { provider: apiConfig.provider, hasKey: !!apiConfig.apiKey })
+      
       toast.info('Generating AI portrait...')
       
       const imageUrl = await aiService.generateImage(promptText, {
@@ -50,6 +53,8 @@ export default function AIPortraitGenerator({
         height: 500,
         style: 'realistic portrait, detailed facial features, professional photography, high quality'
       })
+      
+      console.log('Generated image URL:', imageUrl)
       
       setGeneratedImage(imageUrl)
       setImagePrompt(promptText)
@@ -60,7 +65,7 @@ export default function AIPortraitGenerator({
       
       // Check if it's a placeholder or real AI generated image
       if (imageUrl.startsWith('data:')) {
-        toast.warning('Using placeholder image - configure Venice AI for real generation')
+        toast.warning('Using placeholder image - configure Venice AI key for real generation')
       } else {
         toast.success('Portrait generated successfully!')
       }
@@ -68,7 +73,7 @@ export default function AIPortraitGenerator({
       console.error('Error generating portrait:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate portrait'
       setError(errorMessage)
-      toast.error('Failed to generate portrait')
+      toast.error(`Failed to generate portrait: ${errorMessage}`)
     }
     
     setIsGenerating(false)
@@ -102,7 +107,10 @@ export default function AIPortraitGenerator({
       {!hasApiKey && (
         <div className="mt-2 p-2 bg-accent/10 border border-accent/20 rounded text-xs text-accent flex items-center gap-2">
           <Gear size={12} />
-          Configure Venice AI key for real image generation
+          {apiConfig.provider === 'venice' ? 
+            'Add Venice AI API key in settings for real image generation' :
+            'Switch to Venice AI in settings for image generation'
+          }
         </div>
       )}
       

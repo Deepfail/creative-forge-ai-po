@@ -75,8 +75,8 @@ export class AIService {
     height?: number
     style?: string
   }): Promise<string> {
-    if (!this.config || !this.config.apiKey) {
-      console.log('No API config found, using placeholder for:', prompt)
+    if (!this.config || !this.config.apiKey || this.config.provider !== 'venice') {
+      console.log('No Venice API config found, using placeholder for:', prompt)
       return this.generatePlaceholderImage(prompt, options?.width || 400, options?.height || 400)
     }
 
@@ -84,6 +84,8 @@ export class AIService {
       try {
         // Venice AI image generation endpoint
         const imagePrompt = `${prompt}. ${options?.style || 'realistic portrait, detailed, high quality'}`
+        
+        console.log('Sending image generation request to Venice:', imagePrompt)
         
         const response = await fetch('https://api.venice.ai/api/v1/images/generations', {
           method: 'POST',
@@ -93,25 +95,34 @@ export class AIService {
           },
           body: JSON.stringify({
             prompt: imagePrompt,
-            model: 'default', // Venice auto model for images
-            width: options?.width || 512,
-            height: options?.height || 512,
-            n: 1
+            model: 'auto', // Venice auto model for images
+            size: `${options?.width || 512}x${options?.height || 512}`,
+            n: 1,
+            quality: 'standard',
+            response_format: 'url'
           })
         })
 
+        console.log('Venice response status:', response.status)
+        
         if (!response.ok) {
-          throw new Error(`Venice AI image generation failed: ${response.statusText}`)
+          const errorText = await response.text()
+          console.error('Venice API error response:', errorText)
+          throw new Error(`Venice AI image generation failed: ${response.status} ${response.statusText} - ${errorText}`)
         }
 
         const data = await response.json()
+        console.log('Venice response data:', data)
+        
         if (data.data && data.data[0] && data.data[0].url) {
+          console.log('Successfully generated image:', data.data[0].url)
           return data.data[0].url
         } else {
-          throw new Error('Invalid response format from Venice AI')
+          console.error('Invalid Venice response format:', data)
+          throw new Error('Invalid response format from Venice AI - no image URL found')
         }
       } catch (error) {
-        console.warn('Venice AI image generation failed, using placeholder:', error)
+        console.error('Venice AI image generation failed:', error)
         return this.generatePlaceholderImage(prompt, options?.width || 400, options?.height || 400)
       }
     }
