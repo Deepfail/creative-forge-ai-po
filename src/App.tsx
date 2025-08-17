@@ -3,12 +3,15 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Sparkles, Zap, User, GameController2, FileText, Scroll } from '@phosphor-icons/react'
+import { Sparkles, Zap, User, GameController2, Dice6, Chat, Users } from '@phosphor-icons/react'
 import SimpleMode from './components/SimpleMode'
 import InteractiveMode from './components/InteractiveMode'
+import RandomGenerator from './components/RandomGenerator'
+import CustomChatBuilder from './components/CustomChatBuilder'
+import GenerateGirls from './components/GenerateGirls'
 
-type CreationType = 'character' | 'scenario' | 'game' | 'prompt'
-type AppMode = 'home' | 'simple' | 'interactive'
+type CreationType = 'character' | 'scenario'
+type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls'
 
 const creationTypes: Array<{
   id: CreationType
@@ -19,31 +22,17 @@ const creationTypes: Array<{
 }> = [
   {
     id: 'character',
-    title: 'Character',
-    description: 'Create detailed characters with personalities, backstories, and traits',
+    title: 'Character Creation',
+    description: 'Create detailed NSFW characters with personalities, kinks, and backstories',
     icon: User,
-    examples: ['Fantasy Heroes', 'NPCs', 'Villains', 'Companions']
+    examples: ['Submissive Girl', 'Dominant MILF', 'Shy Virgin', 'Experienced Lover']
   },
   {
     id: 'scenario',
-    title: 'Scenario',
-    description: 'Build immersive scenarios and story situations',
-    icon: Scroll,
-    examples: ['Adventures', 'Conflicts', 'Settings', 'Events']
-  },
-  {
-    id: 'game',
-    title: 'Game',
-    description: 'Design game mechanics, rules, and interactive experiences',
+    title: 'Scenario/Game Builder',
+    description: 'Build immersive NSFW scenarios and interactive experiences',
     icon: GameController2,
-    examples: ['RPG Systems', 'Mini-games', 'Mechanics', 'Challenges']
-  },
-  {
-    id: 'prompt',
-    title: 'Prompt',
-    description: 'Craft effective prompts for AI assistants and creative tools',
-    icon: FileText,
-    examples: ['Creative Writing', 'Role-play', 'Instructions', 'Templates']
+    examples: ['Roleplay Scenarios', 'Interactive Games', 'Fantasy Settings', 'Kinky Adventures']
   }
 ]
 
@@ -51,8 +40,8 @@ function App() {
   const [mode, setMode] = useState<AppMode>('home')
   const [selectedType, setSelectedType] = useState<CreationType>('character')
 
-  const handleModeSelect = (newMode: AppMode, type: CreationType) => {
-    setSelectedType(type)
+  const handleModeSelect = (newMode: AppMode, type?: CreationType) => {
+    if (type) setSelectedType(type)
     setMode(newMode)
   }
 
@@ -68,44 +57,91 @@ function App() {
     return <InteractiveMode type={selectedType} onBack={handleBack} />
   }
 
+  if (mode === 'random') {
+    return <RandomGenerator onBack={handleBack} />
+  }
+
+  if (mode === 'custom') {
+    return <CustomChatBuilder onBack={handleBack} />
+  }
+
+  if (mode === 'girls') {
+    return <GenerateGirls onBack={handleBack} />
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Sparkles className="text-primary" size={32} weight="fill" />
-            <h1 className="text-4xl font-bold text-foreground">AI Creative Generator</h1>
+            <Sparkles className="text-primary" size={40} weight="fill" />
+            <h1 className="text-5xl font-bold text-foreground bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              NSFW AI Generator
+            </h1>
           </div>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Create amazing characters, scenarios, games, and prompts with the power of AI. 
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Create amazing NSFW characters, scenarios, and interactive experiences with AI. 
             Choose your creation type and preferred mode to get started.
           </p>
+          <div className="mt-4 text-sm text-accent font-medium">
+            🔞 18+ Adult Content Only
+          </div>
+        </div>
+
+        {/* Quick Access Buttons */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+          <Card className="bg-gradient-to-br from-primary/20 to-primary/5 border-primary/30 hover:shadow-lg hover:shadow-primary/10 transition-all cursor-pointer group"
+                onClick={() => handleModeSelect('random')}>
+            <CardContent className="p-6 text-center">
+              <Dice6 className="mx-auto mb-3 text-primary group-hover:scale-110 transition-transform" size={32} weight="duotone" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Random Scenario</h3>
+              <p className="text-sm text-muted-foreground">Get instant random NSFW scenarios</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-secondary/20 to-secondary/5 border-secondary/30 hover:shadow-lg hover:shadow-secondary/10 transition-all cursor-pointer group"
+                onClick={() => handleModeSelect('custom')}>
+            <CardContent className="p-6 text-center">
+              <Chat className="mx-auto mb-3 text-secondary group-hover:scale-110 transition-transform" size={32} weight="duotone" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Build Your Own</h3>
+              <p className="text-sm text-muted-foreground">Chat with AI to create custom scenarios</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-accent/20 to-accent/5 border-accent/30 hover:shadow-lg hover:shadow-accent/10 transition-all cursor-pointer group"
+                onClick={() => handleModeSelect('girls')}>
+            <CardContent className="p-6 text-center">
+              <Users className="mx-auto mb-3 text-accent group-hover:scale-110 transition-transform" size={32} weight="duotone" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Generate Girls</h3>
+              <p className="text-sm text-muted-foreground">Create random female characters</p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Creation Types */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid md:grid-cols-2 gap-8 mb-12">
           {creationTypes.map((type) => {
             const Icon = type.icon
             return (
-              <Card key={type.id} className="h-full hover:shadow-lg transition-shadow">
+              <Card key={type.id} className="h-full hover:shadow-lg hover:shadow-primary/5 transition-all border-border/50">
                 <CardHeader className="text-center pb-4">
-                  <Icon className="mx-auto mb-3 text-primary" size={32} weight="duotone" />
-                  <CardTitle className="text-lg">{type.title}</CardTitle>
-                  <CardDescription className="text-sm">{type.description}</CardDescription>
+                  <Icon className="mx-auto mb-3 text-primary" size={40} weight="duotone" />
+                  <CardTitle className="text-xl text-foreground">{type.title}</CardTitle>
+                  <CardDescription className="text-muted-foreground">{type.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="flex flex-wrap gap-1 mb-4">
+                  <div className="flex flex-wrap gap-2 mb-6">
                     {type.examples.map((example) => (
-                      <Badge key={example} variant="secondary" className="text-xs">
+                      <Badge key={example} variant="secondary" className="text-xs bg-muted/50">
                         {example}
                       </Badge>
                     ))}
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <Button 
                       onClick={() => handleModeSelect('simple', type.id)}
-                      className="w-full" 
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" 
                       size="sm"
                     >
                       <Zap size={16} className="mr-2" />
@@ -114,7 +150,7 @@ function App() {
                     <Button 
                       onClick={() => handleModeSelect('interactive', type.id)}
                       variant="outline" 
-                      className="w-full" 
+                      className="w-full border-primary/30 hover:bg-primary/10" 
                       size="sm"
                     >
                       <Sparkles size={16} className="mr-2" />
@@ -129,13 +165,13 @@ function App() {
 
         {/* Mode Explanations */}
         <div className="grid md:grid-cols-2 gap-8">
-          <Card className="border-2 border-primary/20">
+          <Card className="border-primary/30 bg-primary/5">
             <CardHeader>
               <div className="flex items-center gap-3">
                 <Zap className="text-primary" size={24} weight="duotone" />
-                <CardTitle>Simple Mode</CardTitle>
+                <CardTitle className="text-foreground">Simple Mode</CardTitle>
               </div>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 Quick and direct creation for users who know exactly what they want
               </CardDescription>
             </CardHeader>
@@ -149,20 +185,20 @@ function App() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-secondary/20">
+          <Card className="border-secondary/30 bg-secondary/5">
             <CardHeader>
               <div className="flex items-center gap-3">
                 <Sparkles className="text-secondary" size={24} weight="duotone" />
-                <CardTitle>Interactive Mode</CardTitle>
+                <CardTitle className="text-foreground">Interactive Mode</CardTitle>
               </div>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 Guided experience with questions and scenarios to spark creativity
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Step-by-step guided questions</li>
-                <li>• Visual choices and mini-scenarios</li>
+                <li>• Visual choices and scenarios</li>
                 <li>• Great for discovering new ideas</li>
                 <li>• Interactive and inspiring process</li>
               </ul>
