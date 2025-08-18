@@ -2,7 +2,7 @@ import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { useKV } from '@github/spark/hooks'
 import { ApiConfig } from './ApiSettings'
-import { Key, Globe, Sparkles } from '@phosphor-icons/react'
+import { Key, Globe, Sparkle } from '@phosphor-icons/react'
 
 export default function ApiStatusIndicator() {
   const [apiConfig] = useKV<ApiConfig>('api-config', {
@@ -12,10 +12,10 @@ export default function ApiStatusIndicator() {
   })
 
   const getStatusInfo = () => {
-    switch (apiConfig.provider) {
+    switch (apiConfig?.provider) {
       case 'internal':
         return {
-          icon: Sparkles,
+          icon: Sparkle,
           label: 'Internal AI',
           variant: 'default' as const,
           color: 'text-primary'
@@ -23,9 +23,9 @@ export default function ApiStatusIndicator() {
       case 'openrouter':
         return {
           icon: Globe,
-          label: apiConfig.apiKey ? 'OpenRouter' : 'OpenRouter (No Key)',
-          variant: apiConfig.apiKey ? 'secondary' as const : 'destructive' as const,
-          color: apiConfig.apiKey ? 'text-secondary' : 'text-destructive'
+          label: apiConfig?.apiKey ? 'OpenRouter' : 'OpenRouter (No Key)',
+          variant: apiConfig?.apiKey ? 'secondary' as const : 'destructive' as const,
+          color: apiConfig?.apiKey ? 'text-secondary' : 'text-destructive'
         }
       case 'venice':
         return {
@@ -36,7 +36,7 @@ export default function ApiStatusIndicator() {
         }
       default:
         return {
-          icon: Sparkles,
+          icon: Sparkle,
           label: 'Internal AI',
           variant: 'default' as const,
           color: 'text-primary'

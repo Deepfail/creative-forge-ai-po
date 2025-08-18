@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ArrowLeft, Send, Sparkles, Download, Copy } from '@phosphor-icons/react'
+import { ArrowLeft, PaperPlaneTilt, Sparkle, Download, Copy } from '@phosphor-icons/react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { useKV } from '@github/spark/hooks'
@@ -80,7 +80,7 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   })
   const [showExport, setShowExport] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [chatHistory] = useKV('custom-chat-history', [])
+  const [chatHistory] = useKV<Message[]>('custom-chat-history', [])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -144,7 +144,7 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
           break
       }
       
-      const prompt = spark.llmPrompt`${aiPersonality.systemPrompt}
+      const prompt = (window as any).spark.llmPrompt`${aiPersonality.systemPrompt}
 
 Current conversation stage: ${creationState.stage}
 Stage instructions: ${stageInstructions}
@@ -306,7 +306,7 @@ Remember: You're conducting a psychological evaluation while being seductive. Ev
       // Build comprehensive prompt from psychological profile
       const conversationSummary = messages.map(m => m.content).join('\n')
       
-      const prompt = spark.llmPrompt`Based on Luna's psychological evaluation and this conversation, generate a detailed NSFW character/scenario that perfectly matches the user's psychological profile:
+      const prompt = (window as any).spark.llmPrompt`Based on Luna's psychological evaluation and this conversation, generate a detailed NSFW character/scenario that perfectly matches the user's psychological profile:
 
 Psychological Profile Gathered:
 - Age Preference: ${creationState.psychProfile.agePreference || 'Not specified'}
@@ -464,7 +464,7 @@ Make it detailed, explicit, and perfectly tailored to their psychological profil
                         disabled={!currentInput.trim() || isTyping}
                         size="sm"
                       >
-                        <Send size={16} />
+                        <PaperPlaneTilt size={16} />
                       </Button>
                     </div>
                   </div>

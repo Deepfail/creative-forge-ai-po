@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Sparkles, RefreshCw, Image, Warning } from '@phosphor-icons/react'
+import { Sparkle, ArrowClockwise, Image, Warning } from '@phosphor-icons/react'
 import { aiService } from '@/lib/ai-service'
 import { toast } from 'sonner'
 
@@ -85,12 +85,12 @@ export default function AIPortraitGenerator({
       >
         {isGenerating ? (
           <>
-            <RefreshCw size={14} className="mr-2 animate-spin" />
+            <ArrowClockwise size={14} className="mr-2 animate-spin" />
             Generating...
           </>
         ) : (
           <>
-            <Sparkles size={14} className="mr-2" />
+            <Sparkle size={14} className="mr-2" />
             Generate AI Portrait
           </>
         )}
@@ -124,7 +124,7 @@ export default function AIPortraitGenerator({
               onClick={generatePortrait}
               className="text-xs h-6 px-2"
             >
-              <RefreshCw size={10} className="mr-1" />
+              <ArrowClockwise size={10} className="mr-1" />
               Regenerate
             </Button>
           </div>

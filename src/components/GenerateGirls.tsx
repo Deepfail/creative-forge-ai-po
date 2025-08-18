@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Shuffle, Sparkles, Heart, Download, Crown, ArrowLeft } from '@phosphor-icons/react'
+import { Shuffle, Sparkle, Heart, Download, Crown, ArrowLeft } from '@phosphor-icons/react'
 import AIPortraitGenerator from './AIPortraitGenerator'
 import ExportDialog from './ExportDialog'
 import { aiService } from '@/lib/ai-service'
@@ -187,18 +187,19 @@ export default function GenerateGirls({ onBack }: GenerateGirlsProps) {
     }
     
     setSavedGirls(current => {
-      const exists = current.some(g => g.id === girl.id)
+      const currentGirls = current || []
+      const exists = currentGirls.some(g => g.id === girl.id)
       if (exists) {
         toast.error('Girl already in harem')
-        return current
+        return currentGirls
       }
       toast.success(`${girl.name} added to harem!`)
-      return [...current, savedGirl]
+      return [...currentGirls, savedGirl]
     })
   }
 
   const isInHarem = (girlId: string) => {
-    return savedGirls.some(g => g.id === girlId)
+    return savedGirls?.some(g => g.id === girlId) || false
   }
 
   const formatCharacterForExport = (girl: GeneratedGirl): string => {
@@ -367,7 +368,7 @@ This character was designed for adult interactive experiences and can be adapted
                   size="sm" 
                   className="border-secondary text-secondary hover:bg-secondary/10"
                 >
-                  <Sparkles size={14} className="mr-1" />
+                  <Sparkle size={14} className="mr-1" />
                   Scene
                 </Button>
               </div>

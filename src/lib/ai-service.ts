@@ -25,20 +25,20 @@ export class AIService {
     if (!this.config) {
       // Fallback to internal spark.llm
       const fullPrompt = options?.systemPrompt 
-        ? spark.llmPrompt`${options.systemPrompt}\n\nUser: ${prompt}`
-        : spark.llmPrompt`${prompt}`
-      return await spark.llm(fullPrompt)
+        ? (window as any).spark.llmPrompt`${options.systemPrompt}\n\nUser: ${prompt}`
+        : (window as any).spark.llmPrompt`${prompt}`
+      return await (window as any).spark.llm(fullPrompt)
     }
 
     if (this.config.provider === 'internal') {
       const fullPrompt = options?.systemPrompt 
-        ? spark.llmPrompt`${options.systemPrompt}\n\nUser: ${prompt}`
-        : spark.llmPrompt`${prompt}`
-      return await spark.llm(fullPrompt, this.config.model)
+        ? (window as any).spark.llmPrompt`${options.systemPrompt}\n\nUser: ${prompt}`
+        : (window as any).spark.llmPrompt`${prompt}`
+      return await (window as any).spark.llm(fullPrompt, this.config.model)
     }
 
     // External API call
-    const messages = []
+    const messages: Array<{role: string, content: string}> = []
     if (options?.systemPrompt) {
       messages.push({ role: 'system', content: options.systemPrompt })
     }
@@ -79,9 +79,9 @@ export class AIService {
       console.log('Starting Venice AI image generation via Spark')
       
       // Create a comprehensive prompt using Spark's LLM first
-      const promptBuilder = spark.llmPrompt`Create a detailed, professional image generation prompt for: "${prompt}". Include specific visual details like lighting, composition, camera angle, and quality descriptors. Focus on realistic portrait photography. Respond with just the prompt, no additional text.`
+      const promptBuilder = (window as any).spark.llmPrompt`Create a detailed, professional image generation prompt for: "${prompt}". Include specific visual details like lighting, composition, camera angle, and quality descriptors. Focus on realistic portrait photography. Respond with just the prompt, no additional text.`
       
-      const enhancedPrompt = await spark.llm(promptBuilder)
+      const enhancedPrompt = await (window as any).spark.llm(promptBuilder)
       console.log('Enhanced prompt from LLM:', enhancedPrompt)
       
       // Now attempt Venice AI image generation with multiple fallback approaches

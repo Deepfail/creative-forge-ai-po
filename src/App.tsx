@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Sparkles, Zap, User, GameController2, Dice6, Chat, Users, Gear, Crown } from '@phosphor-icons/react'
+import { Sparkle, Lightning, User, GameController, DiceOne, ChatCircle, Users, Gear, Crown } from '@phosphor-icons/react'
 import SimpleMode from './components/SimpleMode'
 import InteractiveMode from './components/InteractiveMode'
 import RandomGenerator from './components/RandomGenerator'
@@ -36,7 +36,7 @@ const creationTypes: Array<{
     id: 'scenario',
     title: 'Scenario/Game Builder',
     description: 'Build immersive NSFW scenarios and interactive experiences',
-    icon: GameController2,
+    icon: GameController,
     examples: ['Roleplay Scenarios', 'Interactive Games', 'Fantasy Settings', 'Kinky Adventures']
   }
 ]
@@ -53,7 +53,7 @@ function App() {
 
   // Initialize AI service with saved config
   useEffect(() => {
-    if (apiConfig.apiKey || apiConfig.provider === 'internal') {
+    if (apiConfig && (apiConfig.apiKey || apiConfig.provider === 'internal')) {
       aiService.setConfig(apiConfig)
     }
   }, [apiConfig])
@@ -109,7 +109,7 @@ function App() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex-1" />
             <div className="flex items-center gap-3">
-              <Sparkles className="text-primary" size={40} weight="fill" />
+              <Sparkle className="text-primary" size={40} weight="fill" />
               <h1 className="text-5xl font-bold text-foreground bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 NSFW AI Generator
               </h1>
@@ -140,7 +140,7 @@ function App() {
           <Card className="bg-gradient-to-br from-primary/20 to-primary/5 border-primary/30 hover:shadow-lg hover:shadow-primary/10 transition-all cursor-pointer group"
                 onClick={() => handleModeSelect('random')}>
             <CardContent className="p-6 text-center">
-              <Dice6 className="mx-auto mb-3 text-primary group-hover:scale-110 transition-transform" size={32} weight="duotone" />
+              <DiceOne className="mx-auto mb-3 text-primary group-hover:scale-110 transition-transform" size={32} weight="duotone" />
               <h3 className="text-lg font-semibold text-foreground mb-2">Random Scenario</h3>
               <p className="text-sm text-muted-foreground">Get instant random NSFW scenarios</p>
             </CardContent>
@@ -149,7 +149,7 @@ function App() {
           <Card className="bg-gradient-to-br from-secondary/20 to-secondary/5 border-secondary/30 hover:shadow-lg hover:shadow-secondary/10 transition-all cursor-pointer group"
                 onClick={() => handleModeSelect('custom')}>
             <CardContent className="p-6 text-center">
-              <Chat className="mx-auto mb-3 text-secondary group-hover:scale-110 transition-transform" size={32} weight="duotone" />
+              <ChatCircle className="mx-auto mb-3 text-secondary group-hover:scale-110 transition-transform" size={32} weight="duotone" />
               <h3 className="text-lg font-semibold text-foreground mb-2">Build Your Own</h3>
               <p className="text-sm text-muted-foreground">Chat with AI to create custom scenarios</p>
             </CardContent>
@@ -199,7 +199,7 @@ function App() {
                       className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" 
                       size="sm"
                     >
-                      <Zap size={16} className="mr-2" />
+                      <Lightning size={16} className="mr-2" />
                       Simple Mode
                     </Button>
                     <Button 
@@ -208,7 +208,7 @@ function App() {
                       className="w-full border-primary/30 hover:bg-primary/10" 
                       size="sm"
                     >
-                      <Sparkles size={16} className="mr-2" />
+                      <Sparkle size={16} className="mr-2" />
                       Interactive Mode
                     </Button>
                   </div>
@@ -223,7 +223,7 @@ function App() {
           <Card className="border-primary/30 bg-primary/5">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <Zap className="text-primary" size={24} weight="duotone" />
+                <Lightning className="text-primary" size={24} weight="duotone" />
                 <CardTitle className="text-foreground">Simple Mode</CardTitle>
               </div>
               <CardDescription className="text-muted-foreground">
@@ -243,7 +243,7 @@ function App() {
           <Card className="border-secondary/30 bg-secondary/5">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <Sparkles className="text-secondary" size={24} weight="duotone" />
+                <Sparkle className="text-secondary" size={24} weight="duotone" />
                 <CardTitle className="text-foreground">Interactive Mode</CardTitle>
               </div>
               <CardDescription className="text-muted-foreground">

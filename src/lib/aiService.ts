@@ -18,10 +18,10 @@ export class AIService {
     // Use internal Spark AI by default
     if (this.config.provider === 'internal') {
       const fullPrompt = systemPrompt 
-        ? spark.llmPrompt`${systemPrompt}\n\n${prompt}`
-        : spark.llmPrompt`${prompt}`
+        ? (window as any).spark.llmPrompt`${systemPrompt}\n\n${prompt}`
+        : (window as any).spark.llmPrompt`${prompt}`
       
-      return await spark.llm(fullPrompt, this.config.model || 'gpt-4o')
+      return await (window as any).spark.llm(fullPrompt, this.config.model || 'gpt-4o')
     }
 
     // Use external API providers
@@ -87,16 +87,16 @@ export class AIService {
       // Fallback to internal AI if external API fails
       console.log('Falling back to internal AI...')
       const fallbackPrompt = systemPrompt 
-        ? spark.llmPrompt`${systemPrompt}\n\n${prompt}`
-        : spark.llmPrompt`${prompt}`
+        ? (window as any).spark.llmPrompt`${systemPrompt}\n\n${prompt}`
+        : (window as any).spark.llmPrompt`${prompt}`
       
-      return await spark.llm(fallbackPrompt, 'gpt-4o')
+      return await (window as any).spark.llm(fallbackPrompt, 'gpt-4o')
     }
   }
 
   async generateImage(description: string): Promise<string> {
     // For now, return a placeholder. In the future, this could integrate with image generation APIs
-    const imagePrompt = spark.llmPrompt`Generate a detailed visual description for AI image generation based on this character description: ${description}. Focus on physical appearance, pose, clothing, and setting. Make it suitable for adult content generation.`
+    const imagePrompt = (window as any).spark.llmPrompt`Generate a detailed visual description for AI image generation based on this character description: ${description}. Focus on physical appearance, pose, clothing, and setting. Make it suitable for adult content generation.`
     
     return await this.generateText(imagePrompt, {
       systemPrompt: 'You are an expert at creating detailed prompts for AI image generation. Create vivid, detailed descriptions that would work well with Stable Diffusion or similar models. Include specific details about appearance, pose, clothing, lighting, and artistic style.',
@@ -113,15 +113,15 @@ export function useAIService(): AIService {
     model: 'gpt-4o'
   })
   
-  return new AIService(apiConfig)
+  return new AIService(apiConfig!)
 }
 
 // Function to get AI service with current config
 export async function getAIService(): Promise<AIService> {
   try {
-    const config = await spark.kv.get<ApiConfig>('api-config')
+    const config = await (window as any).spark.kv.get('api-config')
     return new AIService(config || {
-      provider: 'internal',
+      provider: 'internal' as const,
       apiKey: '',
       model: 'gpt-4o'
     })

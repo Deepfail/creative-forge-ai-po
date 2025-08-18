@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Sparkles, Download, Copy } from '@phosphor-icons/react'
+import { ArrowLeft, Sparkle, Download, Copy } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
@@ -60,7 +60,7 @@ export default function SimpleMode({ type, onBack }: SimpleModeProps) {
   const [generatedContent, setGeneratedContent] = useState<string>('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [showExport, setShowExport] = useState(false)
-  const [projects] = useKV('simple-projects', [])
+  const [projects] = useKV<any[]>('simple-projects', [])
 
   const handleTagToggle = (tag: string) => {
     setFormData(prev => ({
@@ -79,7 +79,7 @@ export default function SimpleMode({ type, onBack }: SimpleModeProps) {
 
     setIsGenerating(true)
     try {
-      const prompt = spark.llmPrompt`
+      const prompt = (window as any).spark.llmPrompt`
         Create a detailed ${type} with the following specifications:
         
         Name: ${formData.name}
@@ -132,7 +132,7 @@ export default function SimpleMode({ type, onBack }: SimpleModeProps) {
         Make it engaging, well-structured, and ready to use. Format it with clear sections and bullet points where appropriate.
       `
       
-      const result = await spark.llm(prompt)
+      const result = await (window as any).spark.llm(prompt)
       setGeneratedContent(result)
       toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully!`)
     } catch (error) {
@@ -274,12 +274,12 @@ export default function SimpleMode({ type, onBack }: SimpleModeProps) {
               >
                 {isGenerating ? (
                   <>
-                    <Sparkles size={16} className="mr-2 animate-spin" />
+                    <Sparkle size={16} className="mr-2 animate-spin" />
                     Generating...
                   </>
                 ) : (
                   <>
-                    <Sparkles size={16} className="mr-2" />
+                    <Sparkle size={16} className="mr-2" />
                     Generate {type.charAt(0).toUpperCase() + type.slice(1)}
                   </>
                 )}
@@ -314,7 +314,7 @@ export default function SimpleMode({ type, onBack }: SimpleModeProps) {
                 </div>
               ) : (
                 <div className="text-center text-muted-foreground py-12">
-                  <Sparkles size={48} className="mx-auto mb-4 opacity-50" />
+                  <Sparkle size={48} className="mx-auto mb-4 opacity-50" />
                   <p>Fill out the form and click generate to see your {type} here</p>
                 </div>
               )}

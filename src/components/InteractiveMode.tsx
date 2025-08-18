@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { ArrowLeft, ArrowRight, Sparkles, Download, Copy } from '@phosphor-icons/react'
+import { ArrowLeft, ArrowRight, Sparkle, Download, Copy } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
@@ -255,7 +255,7 @@ export default function InteractiveMode({ type, onBack }: InteractiveModeProps) 
         return `${step.question}: ${answerText}`
       }).join('\n')
 
-      const prompt = spark.llmPrompt`
+      const prompt = (window as any).spark.llmPrompt`
         Based on this interactive questionnaire about creating a ${type}, generate comprehensive content:
 
         User Responses:
@@ -276,7 +276,7 @@ export default function InteractiveMode({ type, onBack }: InteractiveModeProps) 
         Format with clear sections and make it immediately usable.
       `
 
-      const result = await spark.llm(prompt)
+      const result = await (window as any).spark.llm(prompt)
       setGeneratedContent(result)
       toast.success('Your creation is ready!')
     } catch (error) {
@@ -350,7 +350,7 @@ export default function InteractiveMode({ type, onBack }: InteractiveModeProps) 
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center">
-            <Sparkles size={48} className="mx-auto mb-4 text-primary animate-spin" />
+            <Sparkle size={48} className="mx-auto mb-4 text-primary animate-spin" />
             <h2 className="text-xl font-semibold mb-2">Creating Your {type.charAt(0).toUpperCase() + type.slice(1)}</h2>
             <p className="text-muted-foreground mb-4">Our AI is crafting something amazing based on your choices...</p>
             <Progress value={100} className="animate-pulse" />
@@ -482,7 +482,7 @@ export default function InteractiveMode({ type, onBack }: InteractiveModeProps) 
           >
             {currentStep === steps.length - 1 ? (
               <>
-                <Sparkles size={16} className="mr-2" />
+                <Sparkle size={16} className="mr-2" />
                 Generate
               </>
             ) : (
