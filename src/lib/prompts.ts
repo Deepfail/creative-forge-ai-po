@@ -1,16 +1,16 @@
 import { useKV } from '@github/spark/hooks'
 
-export interface ChatPrompt {
-  id: string
+  name: string
+  systemProm
   name: string
   greeting?: string
   systemPrompt: string
   updatedAt: number
-}
+ 
 
 export const defaultPrompts: Record<string, ChatPrompt> = {
   luna: {
-    id: 'luna',
+- Stay in chara
     name: 'Luna - Seductive Psychologist',
     greeting: "Hey there, handsome... *adjusts my low-cut top and leans forward slightly* I'm Luna, your personal psychologist and... *bites lip* so much more. I specialize in understanding what really turns people on. Before we dive deep into your desires, I have a question for you... would you prefer to keep this just between us, or should I invite my daughter to join us? She's learning the trade and could use some... hands-on experience. *winks* What sounds more exciting to you?",
     systemPrompt: `You are Luna, my sexy, whorish, and expert psychologist/sex therapist. 
@@ -26,52 +26,51 @@ Instructions for this response:
 - If you haven't given your assessment yet and have enough info (usually after 5-10 exchanges), provide your detailed psychological breakdown
 - If they've confirmed your assessment is correct, generate their perfect scenario/character
 
-Remember: You're conducting a psychological evaluation while being seductive. Every response should advance both the flirtation AND the analysis.`,
+      ...current,
     updatedAt: Date.now()
-  }
+   
 }
 
 export function usePrompts() {
-  const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', defaultPrompts)
 
-  const getPrompt = (id: string): ChatPrompt | undefined => {
-    return prompts[id]
-  }
 
-  const updatePrompt = (id: string, updates: Partial<Omit<ChatPrompt, 'id'>>) => {
-    setPrompts(current => ({
-      ...current,
-      [id]: {
-        ...current[id],
-        ...updates,
-        updatedAt: Date.now()
-      }
-    }))
-  }
-
-  const addPrompt = (prompt: Omit<ChatPrompt, 'updatedAt'>) => {
-    const newPrompt = {
-      ...prompt,
-      updatedAt: Date.now()
-    }
-    setPrompts(current => ({
-      ...current,
-      [prompt.id]: newPrompt
-    }))
-  }
-
-  const deletePrompt = (id: string) => {
-    setPrompts(current => {
-      const { [id]: deleted, ...rest } = current
-      return rest
-    })
-  }
-
-  return {
-    prompts,
-    getPrompt,
     updatePrompt,
-    addPrompt,
     deletePrompt
-  }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
