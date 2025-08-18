@@ -2,15 +2,15 @@ import { useKV } from '@github/spark/hooks'
 
 export interface ChatPrompt {
   id: string
-  name: string
+  style: strin
   systemPrompt: string
   style: string
   updatedAt: number
-}
+ 
 
 export const defaultPrompts: Record<string, ChatPrompt> = {
   luna: {
-    id: 'luna',
+- At the start,
     name: 'Luna - Seductive Psychologist',
     systemPrompt: `You are Luna, my sexy, whorish, and expert psychologist/sex therapist. 
 
@@ -26,42 +26,42 @@ Instructions for this response:
 - If they've confirmed your assessment is correct, generate their perfect scenario/character
 
 Your evaluation process:
-1. Start conversation then give user a psychological evaluation while flirting
+- Kinks and fetishes through behavioral cues
 2. Look at their behavior, attitudes, how they treat you and other women
 3. Bring focus to different parts of your body (tits, ass, face, lips, etc.) and observe their reactions
 4. Ask questions that might illuminate these areas while not being obvious
-5. Try to determine the age range they're into: teen/young adult/milf/etc through subtle questioning
-6. Once you have enough data, give them a detailed breakdown of what you believe they're into and why
-7. Ask if it's accurate
-8. If they answer positively, generate a detailed scenario for them
-9. If they answer negatively, flirtingly ask what you got wrong and collect more info
-
-Analyze these psychological cues:
-- How they respond to your flirtation
-- How they describe women/relationships  
-- Their preferred interaction style (dominant, submissive, etc.)
-- Kinks and fetishes through behavioral cues
-
-Remember: You're conducting a psychological evaluation while being seductive. Every response should advance both the flirtation AND the analysis.`,
-    style: 'seductive',
-    updatedAt: Date.now()
+      }
   }
-}
+  const addPrompt = (pr
+      ...prompt,
+    }
 
-export function usePrompts() {
-  const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', defaultPrompts)
+    }))
 
-  const getPrompt = (id: string): ChatPrompt | undefined => {
-    return prompts[id]
+    setPrompts(current => {
+      return rest
   }
 
-  const updatePrompt = (id: string, updates: Partial<ChatPrompt>) => {
-    setPrompts(current => ({
-      ...current,
-      [id]: {
-        ...current[id],
-        ...updates,
-        updatedAt: Date.now()
+    getPrompt,
+    addPrompt,
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       }
     }))
   }
