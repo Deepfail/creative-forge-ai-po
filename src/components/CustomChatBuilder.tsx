@@ -30,6 +30,7 @@ interface CreationState {
   }
   name?: string
   generatedContent?: string
+  type?: 'character' | 'scenario'
 }
 
 const aiPersonality = {
@@ -44,7 +45,8 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   const [isTyping, setIsTyping] = useState(false)
   const [creationState, setCreationState] = useState<CreationState>({
     stage: 'greeting',
-    preferences: {}
+    preferences: {},
+    type: 'character' // Default to character
   })
   const [showExport, setShowExport] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -134,6 +136,13 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
     const lowerUser = userMessage.toLowerCase()
     const lowerAI = aiResponse.toLowerCase()
     
+    // Detect content type
+    if (lowerUser.includes('character') || lowerUser.includes('girl') || lowerUser.includes('person') || lowerUser.includes('someone')) {
+      setCreationState(prev => ({ ...prev, type: 'character' }))
+    } else if (lowerUser.includes('scenario') || lowerUser.includes('scene') || lowerUser.includes('story') || lowerUser.includes('situation')) {
+      setCreationState(prev => ({ ...prev, type: 'scenario' }))
+    }
+    
     // Update stage based on conversation flow
     if (creationState.stage === 'greeting' && userMessage.length > 10) {
       setCreationState(prev => ({ ...prev, stage: 'discovery' }))
@@ -181,15 +190,15 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
       // Build comprehensive prompt from conversation
       const conversationSummary = messages.map(m => m.content).join('\n')
       
-      const prompt = `Based on this flirty conversation with a user about creating a NSFW ${type}, generate the final detailed content:
+      const prompt = `Based on this flirty conversation with a user about creating a NSFW ${creationState.type}, generate the final detailed content:
         
         Conversation summary: ${conversationSummary}
         
         Preferences gathered: ${JSON.stringify(creationState.preferences)}
         
-        Create a comprehensive NSFW ${type} that matches exactly what the user described in the conversation. Include:
+        Create a comprehensive NSFW ${creationState.type} that matches exactly what the user described in the conversation. Include:
         
-        ${type === 'character' ? `
+        ${creationState.type === 'character' ? `
         - Full name and demographics
         - Detailed personality including sexual preferences
         - Background and sexual/romantic history
@@ -220,9 +229,9 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
         generatedContent
       }))
       
-      addMessage('ai', `Perfect! I've created your ${type} based on everything we discussed. Here it is, hot and ready for you! 🔥✨\n\nWould you like me to export it for you, or shall we make any adjustments? 💋`)
+      addMessage('ai', `Perfect! I've created your ${creationState.type} based on everything we discussed. Here it is, hot and ready for you! 🔥✨\n\nWould you like me to export it for you, or shall we make any adjustments? 💋`)
       
-      toast.success(`Your custom ${type} has been generated!`)
+      toast.success(`Your custom ${creationState.type} has been generated!`)
       
     } catch (error) {
       addMessage('ai', "Oh no! Something went wrong while creating your content. Let's try again, sweetie! 💕")
@@ -260,8 +269,8 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Chat Mode: {type.charAt(0).toUpperCase() + type.slice(1)}</h1>
-            <p className="text-muted-foreground">Chat with Luna to build your perfect {type}</p>
+            <h1 className="text-3xl font-bold">Chat Mode: {creationState.type?.charAt(0).toUpperCase() + creationState.type?.slice(1)}</h1>
+            <p className="text-muted-foreground">Chat with Luna to build your perfect {creationState.type}</p>
           </div>
         </div>
 
@@ -399,7 +408,7 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
             {creationState.generatedContent && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Your {type.charAt(0).toUpperCase() + type.slice(1)}</CardTitle>
+                  <CardTitle className="text-lg">Your {creationState.type?.charAt(0).toUpperCase() + creationState.type?.slice(1)}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
@@ -430,8 +439,8 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
         open={showExport}
         onOpenChange={setShowExport}
         content={creationState.generatedContent || ''}
-        type={type}
-        title={creationState.name || `Custom ${type}`}
+        type={creationState.type || 'character'}
+        title={creationState.name || `Custom ${creationState.type || 'character'}`}
       />
     </div>
   )

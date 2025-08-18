@@ -207,7 +207,7 @@ export class AIService {
     else if (lowerPrompt.includes('brown eyes')) eyeColor = '#8B4513'
     else if (lowerPrompt.includes('hazel eyes')) eyeColor = '#A0522D'
     
-    // Generate style-based outfit
+    // Generate style-based outfit  
     if (lowerPrompt.includes('goth') || lowerPrompt.includes('emo')) outfitColor = '#2F2F2F'
     else if (lowerPrompt.includes('cheerleader')) outfitColor = '#FF4500'
     else if (lowerPrompt.includes('business')) outfitColor = '#4A4A4A'
