@@ -11,12 +11,13 @@ import CustomChatBuilder from './components/CustomChatBuilder'
 import GenerateGirls from './components/GenerateGirls'
 import ApiSettings from './components/ApiSettings'
 import Harem from './components/Harem'
+import PromptsManager from './components/PromptsManager'
 import { aiService } from './lib/ai-service'
 import { useKV } from '@github/spark/hooks'
 import type { ApiConfig } from './components/ApiSettings'
 
 type CreationType = 'character' | 'scenario'
-type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem'
+type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts'
 
 const creationTypes: Array<{
   id: CreationType
@@ -91,6 +92,10 @@ function App() {
     return <Harem onBack={handleBack} />
   }
 
+  if (mode === 'prompts') {
+    return <PromptsManager onBack={handleBack} />
+  }
+
   if (showSettings) {
     return <ApiSettings 
       onClose={() => setShowSettings(false)} 
@@ -114,7 +119,16 @@ function App() {
                 NSFW AI Generator
               </h1>
             </div>
-            <div className="flex-1 flex justify-end">
+            <div className="flex-1 flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setMode('prompts')}
+                className="border-secondary/30 hover:bg-secondary/10"
+              >
+                <Chat size={16} className="mr-2" />
+                Prompts
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
