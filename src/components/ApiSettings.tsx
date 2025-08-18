@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Eye, EyeSlash, Check, X, Key, Globe, Sparkles } from '@phosphor-icons/react'
+import { Eye, EyeSlash, Check, X, Key, Globe, Sparkle } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 
@@ -32,7 +32,7 @@ const apiProviders = [
     baseUrl: '',
     models: ['gpt-4o', 'gpt-4o-mini'],
     requiresKey: false,
-    icon: Sparkles
+    icon: Sparkle
   },
   {
     id: 'openrouter' as ApiProvider,
@@ -89,7 +89,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
   const [testingConnection, setTestingConnection] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
-  const selectedProvider = apiProviders.find(p => p.id === apiConfig.provider)
+  const selectedProvider = apiProviders.find(p => p.id === apiConfig?.provider)
 
   const handleProviderChange = (providerId: ApiProvider) => {
     const provider = apiProviders.find(p => p.id === providerId)
@@ -97,7 +97,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
 
     setApiConfig({
       provider: providerId,
-      apiKey: providerId === 'internal' ? '' : apiConfig.apiKey,
+      apiKey: providerId === 'internal' ? '' : apiConfig?.apiKey || '',
       baseUrl: provider.baseUrl,
       model: provider.models[0]
     })
@@ -105,16 +105,26 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
   }
 
   const handleApiKeyChange = (value: string) => {
-    setApiConfig(prev => ({ ...prev, apiKey: value }))
+    setApiConfig(prev => ({ 
+      provider: prev?.provider || 'venice',
+      apiKey: value,
+      baseUrl: prev?.baseUrl,
+      model: prev?.model || 'default'
+    }))
     setConnectionStatus('idle')
   }
 
   const handleModelChange = (model: string) => {
-    setApiConfig(prev => ({ ...prev, model }))
+    setApiConfig(prev => ({ 
+      provider: prev?.provider || 'venice',
+      apiKey: prev?.apiKey || '',
+      baseUrl: prev?.baseUrl,
+      model 
+    }))
   }
 
   const testConnection = async () => {
-    if (!selectedProvider || (selectedProvider.requiresKey && !apiConfig.apiKey)) {
+    if (!selectedProvider || (selectedProvider.requiresKey && !apiConfig?.apiKey)) {
       toast.error('Please enter an API key')
       return
     }
@@ -124,7 +134,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
 
     try {
       // For internal provider, just mark as success since it uses the built-in spark.llm
-      if (apiConfig.provider === 'internal') {
+      if (apiConfig?.provider === 'internal') {
         setConnectionStatus('success')
         toast.success('Internal AI is ready to use')
         setTestingConnection(false)
@@ -134,18 +144,18 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
       // Test external API connection
       const testPrompt = 'Hello, please respond with just "OK" to test the connection.'
       
-      const response = await fetch(`${apiConfig.baseUrl}/chat/completions`, {
+      const response = await fetch(`${apiConfig?.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiConfig.apiKey}`,
-          ...(apiConfig.provider === 'openrouter' && {
+          'Authorization': `Bearer ${apiConfig?.apiKey}`,
+          ...(apiConfig?.provider === 'openrouter' && {
             'HTTP-Referer': window.location.origin,
             'X-Title': 'AI Adult Creative Generator'
           })
         },
         body: JSON.stringify({
-          model: apiConfig.model,
+          model: apiConfig?.model,
           messages: [{ role: 'user', content: testPrompt }],
           max_tokens: 10,
           temperature: 0.1
@@ -171,13 +181,13 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
   }
 
   const handleSave = () => {
-    if (selectedProvider?.requiresKey && !apiConfig.apiKey) {
+    if (selectedProvider?.requiresKey && !apiConfig?.apiKey) {
       toast.error('Please enter an API key for the selected provider')
       return
     }
 
     toast.success('API settings saved successfully!')
-    onSave?.(apiConfig)
+    onSave?.(apiConfig!)
     onClose()
   }
 
@@ -202,7 +212,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
         </CardHeader>
 
         <CardContent className="p-6">
-          <Tabs value={apiConfig.provider} onValueChange={handleProviderChange}>
+          <Tabs value={apiConfig?.provider || 'venice'} onValueChange={handleProviderChange}>
             <TabsList className="grid w-full grid-cols-3 mb-6">
               {apiProviders.map(provider => {
                 const Icon = provider.icon
@@ -242,7 +252,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
                             id="apiKey"
                             type={showKey ? 'text' : 'password'}
                             placeholder="Enter your API key..."
-                            value={apiConfig.apiKey}
+                            value={apiConfig?.apiKey || ''}
                             onChange={(e) => handleApiKeyChange(e.target.value)}
                             className="pr-12"
                           />
@@ -287,7 +297,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
 
                     <div className="space-y-2">
                       <Label htmlFor="model">Model</Label>
-                      <Select value={apiConfig.model} onValueChange={handleModelChange}>
+                      <Select value={apiConfig?.model || 'default'} onValueChange={handleModelChange}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a model" />
                         </SelectTrigger>
@@ -311,7 +321,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
                     <div className="flex items-center gap-2 pt-2">
                       <Button
                         onClick={testConnection}
-                        disabled={testingConnection || (provider.requiresKey && !apiConfig.apiKey)}
+                        disabled={testingConnection || (provider.requiresKey && !apiConfig?.apiKey)}
                         variant="outline"
                         size="sm"
                       >
@@ -349,7 +359,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
           
           <div className="mt-4 text-xs text-muted-foreground p-3 bg-muted/30 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles size={14} className="text-primary" />
+              <Sparkle size={14} className="text-primary" />
               <span className="font-medium">Image Generation</span>
             </div>
             <p>Venice AI image generation is integrated and will attempt to create real AI portraits. If the service is unavailable, artistic SVG placeholders will be used instead.</p>

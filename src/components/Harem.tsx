@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, Heart, HeartStraight, Plus, Trash, Edit, Tag, Star, Crown, Shield } from '@phosphor-icons/react'
+import { ArrowLeft, Heart, HeartStraight, Plus, Trash, Pencil, Tag, Star, Crown, Shield } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 
@@ -59,7 +59,7 @@ export default function Harem({ onBack }: HaremProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
 
-  const filteredGirls = savedGirls.filter(girl => {
+  const filteredGirls = (savedGirls || []).filter(girl => {
     const matchesSearch = searchQuery === '' || 
       girl.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       girl.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -74,14 +74,14 @@ export default function Harem({ onBack }: HaremProps) {
 
   const toggleFavorite = (girlId: string) => {
     setSavedGirls(current => 
-      current.map(girl => 
+      (current || []).map(girl => 
         girl.id === girlId ? { ...girl, favorited: !girl.favorited } : girl
       )
     )
   }
 
   const deleteGirl = (girlId: string) => {
-    setSavedGirls(current => current.filter(girl => girl.id !== girlId))
+    setSavedGirls(current => (current || []).filter(girl => girl.id !== girlId))
     if (selectedGirl?.id === girlId) {
       setSelectedGirl(null)
     }
@@ -97,7 +97,7 @@ export default function Harem({ onBack }: HaremProps) {
     if (!editedGirl) return
     
     setSavedGirls(current => 
-      current.map(girl => 
+      (current || []).map(girl => 
         girl.id === editedGirl.id ? editedGirl : girl
       )
     )
@@ -167,7 +167,7 @@ export default function Harem({ onBack }: HaremProps) {
             </h1>
           </div>
           <Badge variant="secondary" className="ml-auto">
-            {savedGirls.length} Girls
+            {savedGirls?.length || 0} Girls
           </Badge>
         </div>
 
@@ -240,7 +240,7 @@ export default function Harem({ onBack }: HaremProps) {
           </CardContent>
         </Card>
 
-        {savedGirls.length === 0 && (
+        {(!savedGirls || savedGirls.length === 0) && (
           <Card className="text-center py-12">
             <CardContent>
               <Crown className="mx-auto mb-4 text-muted-foreground" size={48} />
@@ -255,7 +255,7 @@ export default function Harem({ onBack }: HaremProps) {
           </Card>
         )}
 
-        {savedGirls.length > 0 && (
+        {savedGirls && savedGirls.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Girls Grid */}
             <div className="lg:col-span-2">
@@ -346,7 +346,7 @@ export default function Harem({ onBack }: HaremProps) {
                           size="sm"
                           onClick={() => startEdit(selectedGirl)}
                         >
-                          <Edit size={16} />
+                          <Pencil size={16} />
                         </Button>
                         <Button
                           variant="ghost"

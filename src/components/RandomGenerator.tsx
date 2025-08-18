@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Sparkles, Dice1, Download, Copy, RefreshCw } from '@phosphor-icons/react'
+import { ArrowLeft, Sparkle, DiceOne, Download, Copy, ArrowClockwise } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
@@ -46,7 +46,7 @@ export default function RandomGenerator({ type, onBack }: RandomGeneratorProps) 
   const [generatedContent, setGeneratedContent] = useState<RandomResult | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [showExport, setShowExport] = useState(false)
-  const [history] = useKV('random-generation-history', [])
+  const [history] = useKV<RandomResult[]>('random-generation-history', [])
 
   const getRandomElement = <T,>(array: T[]): T => {
     return array[Math.floor(Math.random() * array.length)]
@@ -197,7 +197,7 @@ export default function RandomGenerator({ type, onBack }: RandomGeneratorProps) 
             <Card>
               <CardHeader className="text-center">
                 <div className="mx-auto mb-4 p-4 bg-primary/10 rounded-full w-fit">
-                  <Dice1 className="text-primary" size={48} weight="duotone" />
+                  <DiceOne className="text-primary" size={48} weight="duotone" />
                 </div>
                 <CardTitle className="text-2xl">Random {type.charAt(0).toUpperCase() + type.slice(1)} Generator</CardTitle>
                 <CardDescription className="text-lg">
@@ -253,7 +253,7 @@ export default function RandomGenerator({ type, onBack }: RandomGeneratorProps) 
                         </div>
                       </div>
                       <Button onClick={generateRandom} variant="outline" size="sm">
-                        <RefreshCw size={16} className="mr-2" />
+                        <ArrowClockwise size={16} className="mr-2" />
                         New Random
                       </Button>
                     </div>
@@ -286,12 +286,12 @@ export default function RandomGenerator({ type, onBack }: RandomGeneratorProps) 
                   >
                     {isGenerating ? (
                       <>
-                        <Sparkles size={24} className="mr-3 animate-spin" />
+                        <Sparkle size={24} className="mr-3 animate-spin" />
                         Generating Random {type.charAt(0).toUpperCase() + type.slice(1)}...
                       </>
                     ) : (
                       <>
-                        <Dice1 size={24} className="mr-3" />
+                        <DiceOne size={24} className="mr-3" />
                         Generate Random {type.charAt(0).toUpperCase() + type.slice(1)}
                       </>
                     )}
