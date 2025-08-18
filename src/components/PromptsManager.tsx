@@ -14,7 +14,7 @@ interface PromptsManagerProps {
 }
 
 export default function PromptsManager({ onBack }: PromptsManagerProps) {
-  const { prompts, updatePrompt, createPrompt, deletePrompt } = usePrompts()
+  const { prompts, updatePrompt, addPrompt, deletePrompt } = usePrompts()
   const [editingPrompt, setEditingPrompt] = useState<string | null>(null)
   const [newPrompt, setNewPrompt] = useState<Partial<ChatPrompt>>({
     id: '',
@@ -38,7 +38,7 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
       return
     }
 
-    createPrompt(newPrompt as Omit<ChatPrompt, 'updatedAt'>)
+    addPrompt(newPrompt as Omit<ChatPrompt, 'updatedAt'>)
     setNewPrompt({
       id: '',
       name: '',
@@ -164,7 +164,7 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
                       {prompt.name}
                       <Badge variant="secondary">{prompt.id}</Badge>
                     </CardTitle>
-                    <CardDescription>{prompt.description}</CardDescription>
+                    {prompt.description && <CardDescription>{prompt.description}</CardDescription>}
                     {prompt.style && (
                       <Badge variant="outline" className="mt-2">
                         {prompt.style}
@@ -208,14 +208,16 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
               ) : (
                 <CardContent>
                   <div className="space-y-4">
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Greeting</h4>
-                      <div className="bg-muted p-3 rounded-lg">
-                        <p className="text-sm whitespace-pre-wrap line-clamp-3">
-                          {prompt.greeting}
-                        </p>
+                    {prompt.greeting && (
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">Greeting</h4>
+                        <div className="bg-muted p-3 rounded-lg">
+                          <p className="text-sm whitespace-pre-wrap line-clamp-3">
+                            {prompt.greeting}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <div>
                       <h4 className="text-sm font-medium mb-2">System Prompt</h4>
                       <div className="bg-muted p-3 rounded-lg">
@@ -264,7 +266,7 @@ function PromptEditor({ prompt, onSave, onCancel }: PromptEditorProps) {
         <div>
           <label className="text-sm font-medium mb-2 block">Style</label>
           <Input
-            value={editedPrompt.style}
+            value={editedPrompt.style || ''}
             onChange={(e) => setEditedPrompt(prev => ({ ...prev, style: e.target.value }))}
           />
         </div>
@@ -273,7 +275,7 @@ function PromptEditor({ prompt, onSave, onCancel }: PromptEditorProps) {
       <div>
         <label className="text-sm font-medium mb-2 block">Description</label>
         <Input
-          value={editedPrompt.description}
+          value={editedPrompt.description || ''}
           onChange={(e) => setEditedPrompt(prev => ({ ...prev, description: e.target.value }))}
         />
       </div>
@@ -281,7 +283,7 @@ function PromptEditor({ prompt, onSave, onCancel }: PromptEditorProps) {
       <div>
         <label className="text-sm font-medium mb-2 block">Greeting Message</label>
         <Textarea
-          value={editedPrompt.greeting}
+          value={editedPrompt.greeting || ''}
           onChange={(e) => setEditedPrompt(prev => ({ ...prev, greeting: e.target.value }))}
           rows={4}
         />
