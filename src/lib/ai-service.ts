@@ -76,14 +76,12 @@ export class AIService {
     style?: string
   }): Promise<string> {
     try {
-      console.log('Starting image generation with config:', {
-        provider: this.config?.provider,
-        hasApiKey: !!this.config?.apiKey,
-        model: this.config?.model
-      })
+      console.log('Starting Venice AI image generation for prompt:', prompt)
       
-      // Check if we have Venice AI configured
-      if (!this.config?.apiKey || this.config.provider !== 'venice') {
+      // Always use the configured Venice AI key for image generation
+      const veniceKey = this.config?.apiKey
+      
+      if (!veniceKey || this.config?.provider !== 'venice') {
         console.log('No Venice AI configured - falling back to placeholder')
         return this.generateAdvancedPlaceholder(prompt, options?.width || 400, options?.height || 400)
       }
@@ -97,25 +95,28 @@ export class AIService {
       const finalPrompt = `${enhancedPrompt.trim()}, ${options?.style || 'photorealistic, high quality, detailed, professional portrait photography'}`
       console.log('Final prompt for Venice AI:', finalPrompt)
       
-      // Use Venice AI's image generation endpoint with minimal required parameters
+      // Use Venice AI's image generation endpoint with the same format that works in ApiSettings
       const requestBody = {
-        model: "flux-dev",
-        prompt: finalPrompt
+        prompt: finalPrompt,
+        width: options?.width || 512,
+        height: options?.height || 512,
+        num_inference_steps: 25,
+        guidance_scale: 7.5,
+        scheduler: "euler_a"
       }
       
-      console.log('Sending request to Venice AI:', requestBody)
+      console.log('Sending request to Venice AI image/generate:', requestBody)
       
       const response = await fetch('https://api.venice.ai/api/v1/image/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.config.apiKey}`,
+          'Authorization': `Bearer ${veniceKey}`,
         },
         body: JSON.stringify(requestBody)
       })
 
       console.log(`Venice AI Response status: ${response.status}`)
-      console.log(`Venice AI Response headers:`, Object.fromEntries(response.headers.entries()))
       
       if (response.ok) {
         const data = await response.json()
@@ -123,65 +124,49 @@ export class AIService {
         console.log('Venice AI Response data:', data)
         
         // Handle different possible response formats from Venice AI
-        // Venice typically returns: { "generated_images": [base64_string] }
-        if (data.generated_images && Array.isArray(data.generated_images) && data.generated_images.length > 0) {
-          const imageData = data.generated_images[0]
-          console.log('Found generated_images array, first image type:', typeof imageData)
-          
-          if (typeof imageData === 'string') {
-            // Venice returns base64 encoded images
-            const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
-            console.log('Successfully generated image via Venice AI (base64)')
-            return imageUrl
-          }
-        }
-        
-        // Fallback: check for other possible field names
+        // Try the most common fields Venice might return
         if (data.images && Array.isArray(data.images) && data.images.length > 0) {
           const imageData = data.images[0]
           console.log('Found images array, first image type:', typeof imageData)
           
           if (typeof imageData === 'string') {
-            // Could be base64 or URL
-            if (imageData.startsWith('http')) {
-              console.log('Successfully generated image via Venice AI (URL)')
-              return imageData
-            } else {
-              // Assume base64
-              const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
-              console.log('Successfully generated image via Venice AI (base64)')
-              return imageUrl
-            }
-          } else if (imageData && typeof imageData === 'object') {
-            // Check for url or base64 properties
-            if (imageData.url) {
-              console.log('Found URL in image object:', imageData.url)
-              return imageData.url
-            } else if (imageData.base64) {
-              console.log('Found base64 in image object')
-              return `data:image/png;base64,${imageData.base64}`
-            }
+            // Venice returns base64 encoded images
+            const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
+            console.log('Successfully generated image via Venice AI (images array)')
+            return imageUrl
           }
         }
         
-        // Try other possible field names
+        // Check for single image field
         if (data.image && typeof data.image === 'string') {
-          console.log('Found image field:', data.image.substring(0, 100))
+          console.log('Found image field')
           const finalImage = data.image.startsWith('data:') ? data.image : `data:image/png;base64,${data.image}`
           console.log('Successfully generated image via Venice AI (image field)')
           return finalImage
         }
         
-        if (data.url && typeof data.url === 'string') {
-          console.log('Found url field:', data.url)
-          console.log('Successfully generated image via Venice AI (url field)')
-          return data.url
+        // Check for generated_images field
+        if (data.generated_images && Array.isArray(data.generated_images) && data.generated_images.length > 0) {
+          const imageData = data.generated_images[0]
+          console.log('Found generated_images array')
+          
+          if (typeof imageData === 'string') {
+            const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
+            console.log('Successfully generated image via Venice AI (generated_images)')
+            return imageUrl
+          }
         }
         
-        // Check for any base64 data in the response
+        // Check for data field (raw base64)
         if (data.data && typeof data.data === 'string') {
           console.log('Found data field, converting to data URL')
           return `data:image/png;base64,${data.data}`
+        }
+        
+        // Check for url field
+        if (data.url && typeof data.url === 'string') {
+          console.log('Found url field:', data.url)
+          return data.url
         }
         
         console.log('No recognized image data in response, available fields:', Object.keys(data))
