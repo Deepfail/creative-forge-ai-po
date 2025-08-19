@@ -50,15 +50,51 @@ const femaleNames = [
 
 // Generate portrait using built-in Venice AI image generation
 const generatePlaceholderImage = async (name: string, type: string, physicalDescription?: string): Promise<string> => {
-  console.log('Generating portrait placeholder for:', name, type)
+  console.log('=== GENERATING PORTRAIT FOR:', name, type, '===')
+  console.log('Physical description:', physicalDescription)
   
-  // Use AI service to generate a canvas-based placeholder that reflects character traits
-  const prompt = `Portrait of ${name}, a ${type}, ${physicalDescription || 'attractive young woman'}`
-  return await aiService.generateImage(prompt, { 
-    width: 300, 
-    height: 400, 
-    style: 'realistic portrait, detailed, high quality' 
-  })
+  // Create a detailed prompt for Venice AI
+  const characterTraits = []
+  if (type.toLowerCase().includes('cheerleader')) characterTraits.push('athletic, energetic')
+  if (type.toLowerCase().includes('goth')) characterTraits.push('dark makeup, alternative style')
+  if (type.toLowerCase().includes('nerd')) characterTraits.push('intellectual appearance, glasses')
+  if (type.toLowerCase().includes('milf')) characterTraits.push('mature, sophisticated')
+  if (type.toLowerCase().includes('emo')) characterTraits.push('alternative style, emotional')
+  
+  const basePrompt = `Portrait of ${name}, a beautiful ${type}`
+  const detailedPrompt = physicalDescription 
+    ? `${basePrompt}, ${physicalDescription}` 
+    : `${basePrompt}, ${characterTraits.join(', ') || 'attractive young woman'}`
+  
+  console.log('Full prompt for AI generation:', detailedPrompt)
+  
+  try {
+    const result = await aiService.generateImage(detailedPrompt, { 
+      width: 300, 
+      height: 400, 
+      style: 'realistic portrait, detailed, high quality, professional photography' 
+    })
+    
+    console.log('=== PORTRAIT GENERATION RESULT ===')
+    console.log('Type:', typeof result)
+    console.log('Length:', result.length)
+    console.log('Starts with data:', result.startsWith('data:'))
+    console.log('Starts with http:', result.startsWith('http'))
+    console.log('Is SVG placeholder:', result.includes('data:image/svg'))
+    console.log('Preview:', result.substring(0, 100))
+    
+    return result
+  } catch (error) {
+    console.error('Portrait generation failed:', error)
+    // Return a simple fallback
+    return 'data:image/svg+xml;base64,' + btoa(`
+      <svg width="300" height="400" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100%" height="100%" fill="#2a2a2a"/>
+        <text x="50%" y="50%" text-anchor="middle" fill="white" font-size="14">${name}</text>
+        <text x="50%" y="60%" text-anchor="middle" fill="#888" font-size="12">${type}</text>
+      </svg>
+    `)
+  }
 }
 
 const generateRandomGirl = async (): Promise<GeneratedGirl> => {
@@ -123,6 +159,7 @@ export default function GenerateGirls({ onBack }: GenerateGirlsProps) {
   const [selectedGirl, setSelectedGirl] = useState<GeneratedGirl | null>(null)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [savedGirls, setSavedGirls] = useKV<SavedGirl[]>('saved-girls', [])
+  const [apiConfig] = useKV<any>('api-config', { provider: 'venice', apiKey: '', model: 'default' })
 
   const generateNewGirls = async () => {
     setIsGenerating(true)
@@ -257,7 +294,34 @@ This character was designed for adult interactive experiences and can be adapted
             <Heart className="text-secondary" size={32} weight="fill" />
             <h1 className="text-3xl font-bold text-foreground">Generate Girls</h1>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex gap-2">
+            <Button 
+              onClick={async () => {
+                console.log('=== TESTING SINGLE IMAGE GENERATION ===')
+                const testPrompt = 'Beautiful blonde cheerleader named Jessica, athletic build, blue eyes'
+                try {
+                  const result = await aiService.generateImage(testPrompt, { 
+                    width: 300, 
+                    height: 400, 
+                    style: 'realistic portrait, detailed, high quality' 
+                  })
+                  console.log('Test generation completed. Result type:', typeof result)
+                  console.log('Result length:', result.length)
+                  console.log('Is SVG:', result.includes('svg'))
+                  console.log('Preview:', result.substring(0, 200))
+                  toast.success('Test image generated! Check console for details.')
+                } catch (error) {
+                  console.error('Test generation failed:', error)
+                  toast.error('Test failed: ' + (error instanceof Error ? error.message : 'Unknown error'))
+                }
+              }}
+              variant="outline"
+              size="sm"
+              className="border-accent/30 hover:bg-accent/10"
+            >
+              <Sparkle size={16} className="mr-2" />
+              Test AI Image
+            </Button>
             <Button 
               onClick={generateNewGirls}
               disabled={isGenerating}
@@ -274,6 +338,17 @@ This character was designed for adult interactive experiences and can be adapted
             Discover randomly generated characters with unique personalities and traits. 
             Each girl is created with detailed characteristics perfect for your scenarios.
           </p>
+          
+          {/* Debug Info */}
+          <Card className="mt-4 max-w-md mx-auto border-accent/30 bg-accent/5">
+            <CardContent className="p-4 text-xs text-muted-foreground">
+              <div className="font-medium text-accent mb-2">Venice AI Status</div>
+              <div>Provider: {apiConfig?.provider || 'Not set'}</div>
+              <div>Has API Key: {apiConfig?.apiKey ? 'Yes' : 'No'}</div>
+              <div>Model: {apiConfig?.model || 'Not set'}</div>
+              <div>Images will be: {apiConfig?.apiKey && apiConfig?.provider === 'venice' ? 'AI Generated' : 'SVG Placeholders'}</div>
+            </CardContent>
+          </Card>
         </div>
 
       {/* Girls Grid */}

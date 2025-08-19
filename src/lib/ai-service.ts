@@ -82,9 +82,9 @@ export class AIService {
         model: this.config?.model
       })
       
-      // Always try Venice AI with the configured API key
-      if (!this.config?.apiKey) {
-        console.log('No API key configured - falling back to placeholder')
+      // Check if we have Venice AI configured
+      if (!this.config?.apiKey || this.config.provider !== 'venice') {
+        console.log('No Venice AI configured - falling back to placeholder')
         return this.generateAdvancedPlaceholder(prompt, options?.width || 400, options?.height || 400)
       }
       
@@ -104,7 +104,8 @@ export class AIService {
         width: options?.width || 512,
         height: options?.height || 512,
         steps: 20,
-        guidance: 7.5
+        guidance: 7.5,
+        sampler: "euler_a"
       }
       
       console.log('Sending request to Venice AI:', requestBody)
@@ -128,14 +129,33 @@ export class AIService {
         
         // Handle different possible response formats from Venice AI
         if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-          const imageUrl = data.images[0]
-          console.log('Found images array, first image:', typeof imageUrl, imageUrl?.substring(0, 100))
-          if (typeof imageUrl === 'string' && (imageUrl.startsWith('http') || imageUrl.startsWith('data:'))) {
-            console.log('Successfully generated image via Venice AI (images array)')
-            return imageUrl
+          const imageData = data.images[0]
+          console.log('Found images array, first image type:', typeof imageData)
+          
+          if (typeof imageData === 'string') {
+            // Could be base64 or URL
+            if (imageData.startsWith('http')) {
+              console.log('Successfully generated image via Venice AI (URL)')
+              return imageData
+            } else {
+              // Assume base64
+              const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
+              console.log('Successfully generated image via Venice AI (base64)')
+              return imageUrl
+            }
+          } else if (imageData && typeof imageData === 'object') {
+            // Check for url or base64 properties
+            if (imageData.url) {
+              console.log('Found URL in image object:', imageData.url)
+              return imageData.url
+            } else if (imageData.base64) {
+              console.log('Found base64 in image object')
+              return `data:image/png;base64,${imageData.base64}`
+            }
           }
         }
         
+        // Try other possible field names
         if (data.image && typeof data.image === 'string') {
           console.log('Found image field:', data.image.substring(0, 100))
           const finalImage = data.image.startsWith('data:') ? data.image : `data:image/png;base64,${data.image}`
@@ -156,6 +176,7 @@ export class AIService {
         }
         
         console.log('No recognized image data in response, available fields:', Object.keys(data))
+        console.log('Full response for debugging:', JSON.stringify(data, null, 2))
         throw new Error('No valid image data found in Venice AI response')
         
       } else {

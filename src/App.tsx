@@ -12,12 +12,13 @@ import GenerateGirls from './components/GenerateGirls'
 import ApiSettings from './components/ApiSettings'
 import Harem from './components/Harem'
 import PromptsManager from './components/PromptsManager'
+import ImageGenerationTest from './components/ImageGenerationTest'
 import { aiService } from './lib/ai-service'
 import { useKV } from '@github/spark/hooks'
 import type { ApiConfig } from './components/ApiSettings'
 
 type CreationType = 'character' | 'scenario'
-type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts'
+type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'image-test'
 
 const creationTypes: Array<{
   id: CreationType
@@ -99,6 +100,10 @@ function App() {
     return <PromptsManager onBack={handleBack} />
   }
 
+  if (mode === 'image-test') {
+    return <ImageGenerationTest onBack={handleBack} />
+  }
+
   if (showSettings) {
     return <ApiSettings 
       onClose={() => setShowSettings(false)} 
@@ -123,6 +128,15 @@ function App() {
               </h1>
             </div>
             <div className="flex-1 flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setMode('image-test')}
+                className="border-accent/30 hover:bg-accent/10"
+              >
+                <Sparkle size={16} className="mr-2" />
+                Test Images
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
