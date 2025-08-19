@@ -97,14 +97,10 @@ export class AIService {
       const finalPrompt = `${enhancedPrompt.trim()}, ${options?.style || 'photorealistic, high quality, detailed, professional portrait photography'}`
       console.log('Final prompt for Venice AI:', finalPrompt)
       
-      // Use Venice AI's native image generation endpoint
+      // Use Venice AI's image generation endpoint with minimal required parameters
       const requestBody = {
-        prompt: finalPrompt,
-        width: options?.width || 512,
-        height: options?.height || 512,
-        num_inference_steps: 20,
-        guidance_scale: 7.5,
-        scheduler: "euler_a"
+        model: "flux-dev",
+        prompt: finalPrompt
       }
       
       console.log('Sending request to Venice AI:', requestBody)
