@@ -76,72 +76,98 @@ export class AIService {
     style?: string
   }): Promise<string> {
     try {
-      console.log('Starting Venice AI image generation')
+      console.log('Starting image generation with config:', {
+        provider: this.config?.provider,
+        hasApiKey: !!this.config?.apiKey,
+        model: this.config?.model
+      })
       
-      // For Venice AI, we need to check if API key is provided
+      // Always try Venice AI with the configured API key
       if (!this.config?.apiKey) {
-        console.log('No API key provided, creating placeholder')
+        console.log('No API key configured - falling back to placeholder')
         return this.generateAdvancedPlaceholder(prompt, options?.width || 400, options?.height || 400)
       }
       
       // First, enhance the prompt using Spark's LLM
-      const promptBuilder = spark.llmPrompt`Create a detailed, professional image generation prompt for: "${prompt}". Include specific visual details like lighting, composition, camera angle, and quality descriptors. Focus on realistic portrait photography. Respond with just the prompt, no additional text.`
+      const promptBuilder = (window as any).spark.llmPrompt`Create a detailed, professional image generation prompt for: "${prompt}". Include specific visual details like lighting, composition, camera angle, and quality descriptors. Focus on realistic portrait photography. Respond with just the prompt, no additional text.`
       
       const enhancedPrompt = await (window as any).spark.llm(promptBuilder)
       console.log('Enhanced prompt from LLM:', enhancedPrompt)
       
       const finalPrompt = `${enhancedPrompt.trim()}, ${options?.style || 'photorealistic, high quality, detailed, professional portrait photography'}`
+      console.log('Final prompt for Venice AI:', finalPrompt)
       
       // Use Venice AI's native image generation endpoint
+      const requestBody = {
+        prompt: finalPrompt,
+        model: 'auto', // Use Venice's auto trait
+        width: options?.width || 512,
+        height: options?.height || 512,
+        steps: 20,
+        guidance: 7.5
+      }
+      
+      console.log('Sending request to Venice AI:', requestBody)
+      
       const response = await fetch('https://api.venice.ai/api/v1/image/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.config.apiKey}`,
         },
-        body: JSON.stringify({
-          prompt: finalPrompt,
-          model: 'auto', // Use Venice's auto trait
-          width: options?.width || 512,
-          height: options?.height || 512,
-          steps: 20,
-          guidance: 7.5
-        })
+        body: JSON.stringify(requestBody)
       })
 
       console.log(`Venice AI Response status: ${response.status}`)
+      console.log(`Venice AI Response headers:`, Object.fromEntries(response.headers.entries()))
       
       if (response.ok) {
         const data = await response.json()
+        console.log('Venice AI Response data structure:', Object.keys(data))
         console.log('Venice AI Response data:', data)
         
-        // Handle Venice AI response format
+        // Handle different possible response formats from Venice AI
         if (data.images && Array.isArray(data.images) && data.images.length > 0) {
           const imageUrl = data.images[0]
+          console.log('Found images array, first image:', typeof imageUrl, imageUrl?.substring(0, 100))
           if (typeof imageUrl === 'string' && (imageUrl.startsWith('http') || imageUrl.startsWith('data:'))) {
-            console.log('Successfully generated image via Venice AI')
+            console.log('Successfully generated image via Venice AI (images array)')
             return imageUrl
           }
         }
         
         if (data.image && typeof data.image === 'string') {
+          console.log('Found image field:', data.image.substring(0, 100))
+          const finalImage = data.image.startsWith('data:') ? data.image : `data:image/png;base64,${data.image}`
           console.log('Successfully generated image via Venice AI (image field)')
-          return data.image.startsWith('data:') ? data.image : `data:image/png;base64,${data.image}`
+          return finalImage
         }
         
-        if (data.url) {
+        if (data.url && typeof data.url === 'string') {
+          console.log('Found url field:', data.url)
           console.log('Successfully generated image via Venice AI (url field)')
           return data.url
         }
+        
+        // Check for any base64 data in the response
+        if (data.data && typeof data.data === 'string') {
+          console.log('Found data field, converting to data URL')
+          return `data:image/png;base64,${data.data}`
+        }
+        
+        console.log('No recognized image data in response, available fields:', Object.keys(data))
+        throw new Error('No valid image data found in Venice AI response')
+        
       } else {
         const errorText = await response.text()
-        console.log(`Venice AI failed:`, errorText)
+        console.error(`Venice AI HTTP ${response.status}:`, errorText)
+        throw new Error(`Venice AI API error: ${response.status} - ${errorText}`)
       }
       
-      throw new Error('Venice AI image generation failed')
-      
     } catch (error) {
-      console.log('Venice AI image generation failed, creating enhanced placeholder:', error)
+      console.error('Venice AI image generation failed:', error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      console.log('Creating enhanced placeholder due to error:', errorMessage)
       return this.generateAdvancedPlaceholder(prompt, options?.width || 400, options?.height || 400)
     }
   }

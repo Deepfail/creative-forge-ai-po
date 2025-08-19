@@ -54,8 +54,11 @@ function App() {
 
   // Initialize AI service with saved config
   useEffect(() => {
-    if (apiConfig && (apiConfig.apiKey || apiConfig.provider === 'internal')) {
+    console.log('Initializing AI service with config:', apiConfig)
+    if (apiConfig) {
+      // Always set the config, even if there's no API key for better debugging
       aiService.setConfig(apiConfig)
+      console.log('AI service configured with provider:', apiConfig.provider, 'hasKey:', !!apiConfig.apiKey)
     }
   }, [apiConfig])
 

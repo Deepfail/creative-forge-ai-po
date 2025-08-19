@@ -39,7 +39,7 @@ export default function AIPortraitGenerator({
       
       console.log('Starting image generation with prompt:', promptText)
       
-      toast.info('Generating AI portrait...')
+      toast.info('Generating AI portrait with Venice AI...')
       
       const imageUrl = await aiService.generateImage(promptText, {
         width: 400,
@@ -47,7 +47,7 @@ export default function AIPortraitGenerator({
         style: 'realistic portrait, detailed facial features, professional photography, high quality'
       })
       
-      console.log('Generated image URL:', imageUrl)
+      console.log('Generated image URL type:', typeof imageUrl, 'starts with data:', imageUrl.startsWith('data:'))
       
       setGeneratedImage(imageUrl)
       setImagePrompt(promptText)
@@ -57,10 +57,12 @@ export default function AIPortraitGenerator({
       }
       
       // Check if it's a placeholder or real AI generated image
-      if (imageUrl.startsWith('data:')) {
+      if (imageUrl.startsWith('data:image/svg')) {
+        toast.warning('Venice AI unavailable - using enhanced artistic placeholder. Check API settings.')
+      } else if (imageUrl.startsWith('data:')) {
         toast.info('Venice AI unavailable - using artistic placeholder')
       } else {
-        toast.success('AI portrait generated successfully!')
+        toast.success('AI portrait generated successfully with Venice AI!')
       }
     } catch (error) {
       console.error('Error generating portrait:', error)
@@ -102,6 +104,11 @@ export default function AIPortraitGenerator({
           {error}
         </div>
       )}
+      
+      {/* Debug info */}
+      <div className="mt-1 text-xs text-muted-foreground">
+        Venice AI Status: {isGenerating ? 'Generating...' : 'Ready'}
+      </div>
       
       {generatedImage && (
         <div className="mt-2">

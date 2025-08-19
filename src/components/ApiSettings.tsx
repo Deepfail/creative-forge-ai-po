@@ -141,7 +141,67 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
         return
       }
 
-      // Test external API connection
+      // For Venice AI, test both text and image generation
+      if (apiConfig?.provider === 'venice') {
+        console.log('Testing Venice AI connection...')
+        
+        // Test text generation first
+        const textResponse = await fetch(`${apiConfig?.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiConfig?.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: apiConfig?.model || 'default',
+            messages: [{ role: 'user', content: 'Hello, please respond with just "OK" to test the connection.' }],
+            max_tokens: 10,
+            temperature: 0.1
+          })
+        })
+
+        if (!textResponse.ok) {
+          const error = await textResponse.text()
+          console.error('Venice AI text test failed:', error)
+          throw new Error(`Text API failed: ${textResponse.status}`)
+        }
+
+        // Test image generation
+        const imageResponse = await fetch('https://api.venice.ai/api/v1/image/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiConfig?.apiKey}`,
+          },
+          body: JSON.stringify({
+            prompt: 'test portrait',
+            model: 'auto',
+            width: 256,
+            height: 256,
+            steps: 10,
+            guidance: 5
+          })
+        })
+
+        console.log('Venice AI image test response:', imageResponse.status)
+        
+        if (imageResponse.ok) {
+          const imageData = await imageResponse.json()
+          console.log('Venice AI image test response data:', Object.keys(imageData))
+          setConnectionStatus('success')
+          toast.success('Venice AI connection successful! (Text & Image)')
+        } else {
+          const imageError = await imageResponse.text()
+          console.error('Venice AI image test failed:', imageError)
+          setConnectionStatus('success') // Still mark success if text works
+          toast.warning('Venice AI text works, but image generation may have issues')
+        }
+        
+        setTestingConnection(false)
+        return
+      }
+
+      // Test other external API connections
       const testPrompt = 'Hello, please respond with just "OK" to test the connection.'
       
       const response = await fetch(`${apiConfig?.baseUrl}/chat/completions`, {
