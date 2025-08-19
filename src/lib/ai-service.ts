@@ -100,12 +100,11 @@ export class AIService {
       // Use Venice AI's native image generation endpoint
       const requestBody = {
         prompt: finalPrompt,
-        model: 'auto', // Use Venice's auto trait
         width: options?.width || 512,
         height: options?.height || 512,
-        steps: 20,
-        guidance: 7.5,
-        sampler: "euler_a"
+        num_inference_steps: 20,
+        guidance_scale: 7.5,
+        scheduler: "euler_a"
       }
       
       console.log('Sending request to Venice AI:', requestBody)
@@ -128,6 +127,20 @@ export class AIService {
         console.log('Venice AI Response data:', data)
         
         // Handle different possible response formats from Venice AI
+        // Venice typically returns: { "generated_images": [base64_string] }
+        if (data.generated_images && Array.isArray(data.generated_images) && data.generated_images.length > 0) {
+          const imageData = data.generated_images[0]
+          console.log('Found generated_images array, first image type:', typeof imageData)
+          
+          if (typeof imageData === 'string') {
+            // Venice returns base64 encoded images
+            const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
+            console.log('Successfully generated image via Venice AI (base64)')
+            return imageUrl
+          }
+        }
+        
+        // Fallback: check for other possible field names
         if (data.images && Array.isArray(data.images) && data.images.length > 0) {
           const imageData = data.images[0]
           console.log('Found images array, first image type:', typeof imageData)

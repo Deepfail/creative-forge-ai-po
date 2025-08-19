@@ -175,11 +175,11 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
           },
           body: JSON.stringify({
             prompt: 'test portrait',
-            model: 'auto',
             width: 256,
             height: 256,
-            steps: 10,
-            guidance: 5
+            num_inference_steps: 10,
+            guidance_scale: 5,
+            scheduler: "euler_a"
           })
         })
 
