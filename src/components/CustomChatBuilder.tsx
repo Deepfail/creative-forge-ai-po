@@ -98,7 +98,9 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   useEffect(() => { scrollToBottom() }, [messages])
 
   useEffect(() => {
+    console.log('Checking Luna prompt and messages:', { lunaPrompt, messagesLength: messages.length })
     if (messages.length === 0 && lunaPrompt?.greeting) {
+      console.log('Adding Luna greeting message')
       const greeting: Message = {
         id: Date.now().toString(),
         role: 'ai',
@@ -107,7 +109,7 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
       }
       setMessages([greeting])
     }
-  }, []) // Only run once on mount
+  }, [lunaPrompt]) // Depend on lunaPrompt so it triggers when prompt loads
 
   const addMessage = (role: 'user' | 'ai', content: string) =>
     setMessages(prev => [...prev, { id: Date.now().toString(), role, content, timestamp: new Date() }])

@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Edit3, Save, X, Plus, Trash2 } from '@phosphor-icons/react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { usePrompts, type ChatPrompt } from '@/lib/prompts'
+import { usePrompts, type ChatPrompt, defaultPrompts } from '@/lib/prompts'
 import { toast } from 'sonner'
 
 interface PromptsManagerProps {
@@ -14,7 +14,7 @@ interface PromptsManagerProps {
 }
 
 export default function PromptsManager({ onBack }: PromptsManagerProps) {
-  const { prompts, sortedPrompts, updatePrompt, addPrompt, deletePrompt } = usePrompts()
+  const { prompts, sortedPrompts, updatePrompt, addPrompt, deletePrompt, setPrompts } = usePrompts()
   const [editingPrompt, setEditingPrompt] = useState<string | null>(null)
   const [newPrompt, setNewPrompt] = useState<Partial<ChatPrompt>>({
     id: '',
@@ -25,6 +25,27 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
     systemPrompt: ''
   })
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+
+  // Manual initialization function
+  const initializeDefaults = () => {
+    console.log('Manually initializing default prompts')
+    setPrompts(defaultPrompts)
+    toast.success('Prompts initialized with defaults')
+  }
+
+  // Debug function
+  const debugStorage = async () => {
+    try {
+      const keys = await spark.kv.keys()
+      console.log('All KV keys:', keys)
+      const chatPromptsData = await spark.kv.get('chat-prompts')
+      console.log('Raw chat-prompts data:', chatPromptsData)
+      toast.info(`Found ${keys.length} keys in storage. Check console for details.`)
+    } catch (error) {
+      console.error('Debug storage error:', error)
+      toast.error('Failed to debug storage')
+    }
+  }
 
   const handleSave = (promptId: string, updates: Partial<ChatPrompt>) => {
     updatePrompt(promptId, updates)
@@ -169,6 +190,8 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
               <p>Prompts in storage: {Object.keys(prompts).length}</p>
               <p>Sorted prompts: {sortedPrompts.length}</p>
               <p>Available IDs: {Object.keys(prompts).join(', ')}</p>
+              <p>Luna exists: {prompts.luna ? 'Yes' : 'No'}</p>
+              <p>Raw prompts object: {JSON.stringify(Object.keys(prompts))}</p>
             </div>
           </CardContent>
         </Card>
@@ -178,10 +201,37 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
           {sortedPrompts.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
-                <p className="text-muted-foreground mb-4">No prompts found. Click "Create Prompt" to add one.</p>
-                <p className="text-sm text-muted-foreground">
-                  Debug info: Found {Object.keys(prompts).length} prompts in storage
+                <p className="text-muted-foreground mb-4">
+                  {Object.keys(prompts).length === 0 
+                    ? "No prompts found. The default Luna prompt should be loading..." 
+                    : "Prompts exist but not showing in sorted list. Check debug info above."}
                 </p>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="mt-4"
+              variant="outline"
+            >
+              Refresh Page
+            </Button>
+            <Button 
+              onClick={() => {
+                // Force re-initialization of prompts
+                initializeDefaults()
+              }}
+              className="mt-4"
+              variant="outline"
+            >
+              Initialize Defaults
+            </Button>
+            <Button 
+              onClick={debugStorage}
+              className="mt-4"
+              variant="outline"
+            >
+              Debug Storage
+            </Button>
+          </div>
               </CardContent>
             </Card>
           ) : (
