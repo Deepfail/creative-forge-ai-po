@@ -76,13 +76,31 @@ export class AIService {
     style?: string
   }): Promise<string> {
     try {
-      console.log('Starting Venice AI image generation for prompt:', prompt)
+      console.log('Starting image generation for prompt:', prompt)
       
-      // Always use the configured Venice AI key for image generation
-      const veniceKey = this.config?.apiKey
+      // ALWAYS attempt Venice AI for image generation regardless of text provider
+      // This separates image generation from text generation provider choice
+      let veniceKey = null
       
-      if (!veniceKey || this.config?.provider !== 'venice') {
-        console.log('No Venice AI configured - falling back to placeholder')
+      // Check if user has Venice AI configured (either as primary provider or just has a key)
+      if (this.config?.provider === 'venice' && this.config?.apiKey) {
+        veniceKey = this.config.apiKey
+        console.log('Using user-configured Venice AI key for image generation')
+      } else {
+        // Look for Venice API key in the storage even if it's not the active provider
+        try {
+          const savedApiConfig = await (window as any).spark.kv.get('api-config')
+          if (savedApiConfig?.provider === 'venice' && savedApiConfig?.apiKey) {
+            veniceKey = savedApiConfig.apiKey
+            console.log('Found Venice AI key in storage for image generation')
+          }
+        } catch (error) {
+          console.log('Could not access stored Venice AI configuration')
+        }
+      }
+      
+      if (!veniceKey) {
+        console.log('No Venice AI key available - using enhanced placeholder generation')
         return this.generateAdvancedPlaceholder(prompt, options?.width || 400, options?.height || 400)
       }
       
