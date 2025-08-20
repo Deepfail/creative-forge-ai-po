@@ -40,6 +40,22 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
     toast.success('Prompts initialized with defaults')
   }
 
+  // Complete system reset
+  const completeReset = async () => {
+    try {
+      // Clear the chat-prompts key entirely
+      await spark.kv.delete('chat-prompts')
+      
+      // Set to defaults
+      setPrompts(defaultPrompts)
+      setRefreshKey(prev => prev + 1)
+      toast.success('Complete prompts reset performed')
+    } catch (error) {
+      console.error('Error in complete reset:', error)
+      toast.error('Error performing complete reset')
+    }
+  }
+
   // Clear all prompts
   const clearAllPrompts = () => {
     forceClear()
@@ -67,22 +83,47 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
     toast.success('Test prompt created!')
   }
 
-  // Kill Luna function to remove any Luna-related prompts
-  const killLuna = () => {
-    const currentPrompts = prompts || {}
-    const filteredPrompts: Record<string, ChatPrompt> = {}
-    
-    Object.entries(currentPrompts).forEach(([key, prompt]) => {
-      if (!key.includes('luna') && 
-          !prompt.name.toLowerCase().includes('luna') && 
-          !prompt.systemPrompt.toLowerCase().includes('luna')) {
-        filteredPrompts[key] = prompt
+  // Comprehensive Luna cleanup function
+  const killLuna = async () => {
+    try {
+      // First try to get all KV keys to see if there are any luna-related keys
+      const allKeys = await spark.kv.keys()
+      console.log('All KV keys:', allKeys)
+      
+      // Delete any keys that might contain luna
+      const lunaKeys = allKeys.filter(key => key.toLowerCase().includes('luna'))
+      console.log('Found Luna keys to delete:', lunaKeys)
+      
+      for (const key of lunaKeys) {
+        await spark.kv.delete(key)
+        console.log('Deleted KV key:', key)
       }
-    })
-    
-    setPrompts(filteredPrompts)
-    setRefreshKey(prev => prev + 1)
-    toast.success('Luna prompts removed!')
+      
+      // Also clean the chat-prompts
+      const currentPrompts = prompts || {}
+      const filteredPrompts: Record<string, ChatPrompt> = {}
+      
+      Object.entries(currentPrompts).forEach(([key, prompt]) => {
+        const hasLuna = key.toLowerCase().includes('luna') || 
+                       prompt.name.toLowerCase().includes('luna') || 
+                       prompt.systemPrompt.toLowerCase().includes('luna') ||
+                       prompt.description?.toLowerCase().includes('luna') ||
+                       prompt.greeting?.toLowerCase().includes('luna')
+        
+        if (!hasLuna) {
+          filteredPrompts[key] = prompt
+        } else {
+          console.log('Removing Luna prompt:', key, prompt.name)
+        }
+      })
+      
+      setPrompts(filteredPrompts)
+      setRefreshKey(prev => prev + 1)
+      toast.success(`Luna prompts removed! Deleted ${Object.keys(currentPrompts).length - Object.keys(filteredPrompts).length} prompts and ${lunaKeys.length} KV keys`)
+    } catch (error) {
+      console.error('Error killing Luna:', error)
+      toast.error('Error removing Luna prompts')
+    }
   }
 
   const handleSave = (promptId: string, updates: Partial<ChatPrompt>) => {
@@ -228,12 +269,12 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
                   🗡️ Kill Luna
                 </Button>
                 <Button 
-                  onClick={clearAllPrompts}
+                  onClick={completeReset}
                   size="sm"
                   variant="outline"
                   className="border-destructive text-destructive hover:bg-destructive/10"
                 >
-                  Clear All Prompts
+                  💥 Complete Reset
                 </Button>
                 <Button 
                   onClick={forceRefresh}

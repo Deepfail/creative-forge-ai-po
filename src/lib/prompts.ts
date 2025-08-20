@@ -67,36 +67,25 @@ Make it engaging, immersive, and suitable for adult interactive experiences.`,
 export function usePrompts() {
   const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', {})
   
-  // Force initialize with defaults on first load if empty, and remove any Luna prompts
+  // Debug logging to see what's in storage
+  useEffect(() => {
+    console.log('Current prompts in storage:', prompts)
+    if (prompts) {
+      Object.entries(prompts).forEach(([key, prompt]) => {
+        console.log(`Prompt ${key}:`, prompt.name)
+      })
+    }
+  }, [prompts])
+  
+  // Only initialize with defaults on first load if completely empty
   useEffect(() => {
     if (!prompts || Object.keys(prompts).length === 0) {
       console.log('Initializing prompts with defaults...')
       setPrompts(defaultPrompts)
-    } else {
-      // Remove any Luna prompts if they exist
-      const currentPrompts = prompts || {}
-      const hasLuna = Object.entries(currentPrompts).some(([key, prompt]) => 
-        key.includes('luna') || 
-        prompt.name.toLowerCase().includes('luna') || 
-        prompt.systemPrompt.toLowerCase().includes('luna')
-      )
-      
-      if (hasLuna) {
-        console.log('Removing Luna prompts automatically...')
-        const filteredPrompts: Record<string, ChatPrompt> = {}
-        Object.entries(currentPrompts).forEach(([key, prompt]) => {
-          if (!key.includes('luna') && 
-              !prompt.name.toLowerCase().includes('luna') && 
-              !prompt.systemPrompt.toLowerCase().includes('luna')) {
-            filteredPrompts[key] = prompt
-          }
-        })
-        setPrompts(filteredPrompts)
-      }
     }
-  }, [prompts, setPrompts])
+  }, [])
   
-  // Always ensure we have valid prompts - use defaults as fallback
+  // Always ensure we have valid prompts - use current prompts or defaults as fallback
   const safePrompts = (prompts && Object.keys(prompts).length > 0) ? prompts : defaultPrompts
   
   // Compute sorted prompts
