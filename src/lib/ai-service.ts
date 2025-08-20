@@ -95,87 +95,116 @@ export class AIService {
       console.log('Final prompt for Venice AI:', finalPrompt)
       console.log('Using Venice AI image model:', this.config.imageModel)
       
-      // Use Venice AI's image generation endpoint with proper model
-      const requestBody = {
-        model: this.config.imageModel,
-        prompt: finalPrompt,
-        width: options?.width || 512,
-        height: options?.height || 512
-      }
+      // List of fallback models to try if the configured one fails
+      const modelsToTry = [
+        this.config.imageModel,
+        'venice-sd35',  // Default fallback
+        'flux-dev',     // High quality fallback
+        'stable-diffusion-3.5' // Another fallback
+      ].filter((model, index, arr) => arr.indexOf(model) === index) // Remove duplicates
       
-      console.log('Sending request to Venice AI image/generate:', requestBody)
+      let lastError: any = null
       
-      const response = await fetch('https://api.venice.ai/api/v1/image/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.config.apiKey}`,
-        },
-        body: JSON.stringify(requestBody)
-      })
+      for (const model of modelsToTry) {
+        try {
+          console.log(`Trying Venice AI image model: ${model}`)
+          
+          const requestBody = {
+            model: model,
+            prompt: finalPrompt
+          }
+          
+          console.log('Sending request to Venice AI image/generate:', requestBody)
+          
+          const response = await fetch('https://api.venice.ai/api/v1/image/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${this.config.apiKey}`,
+            },
+            body: JSON.stringify(requestBody)
+          })
 
-      console.log(`Venice AI Response status: ${response.status}`)
-      
-      if (response.ok) {
-        const data = await response.json()
-        console.log('Venice AI Response data structure:', Object.keys(data))
-        console.log('Venice AI Response data:', data)
-        
-        // Handle different possible response formats from Venice AI
-        // Try the most common fields Venice might return
-        if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-          const imageData = data.images[0]
-          console.log('Found images array, first image type:', typeof imageData)
+          console.log(`Venice AI Response status for model ${model}: ${response.status}`)
           
-          if (typeof imageData === 'string') {
-            // Venice returns base64 encoded images
-            const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
-            console.log('Successfully generated image via Venice AI (images array)')
-            return imageUrl
+          if (response.ok) {
+            const data = await response.json()
+            console.log('Venice AI Response data structure:', Object.keys(data))
+            console.log('Venice AI Response data:', data)
+            
+            // Handle different possible response formats from Venice AI
+            // Try the most common fields Venice might return
+            if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+              const imageData = data.images[0]
+              console.log('Found images array, first image type:', typeof imageData)
+              
+              if (typeof imageData === 'string') {
+                // Venice returns base64 encoded images
+                const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
+                console.log(`Successfully generated image via Venice AI with model ${model} (images array)`)
+                return imageUrl
+              }
+            }
+            
+            // Check for single image field
+            if (data.image && typeof data.image === 'string') {
+              console.log('Found image field')
+              const finalImage = data.image.startsWith('data:') ? data.image : `data:image/png;base64,${data.image}`
+              console.log(`Successfully generated image via Venice AI with model ${model} (image field)`)
+              return finalImage
+            }
+            
+            // Check for generated_images field
+            if (data.generated_images && Array.isArray(data.generated_images) && data.generated_images.length > 0) {
+              const imageData = data.generated_images[0]
+              console.log('Found generated_images array')
+              
+              if (typeof imageData === 'string') {
+                const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
+                console.log(`Successfully generated image via Venice AI with model ${model} (generated_images)`)
+                return imageUrl
+              }
+            }
+            
+            // Check for data field (raw base64)
+            if (data.data && typeof data.data === 'string') {
+              console.log('Found data field, converting to data URL')
+              return `data:image/png;base64,${data.data}`
+            }
+            
+            // Check for url field
+            if (data.url && typeof data.url === 'string') {
+              console.log('Found url field:', data.url)
+              return data.url
+            }
+            
+            console.log(`No recognized image data in response for model ${model}, available fields:`, Object.keys(data))
+            lastError = new Error(`No valid image data found in Venice AI response for model ${model}`)
+            continue // Try next model
+            
+          } else {
+            const errorText = await response.text()
+            console.error(`Venice AI HTTP ${response.status} for model ${model}:`, errorText)
+            lastError = new Error(`Venice AI API error for model ${model}: ${response.status} - ${errorText}`)
+            
+            // If it's a model not found error, try the next model
+            if (response.status === 404 || errorText.includes('model not found') || errorText.includes('Specified model not found')) {
+              console.log(`Model ${model} not found, trying next fallback...`)
+              continue
+            }
+            
+            // For other errors, throw immediately
+            throw lastError
           }
+        } catch (modelError) {
+          console.error(`Error with model ${model}:`, modelError)
+          lastError = modelError
+          continue // Try next model
         }
-        
-        // Check for single image field
-        if (data.image && typeof data.image === 'string') {
-          console.log('Found image field')
-          const finalImage = data.image.startsWith('data:') ? data.image : `data:image/png;base64,${data.image}`
-          console.log('Successfully generated image via Venice AI (image field)')
-          return finalImage
-        }
-        
-        // Check for generated_images field
-        if (data.generated_images && Array.isArray(data.generated_images) && data.generated_images.length > 0) {
-          const imageData = data.generated_images[0]
-          console.log('Found generated_images array')
-          
-          if (typeof imageData === 'string') {
-            const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
-            console.log('Successfully generated image via Venice AI (generated_images)')
-            return imageUrl
-          }
-        }
-        
-        // Check for data field (raw base64)
-        if (data.data && typeof data.data === 'string') {
-          console.log('Found data field, converting to data URL')
-          return `data:image/png;base64,${data.data}`
-        }
-        
-        // Check for url field
-        if (data.url && typeof data.url === 'string') {
-          console.log('Found url field:', data.url)
-          return data.url
-        }
-        
-        console.log('No recognized image data in response, available fields:', Object.keys(data))
-        console.log('Full response for debugging:', JSON.stringify(data, null, 2))
-        throw new Error('No valid image data found in Venice AI response')
-        
-      } else {
-        const errorText = await response.text()
-        console.error(`Venice AI HTTP ${response.status}:`, errorText)
-        throw new Error(`Venice AI API error: ${response.status} - ${errorText}`)
       }
+      
+      // If all models failed, throw the last error
+      throw lastError || new Error('All Venice AI image models failed')
       
     } catch (error) {
       console.error('Venice AI image generation failed:', error)
@@ -188,6 +217,7 @@ export class AIService {
   private generateAdvancedPlaceholder(prompt: string, width: number, height: number): string {
     // Generate a very sophisticated SVG-based portrait that looks more like an illustration
     const lowerPrompt = prompt.toLowerCase()
+    console.log('Generating SVG placeholder for prompt:', lowerPrompt)
     
     // Determine character features
     let hairColor = '#8B4513'
@@ -212,6 +242,8 @@ export class AIService {
     if (lowerPrompt.includes('goth') || lowerPrompt.includes('emo')) outfitColor = '#2F2F2F'
     else if (lowerPrompt.includes('cheerleader')) outfitColor = '#FF4500'
     else if (lowerPrompt.includes('business')) outfitColor = '#4A4A4A'
+    
+    console.log('SVG colors determined:', { hairColor, skinColor, outfitColor, eyeColor })
     
     const svg = `
       <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
@@ -272,10 +304,11 @@ export class AIService {
         <ellipse cx="${width/2 + width*0.08}" cy="${height*0.35}" rx="${width*0.025}" ry="${width*0.06}" fill="${this.adjustBrightness(hairColor, 30)}" opacity="0.4"/>
         
         <!-- Text overlay -->
-        <text x="${width/2}" y="${height - 20}" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="12" font-weight="bold">AI Generated Portrait</text>
+        <text x="${width/2}" y="${height - 20}" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Venice AI Unavailable - SVG Placeholder</text>
       </svg>
     `
     
+    console.log('Generated SVG placeholder with outfit color:', outfitColor)
     return `data:image/svg+xml;base64,${btoa(svg)}`
   }
   

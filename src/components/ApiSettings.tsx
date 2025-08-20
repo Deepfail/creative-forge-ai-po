@@ -43,8 +43,8 @@ const veniceTextModels = [
 const veniceImageModels = [
   { id: 'venice-sd35', name: 'Venice SD35', description: 'Default stable diffusion model' },
   { id: 'flux-dev', name: 'Flux Dev', description: 'Highest quality images' },
-  { id: 'hidream', name: 'HiDream', description: 'High detail generation' },
-  { id: 'stable-diffusion-3.5', name: 'Stable Diffusion 3.5', description: 'Latest stable diffusion' }
+  { id: 'stable-diffusion-3.5', name: 'Stable Diffusion 3.5', description: 'Latest stable diffusion' },
+  { id: 'hidream', name: 'HiDream', description: 'High detail generation' }
 ]
 
 export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
