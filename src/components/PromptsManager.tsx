@@ -15,7 +15,7 @@ interface PromptsManagerProps {
 }
 
 export default function PromptsManager({ onBack }: PromptsManagerProps) {
-  const { prompts, sortedPrompts, updatePrompt, addPrompt, deletePrompt, setPrompts } = usePrompts()
+  const { prompts, sortedPrompts, updatePrompt, addPrompt, deletePrompt, setPrompts, forceReset, forceClear } = usePrompts()
   const [editingPrompt, setEditingPrompt] = useState<string | null>(null)
   const [newPrompt, setNewPrompt] = useState<Partial<ChatPrompt>>({
     id: '',
@@ -35,15 +35,14 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
   // Initialize defaults if needed
   const initializeDefaults = () => {
     console.log('Manually initializing default prompts')
-    console.log('Default prompts:', defaultPrompts)
-    setPrompts(defaultPrompts)
+    forceReset()
     setRefreshKey(prev => prev + 1)
     toast.success('Prompts initialized with defaults')
   }
 
   // Clear all prompts
   const clearAllPrompts = () => {
-    setPrompts({})
+    forceClear()
     setRefreshKey(prev => prev + 1)
     toast.success('All prompts cleared')
   }
@@ -66,6 +65,24 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
     }
     addPrompt(testPrompt)
     toast.success('Test prompt created!')
+  }
+
+  // Kill Luna function to remove any Luna-related prompts
+  const killLuna = () => {
+    const currentPrompts = prompts || {}
+    const filteredPrompts: Record<string, ChatPrompt> = {}
+    
+    Object.entries(currentPrompts).forEach(([key, prompt]) => {
+      if (!key.includes('luna') && 
+          !prompt.name.toLowerCase().includes('luna') && 
+          !prompt.systemPrompt.toLowerCase().includes('luna')) {
+        filteredPrompts[key] = prompt
+      }
+    })
+    
+    setPrompts(filteredPrompts)
+    setRefreshKey(prev => prev + 1)
+    toast.success('Luna prompts removed!')
   }
 
   const handleSave = (promptId: string, updates: Partial<ChatPrompt>) => {
@@ -202,6 +219,14 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
           <Card className="bg-muted/30">
             <CardContent className="pt-6">
               <div className="flex flex-wrap gap-2 items-center">
+                <Button 
+                  onClick={killLuna}
+                  size="sm"
+                  variant="outline"
+                  className="border-destructive text-destructive hover:bg-destructive/10"
+                >
+                  🗡️ Kill Luna
+                </Button>
                 <Button 
                   onClick={clearAllPrompts}
                   size="sm"
