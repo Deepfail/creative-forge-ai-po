@@ -2,45 +2,30 @@ import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { useKV } from '@github/spark/hooks'
 import { ApiConfig } from './ApiSettings'
-import { Key, Globe, Sparkle } from '@phosphor-icons/react'
+import { Key } from '@phosphor-icons/react'
 
 export default function ApiStatusIndicator() {
   const [apiConfig] = useKV<ApiConfig>('api-config', {
-    provider: 'internal',
     apiKey: '',
-    model: 'gpt-4o'
+    textModel: 'default',
+    imageModel: 'flux-1.1-pro'
   })
 
   const getStatusInfo = () => {
-    switch (apiConfig?.provider) {
-      case 'internal':
-        return {
-          icon: Sparkle,
-          label: 'Internal AI',
-          variant: 'default' as const,
-          color: 'text-primary'
-        }
-      case 'openrouter':
-        return {
-          icon: Globe,
-          label: apiConfig?.apiKey ? 'OpenRouter' : 'OpenRouter (No Key)',
-          variant: apiConfig?.apiKey ? 'secondary' as const : 'destructive' as const,
-          color: apiConfig?.apiKey ? 'text-secondary' : 'text-destructive'
-        }
-      case 'venice':
-        return {
-          icon: Key,
-          label: 'Venice.ai (Built-in)',
-          variant: 'secondary' as const,
-          color: 'text-secondary'
-        }
-      default:
-        return {
-          icon: Sparkle,
-          label: 'Internal AI',
-          variant: 'default' as const,
-          color: 'text-primary'
-        }
+    if (apiConfig?.apiKey) {
+      return {
+        icon: Key,
+        label: 'Venice AI Connected',
+        variant: 'secondary' as const,
+        color: 'text-secondary'
+      }
+    } else {
+      return {
+        icon: Key,
+        label: 'Venice AI (No Key)',
+        variant: 'destructive' as const,
+        color: 'text-destructive'
+      }
     }
   }
 

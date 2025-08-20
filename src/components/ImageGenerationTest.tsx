@@ -18,9 +18,9 @@ export default function ImageGenerationTest({ onBack }: ImageGenerationTestProps
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [apiConfig] = useKV<ApiConfig>('api-config', {
-    provider: 'venice',
     apiKey: '',
-    model: 'default'
+    textModel: 'default',
+    imageModel: 'flux-1.1-pro'
   })
 
   const testImageGeneration = async () => {
@@ -35,9 +35,9 @@ export default function ImageGenerationTest({ onBack }: ImageGenerationTestProps
     try {
       console.log('Testing image generation with prompt:', prompt)
       console.log('Current API config:', {
-        provider: apiConfig?.provider,
         hasKey: !!apiConfig?.apiKey,
-        model: apiConfig?.model
+        textModel: apiConfig?.textModel,
+        imageModel: apiConfig?.imageModel
       })
 
       const imageUrl = await aiService.generateImage(prompt, {
@@ -98,18 +98,18 @@ export default function ImageGenerationTest({ onBack }: ImageGenerationTestProps
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
-                <Label className="text-muted-foreground">Provider</Label>
-                <div className="font-medium">{apiConfig?.provider || 'Not configured'}</div>
+                <Label className="text-muted-foreground">Text Model</Label>
+                <div className="font-medium">{apiConfig?.textModel || 'Not configured'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Image Model</Label>
+                <div className="font-medium">{apiConfig?.imageModel || 'Not configured'}</div>
               </div>
               <div>
                 <Label className="text-muted-foreground">API Key</Label>
                 <div className="font-medium">
                   {apiConfig?.apiKey ? '✓ Configured' : '✗ Missing'}
                 </div>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Model</Label>
-                <div className="font-medium">{apiConfig?.model || 'Not selected'}</div>
               </div>
             </div>
           </CardContent>

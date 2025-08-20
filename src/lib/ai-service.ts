@@ -15,6 +15,11 @@ export class AIService {
 
   setConfig(config: ApiConfig) {
     this.config = config
+    console.log('AI Service config set:', {
+      hasApiKey: !!config.apiKey,
+      textModel: config.textModel,
+      imageModel: config.imageModel
+    })
   }
 
   async generateText(prompt: string, options?: {
@@ -22,52 +27,49 @@ export class AIService {
     temperature?: number
     maxTokens?: number
   }): Promise<string> {
-    if (!this.config) {
-      // Fallback to internal spark.llm
-      const fullPrompt = options?.systemPrompt 
-        ? (window as any).spark.llmPrompt`${options.systemPrompt}\n\nUser: ${prompt}`
-        : (window as any).spark.llmPrompt`${prompt}`
-      return await (window as any).spark.llm(fullPrompt)
-    }
+    // Always use Venice AI if configured, fallback to internal
+    if (this.config?.apiKey) {
+      console.log('Using Venice AI for text generation with model:', this.config.textModel)
+      
+      const messages: Array<{role: string, content: string}> = []
+      if (options?.systemPrompt) {
+        messages.push({ role: 'system', content: options.systemPrompt })
+      }
+      messages.push({ role: 'user', content: prompt })
 
-    if (this.config.provider === 'internal') {
-      const fullPrompt = options?.systemPrompt 
-        ? (window as any).spark.llmPrompt`${options.systemPrompt}\n\nUser: ${prompt}`
-        : (window as any).spark.llmPrompt`${prompt}`
-      return await (window as any).spark.llm(fullPrompt, this.config.model)
-    }
-
-    // External API call
-    const messages: Array<{role: string, content: string}> = []
-    if (options?.systemPrompt) {
-      messages.push({ role: 'system', content: options.systemPrompt })
-    }
-    messages.push({ role: 'user', content: prompt })
-
-    const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
-        ...(this.config.provider === 'openrouter' && {
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'NSFW AI Generator'
+      const response = await fetch('https://api.venice.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.apiKey}`
+        },
+        body: JSON.stringify({
+          model: this.config.textModel,
+          messages,
+          temperature: options?.temperature ?? 0.8,
+          max_tokens: options?.maxTokens ?? 2000
         })
-      },
-      body: JSON.stringify({
-        model: this.config.model,
-        messages,
-        temperature: options?.temperature ?? 0.8,
-        max_tokens: options?.maxTokens ?? 2000
       })
-    })
 
-    if (!response.ok) {
-      throw new Error(`API call failed: ${response.statusText}`)
+      if (!response.ok) {
+        console.error('Venice AI text generation failed, falling back to internal')
+        // Fallback to internal
+        const fullPrompt = options?.systemPrompt 
+          ? (window as any).spark.llmPrompt`${options.systemPrompt}\n\nUser: ${prompt}`
+          : (window as any).spark.llmPrompt`${prompt}`
+        return await (window as any).spark.llm(fullPrompt)
+      }
+
+      const data = await response.json()
+      return data.choices[0]?.message?.content || 'No response generated'
     }
 
-    const data = await response.json()
-    return data.choices[0]?.message?.content || 'No response generated'
+    // Fallback to internal spark.llm
+    console.log('Using internal AI for text generation')
+    const fullPrompt = options?.systemPrompt 
+      ? (window as any).spark.llmPrompt`${options.systemPrompt}\n\nUser: ${prompt}`
+      : (window as any).spark.llmPrompt`${prompt}`
+    return await (window as any).spark.llm(fullPrompt)
   }
 
   async generateImage(prompt: string, options?: {
@@ -78,15 +80,12 @@ export class AIService {
     try {
       console.log('Starting Venice AI image generation for prompt:', prompt)
       
-      // Always use the configured Venice AI key for image generation
-      const veniceKey = this.config?.apiKey
-      
-      if (!veniceKey || this.config?.provider !== 'venice') {
-        console.log('No Venice AI configured - falling back to placeholder')
+      if (!this.config?.apiKey) {
+        console.log('No Venice AI API key configured - using placeholder')
         return this.generateAdvancedPlaceholder(prompt, options?.width || 400, options?.height || 400)
       }
       
-      // First, enhance the prompt using Spark's LLM
+      // First, enhance the prompt using internal AI
       const promptBuilder = (window as any).spark.llmPrompt`Create a detailed, professional image generation prompt for: "${prompt}". Include specific visual details like lighting, composition, camera angle, and quality descriptors. Focus on realistic portrait photography. Respond with just the prompt, no additional text.`
       
       const enhancedPrompt = await (window as any).spark.llm(promptBuilder)
@@ -94,9 +93,11 @@ export class AIService {
       
       const finalPrompt = `${enhancedPrompt.trim()}, ${options?.style || 'photorealistic, high quality, detailed, professional portrait photography'}`
       console.log('Final prompt for Venice AI:', finalPrompt)
+      console.log('Using Venice AI image model:', this.config.imageModel)
       
-      // Use Venice AI's image generation endpoint with the same format that works in ApiSettings
+      // Use Venice AI's image generation endpoint with proper model
       const requestBody = {
+        model: this.config.imageModel,
         prompt: finalPrompt,
         width: options?.width || 512,
         height: options?.height || 512,
@@ -111,7 +112,7 @@ export class AIService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${veniceKey}`,
+          'Authorization': `Bearer ${this.config.apiKey}`,
         },
         body: JSON.stringify(requestBody)
       })

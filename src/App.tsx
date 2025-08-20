@@ -48,9 +48,9 @@ function App() {
   const [selectedType, setSelectedType] = useState<CreationType>('character')
   const [showSettings, setShowSettings] = useState(false)
   const [apiConfig] = useKV<ApiConfig>('api-config', {
-    provider: 'venice',
     apiKey: '',
-    model: 'default'
+    textModel: 'default',
+    imageModel: 'flux-1.1-pro'
   })
 
   // Initialize AI service with saved config
@@ -59,7 +59,7 @@ function App() {
     if (apiConfig) {
       // Always set the config, even if there's no API key for better debugging
       aiService.setConfig(apiConfig)
-      console.log('AI service configured with provider:', apiConfig.provider, 'hasKey:', !!apiConfig.apiKey)
+      console.log('AI service configured with textModel:', apiConfig.textModel, 'imageModel:', apiConfig.imageModel, 'hasKey:', !!apiConfig.apiKey)
     }
   }, [apiConfig])
 

@@ -159,7 +159,7 @@ export default function GenerateGirls({ onBack }: GenerateGirlsProps) {
   const [selectedGirl, setSelectedGirl] = useState<GeneratedGirl | null>(null)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [savedGirls, setSavedGirls] = useKV<SavedGirl[]>('saved-girls', [])
-  const [apiConfig] = useKV<any>('api-config', { provider: 'venice', apiKey: '', model: 'default' })
+  const [apiConfig] = useKV<any>('api-config', { apiKey: '', textModel: 'default', imageModel: 'flux-1.1-pro' })
 
   const generateNewGirls = async () => {
     setIsGenerating(true)
@@ -343,10 +343,10 @@ This character was designed for adult interactive experiences and can be adapted
           <Card className="mt-4 max-w-md mx-auto border-accent/30 bg-accent/5">
             <CardContent className="p-4 text-xs text-muted-foreground">
               <div className="font-medium text-accent mb-2">Venice AI Status</div>
-              <div>Provider: {apiConfig?.provider || 'Not set'}</div>
+              <div>Text Model: {apiConfig?.textModel || 'Not set'}</div>
+              <div>Image Model: {apiConfig?.imageModel || 'Not set'}</div>
               <div>Has API Key: {apiConfig?.apiKey ? 'Yes' : 'No'}</div>
-              <div>Model: {apiConfig?.model || 'Not set'}</div>
-              <div>Images will be: {apiConfig?.apiKey && apiConfig?.provider === 'venice' ? 'AI Generated' : 'SVG Placeholders'}</div>
+              <div>Images will be: {apiConfig?.apiKey ? 'AI Generated' : 'SVG Placeholders'}</div>
             </CardContent>
           </Card>
         </div>
