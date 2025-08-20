@@ -1,8 +1,41 @@
 import { ApiConfig } from '@/components/ApiSettings'
 
+// Semaphore class to limit concurrent requests
+class Semaphore {
+  private permits: number
+  private waiting: Array<() => void> = []
+
+  constructor(permits: number) {
+    this.permits = permits
+  }
+
+  async acquire(): Promise<void> {
+    if (this.permits > 0) {
+      this.permits--
+      return Promise.resolve()
+    }
+
+    return new Promise((resolve) => {
+      this.waiting.push(resolve)
+    })
+  }
+
+  release(): void {
+    this.permits++
+    if (this.waiting.length > 0) {
+      const next = this.waiting.shift()
+      if (next) {
+        this.permits--
+        next()
+      }
+    }
+  }
+}
+
 export class AIService {
   private static instance: AIService
   private config: ApiConfig | null = null
+  private semaphore = new Semaphore(2) // Limit to 2 concurrent requests
 
   private constructor() {}
 
@@ -27,49 +60,54 @@ export class AIService {
     temperature?: number
     maxTokens?: number
   }): Promise<string> {
-    // Always use Venice AI if configured, fallback to internal
-    if (this.config?.apiKey) {
-      console.log('Using Venice AI for text generation with model:', this.config.textModel)
-      
-      const messages: Array<{role: string, content: string}> = []
-      if (options?.systemPrompt) {
-        messages.push({ role: 'system', content: options.systemPrompt })
-      }
-      messages.push({ role: 'user', content: prompt })
+    await this.semaphore.acquire()
+    try {
+      // Always use Venice AI if configured, fallback to internal
+      if (this.config?.apiKey) {
+        console.log('Using Venice AI for text generation with model:', this.config.textModel)
+        
+        const messages: Array<{role: string, content: string}> = []
+        if (options?.systemPrompt) {
+          messages.push({ role: 'system', content: options.systemPrompt })
+        }
+        messages.push({ role: 'user', content: prompt })
 
-      const response = await fetch('https://api.venice.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.config.apiKey}`
-        },
-        body: JSON.stringify({
-          model: this.config.textModel,
-          messages,
-          temperature: options?.temperature ?? 0.8,
-          max_tokens: options?.maxTokens ?? 2000
+        const response = await fetch('https://api.venice.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.config.apiKey}`
+          },
+          body: JSON.stringify({
+            model: this.config.textModel,
+            messages,
+            temperature: options?.temperature ?? 0.8,
+            max_tokens: options?.maxTokens ?? 2000
+          })
         })
-      })
 
-      if (!response.ok) {
-        console.error('Venice AI text generation failed, falling back to internal')
-        // Fallback to internal
-        const fullPrompt = options?.systemPrompt 
-          ? (window as any).spark.llmPrompt`${options.systemPrompt}\n\nUser: ${prompt}`
-          : (window as any).spark.llmPrompt`${prompt}`
-        return await (window as any).spark.llm(fullPrompt)
+        if (!response.ok) {
+          console.error('Venice AI text generation failed, falling back to internal')
+          // Fallback to internal
+          const fullPrompt = options?.systemPrompt 
+            ? (window as any).spark.llmPrompt`${options.systemPrompt}\n\nUser: ${prompt}`
+            : (window as any).spark.llmPrompt`${prompt}`
+          return await (window as any).spark.llm(fullPrompt)
+        }
+
+        const data = await response.json()
+        return data.choices[0]?.message?.content || 'No response generated'
       }
 
-      const data = await response.json()
-      return data.choices[0]?.message?.content || 'No response generated'
+      // Fallback to internal spark.llm
+      console.log('Using internal AI for text generation')
+      const fullPrompt = options?.systemPrompt 
+        ? (window as any).spark.llmPrompt`${options.systemPrompt}\n\nUser: ${prompt}`
+        : (window as any).spark.llmPrompt`${prompt}`
+      return await (window as any).spark.llm(fullPrompt)
+    } finally {
+      this.semaphore.release()
     }
-
-    // Fallback to internal spark.llm
-    console.log('Using internal AI for text generation')
-    const fullPrompt = options?.systemPrompt 
-      ? (window as any).spark.llmPrompt`${options.systemPrompt}\n\nUser: ${prompt}`
-      : (window as any).spark.llmPrompt`${prompt}`
-    return await (window as any).spark.llm(fullPrompt)
   }
 
   async generateImage(prompt: string, options?: {
@@ -77,6 +115,7 @@ export class AIService {
     height?: number
     style?: string
   }): Promise<string> {
+    await this.semaphore.acquire()
     try {
       console.log('Starting Venice AI image generation for prompt:', prompt)
       
@@ -95,12 +134,15 @@ export class AIService {
       console.log('Final prompt for Venice AI:', finalPrompt)
       console.log('Using Venice AI image model:', this.config.imageModel)
       
-      // List of fallback models to try if the configured one fails
+      // Updated models list with correct Venice AI models
       const modelsToTry = [
         this.config.imageModel,
-        'venice-sd35',  // Default fallback
-        'flux-dev',     // High quality fallback
-        'hidream'       // Another fallback
+        'venice-sd35',  // Default
+        'flux-dev',     // High quality
+        'flux-dev-uncensored', // Uncensored
+        'hidream',      // Alternative
+        'pony-realism', // Most uncensored
+        'wai-Illustrious' // Anime/NSFW capable
       ].filter((model, index, arr) => arr.indexOf(model) === index) // Remove duplicates
       
       let lastError: any = null
@@ -212,6 +254,8 @@ export class AIService {
       const errorMessage = error instanceof Error ? error.message : String(error)
       console.log('Creating enhanced placeholder due to error:', errorMessage)
       return this.generateAdvancedPlaceholder(prompt, options?.width || 400, options?.height || 400)
+    } finally {
+      this.semaphore.release()
     }
   }
 
