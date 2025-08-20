@@ -20,7 +20,7 @@ export default function ImageGenerationTest({ onBack }: ImageGenerationTestProps
   const [apiConfig] = useKV<ApiConfig>('api-config', {
     apiKey: '',
     textModel: 'default',
-    imageModel: 'venice-sd35'
+    imageModel: 'flux-dev'
   })
 
   const testImageGeneration = async () => {

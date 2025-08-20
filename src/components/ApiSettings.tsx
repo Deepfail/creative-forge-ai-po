@@ -41,17 +41,21 @@ const veniceTextModels = [
 
 // Venice AI image models (from their official API docs)
 const veniceImageModels = [
-  { id: 'venice-sd35', name: 'Venice SD35', description: 'Default stable diffusion model' },
+  { id: 'venice-sd35', name: 'Venice SD35', description: 'Default stable diffusion model (eliza-default)' },
   { id: 'flux-dev', name: 'Flux Dev', description: 'Highest quality images' },
+  { id: 'flux-dev-uncensored', name: 'Flux Dev Uncensored', description: 'Uncensored high quality' },
+  { id: 'hidream', name: 'HiDream', description: 'High detail generation' },
   { id: 'stable-diffusion-3.5', name: 'Stable Diffusion 3.5', description: 'Latest stable diffusion' },
-  { id: 'hidream', name: 'HiDream', description: 'High detail generation' }
+  { id: 'lustify-sdxl', name: 'Lustify SDXL', description: 'NSFW focused model' },
+  { id: 'pony-realism', name: 'Pony Realism', description: 'Most uncensored realistic model' },
+  { id: 'wai-Illustrious', name: 'WAI Illustrious', description: 'Anime/WAI style, NSFW capable' }
 ]
 
 export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
   const [apiConfig, setApiConfig] = useKV<ApiConfig>('api-config', {
     apiKey: '',
     textModel: 'default',
-    imageModel: 'venice-sd35'
+    imageModel: 'flux-dev'
   })
 
   const [showKey, setShowKey] = useState(false)
@@ -62,7 +66,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
     setApiConfig(prev => ({ 
       apiKey: value,
       textModel: prev?.textModel || 'default',
-      imageModel: prev?.imageModel || 'venice-sd35'
+      imageModel: prev?.imageModel || 'flux-dev'
     }))
     setConnectionStatus('idle')
   }
@@ -71,7 +75,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
     setApiConfig(prev => ({ 
       apiKey: prev?.apiKey || '',
       textModel: model,
-      imageModel: prev?.imageModel || 'venice-sd35'
+      imageModel: prev?.imageModel || 'flux-dev'
     }))
   }
 
@@ -127,7 +131,8 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
           model: apiConfig.imageModel,
           prompt: 'test portrait',
           width: 256,
-          height: 256
+          height: 256,
+          hide_watermark: true
         })
       })
 
@@ -307,7 +312,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="imageModel">Image Model</Label>
-                <Select value={apiConfig?.imageModel || 'venice-sd35'} onValueChange={handleImageModelChange}>
+                <Select value={apiConfig?.imageModel || 'flux-dev'} onValueChange={handleImageModelChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select an image model" />
                   </SelectTrigger>

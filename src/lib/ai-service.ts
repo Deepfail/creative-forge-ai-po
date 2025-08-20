@@ -100,7 +100,7 @@ export class AIService {
         this.config.imageModel,
         'venice-sd35',  // Default fallback
         'flux-dev',     // High quality fallback
-        'stable-diffusion-3.5' // Another fallback
+        'hidream'       // Another fallback
       ].filter((model, index, arr) => arr.indexOf(model) === index) // Remove duplicates
       
       let lastError: any = null
@@ -111,7 +111,8 @@ export class AIService {
           
           const requestBody = {
             model: model,
-            prompt: finalPrompt
+            prompt: finalPrompt,
+            hide_watermark: true
           }
           
           console.log('Sending request to Venice AI image/generate:', requestBody)
