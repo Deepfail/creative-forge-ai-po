@@ -60,7 +60,7 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
     }
 
     // Check if ID already exists
-    if (prompts[newPrompt.id]) {
+    if (prompts && prompts[newPrompt.id]) {
       toast.error('A prompt with this ID already exists')
       return
     }
@@ -187,22 +187,24 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
           </CardHeader>
           <CardContent>
             <div className="text-xs space-y-1">
-              <p>Prompts in storage: {Object.keys(prompts).length}</p>
-              <p>Sorted prompts: {sortedPrompts.length}</p>
-              <p>Available IDs: {Object.keys(prompts).join(', ')}</p>
-              <p>Luna exists: {prompts.luna ? 'Yes' : 'No'}</p>
-              <p>Raw prompts object: {JSON.stringify(Object.keys(prompts))}</p>
+              <p>Prompts type: {typeof prompts}</p>
+              <p>Prompts is null/undefined: {prompts ? 'No' : 'Yes'}</p>
+              <p>Prompts in storage: {prompts ? Object.keys(prompts).length : 0}</p>
+              <p>Sorted prompts: {sortedPrompts?.length || 0}</p>
+              <p>Available IDs: {prompts ? Object.keys(prompts).join(', ') : 'None'}</p>
+              <p>Luna exists: {prompts?.luna ? 'Yes' : 'No'}</p>
+              <p>Raw prompts object: {JSON.stringify(prompts ? Object.keys(prompts) : null)}</p>
             </div>
           </CardContent>
         </Card>
 
         {/* Prompts List */}
         <div className="space-y-6">
-          {sortedPrompts.length === 0 ? (
+          {!sortedPrompts || sortedPrompts.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
                 <p className="text-muted-foreground mb-4">
-                  {Object.keys(prompts).length === 0 
+                  {!prompts || Object.keys(prompts).length === 0 
                     ? "No prompts found. The default Luna prompt should be loading..." 
                     : "Prompts exist but not showing in sorted list. Check debug info above."}
                 </p>

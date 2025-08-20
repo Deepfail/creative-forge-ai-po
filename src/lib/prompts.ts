@@ -40,8 +40,9 @@ export function usePrompts() {
   const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', defaultPrompts)
 
   console.log('usePrompts - Current prompts state:', prompts)
-  console.log('usePrompts - Prompts keys:', Object.keys(prompts))
-  console.log('usePrompts - Has Luna:', !!prompts.luna)
+  console.log('usePrompts - Prompts keys:', Object.keys(prompts || {}))
+  console.log('usePrompts - Has Luna:', !!(prompts && prompts.luna))
+  console.log('usePrompts - Prompts type:', typeof prompts)
 
   const updatePrompt = (id: string, updates: Partial<ChatPrompt>) => {
     console.log('Updating prompt:', id, updates)
@@ -78,11 +79,17 @@ export function usePrompts() {
 
   // Get prompts sorted by update time (newest first)
   const getSortedPrompts = () => {
-    return Object.values(prompts).sort((a, b) => b.updatedAt - a.updatedAt)
+    if (!prompts || typeof prompts !== 'object') {
+      console.log('getSortedPrompts - prompts is not valid:', prompts)
+      return []
+    }
+    const sorted = Object.values(prompts).sort((a, b) => b.updatedAt - a.updatedAt)
+    console.log('getSortedPrompts - returning:', sorted.length, 'prompts')
+    return sorted
   }
 
   return {
-    prompts,
+    prompts: prompts || {},
     sortedPrompts: getSortedPrompts(),
     updatePrompt,
     deletePrompt,
