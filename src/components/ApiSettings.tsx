@@ -130,8 +130,6 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
         body: JSON.stringify({
           model: apiConfig.imageModel,
           prompt: 'test portrait',
-          width: 256,
-          height: 256,
           hide_watermark: true
         })
       })

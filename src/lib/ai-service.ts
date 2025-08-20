@@ -154,9 +154,7 @@ export class AIService {
           const requestBody = {
             model: model,
             prompt: finalPrompt,
-            hide_watermark: true,
-            width: options?.width || 512,
-            height: options?.height || 512
+            hide_watermark: true
           }
           
           console.log('Sending request to Venice AI image/generate:', requestBody)

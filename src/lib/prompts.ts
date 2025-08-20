@@ -41,11 +41,12 @@ export function usePrompts() {
   
   // Force initialization on first load if prompts is null or empty
   useEffect(() => {
+    console.log('usePrompts useEffect: prompts =', prompts)
     if (!prompts || Object.keys(prompts).length === 0) {
       console.log('usePrompts: Initializing default prompts')
       setPrompts(defaultPrompts)
     }
-  }, [])
+  }, [prompts, setPrompts])
   
   // Always ensure we have valid prompts
   const safePrompts = prompts || defaultPrompts
@@ -58,6 +59,7 @@ export function usePrompts() {
 
   console.log('usePrompts - Current prompts:', Object.keys(safePrompts))
   console.log('usePrompts - Sorted prompts count:', sortedPrompts.length)
+  console.log('usePrompts - Raw prompts:', prompts)
 
   const updatePrompt = (id: string, updates: Partial<ChatPrompt>) => {
     setPrompts(current => {
