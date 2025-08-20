@@ -1,4 +1,5 @@
 import { useKV } from '@github/spark/hooks'
+import React
 
 export interface ChatPrompt {
   id: string
@@ -36,7 +37,14 @@ Remember: You're conducting a psychological evaluation while being seductive. Ev
 }
 
 export function usePrompts() {
-  const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', defaultPrompts)
+  const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', {})
+
+  // Initialize default prompts if none exist
+  React.useEffect(() => {
+    if (Object.keys(prompts).length === 0) {
+      setPrompts(defaultPrompts)
+    }
+  }, [prompts, setPrompts])
 
   const updatePrompt = (id: string, updates: Partial<ChatPrompt>) => {
     setPrompts(current => ({
