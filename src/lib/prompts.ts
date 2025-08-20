@@ -66,6 +66,7 @@ Make it engaging, immersive, and suitable for adult interactive experiences.`,
 
 export function usePrompts() {
   const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', {})
+  const [initialized, setInitialized] = React.useState(false)
   
   // Debug logging to see what's in storage
   useEffect(() => {
@@ -77,16 +78,19 @@ export function usePrompts() {
     }
   }, [prompts])
   
-  // Only initialize with defaults on first load if completely empty
+  // Only initialize with defaults on first load if completely empty AND not yet initialized
   useEffect(() => {
-    if (!prompts || Object.keys(prompts).length === 0) {
-      console.log('Initializing prompts with defaults...')
+    if (!initialized && (!prompts || Object.keys(prompts).length === 0)) {
+      console.log('First time initialization with defaults...')
       setPrompts(defaultPrompts)
+      setInitialized(true)
+    } else if (!initialized) {
+      setInitialized(true)
     }
-  }, [])
+  }, [prompts, initialized])
   
-  // Always ensure we have valid prompts - use current prompts or defaults as fallback
-  const safePrompts = (prompts && Object.keys(prompts).length > 0) ? prompts : defaultPrompts
+  // Use current prompts, even if empty (user might have cleared them intentionally)
+  const safePrompts = prompts || {}
   
   // Compute sorted prompts
   const sortedPrompts = useMemo(() => {
