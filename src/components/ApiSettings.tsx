@@ -422,7 +422,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
               <Sparkle size={14} className="text-primary" />
               <span className="font-medium">Image Generation</span>
             </div>
-            <p>Venice AI image generation is integrated and will attempt to create real AI portraits. If the service is unavailable, artistic SVG placeholders will be used instead.</p>
+            <p>Image generation always attempts to use Venice AI when available, regardless of your text generation provider choice. Configure Venice AI here to enable AI-generated portraits. When Venice AI is unavailable, enhanced artistic placeholders are used instead.</p>
           </div>
         </CardContent>
       </div>
