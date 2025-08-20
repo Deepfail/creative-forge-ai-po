@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,6 +25,20 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
     systemPrompt: ''
   })
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+
+  // Force initialization on mount if prompts are empty
+  useEffect(() => {
+    console.log('PromptsManager mounted, checking prompt state')
+    console.log('Prompts object:', prompts)
+    console.log('Prompts keys:', Object.keys(prompts || {}))
+    console.log('Sorted prompts:', sortedPrompts?.length)
+    
+    // If no prompts at all, force initialization
+    if (!prompts || Object.keys(prompts).length === 0) {
+      console.log('No prompts found, forcing initialization')
+      setPrompts(defaultPrompts)
+    }
+  }, []) // Only run on mount
 
   // Manual initialization function
   const initializeDefaults = () => {
@@ -193,7 +207,9 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
               <p>Sorted prompts: {sortedPrompts?.length || 0}</p>
               <p>Available IDs: {prompts ? Object.keys(prompts).join(', ') : 'None'}</p>
               <p>Luna exists: {prompts?.luna ? 'Yes' : 'No'}</p>
+              <p>Luna greeting exists: {prompts?.luna?.greeting ? 'Yes' : 'No'}</p>
               <p>Raw prompts object: {JSON.stringify(prompts ? Object.keys(prompts) : null)}</p>
+              <p>Default prompts available: {JSON.stringify(Object.keys(defaultPrompts))}</p>
             </div>
           </CardContent>
         </Card>
@@ -204,9 +220,9 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
             <Card>
               <CardContent className="text-center py-12">
                 <p className="text-muted-foreground mb-4">
-                  {!prompts || Object.keys(prompts).length === 0 
+                  {(!prompts || Object.keys(prompts).length === 0) 
                     ? "No prompts found. The default Luna prompt should be loading..." 
-                    : "Prompts exist but not showing in sorted list. Check debug info above."}
+                    : `Found ${Object.keys(prompts).length} prompt(s) but not showing in sorted list. Check debug info above.`}
                 </p>
           <div className="flex gap-2">
             <Button 

@@ -86,19 +86,25 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   const [chatHistory] = useKV('custom-chat-history', [])
   const { prompts } = usePrompts()
 
-  // Get Luna's current prompt configuration
-  const lunaPrompt = prompts.luna
+  // Get Luna's current prompt configuration with fallback
+  const lunaPrompt = prompts?.luna || prompts['luna']
   
   // Debug log
   React.useEffect(() => {
     console.log('Luna prompt updated:', lunaPrompt)
-  }, [lunaPrompt])
+    console.log('All prompts available:', Object.keys(prompts || {}))
+  }, [lunaPrompt, prompts])
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   useEffect(() => { scrollToBottom() }, [messages])
 
   useEffect(() => {
-    console.log('Checking Luna prompt and messages:', { lunaPrompt, messagesLength: messages.length })
+    console.log('Checking Luna prompt and messages:', { 
+      lunaPrompt: !!lunaPrompt, 
+      greeting: !!lunaPrompt?.greeting,
+      messagesLength: messages.length,
+      allPromptKeys: Object.keys(prompts || {})
+    })
     if (messages.length === 0 && lunaPrompt?.greeting) {
       console.log('Adding Luna greeting message')
       const greeting: Message = {
@@ -109,7 +115,7 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
       }
       setMessages([greeting])
     }
-  }, [lunaPrompt]) // Depend on lunaPrompt so it triggers when prompt loads
+  }, [lunaPrompt, prompts, messages.length]) // Depend on prompts and lunaPrompt
 
   const addMessage = (role: 'user' | 'ai', content: string) =>
     setMessages(prev => [...prev, { id: Date.now().toString(), role, content, timestamp: new Date() }])
@@ -147,8 +153,21 @@ Stage instructions:
         stageInstructions += `\nStyle notes: Generate their scenario/character in detail, immersive and explicit.`
       }
 
-      // Use Luna's current system prompt from prompts configuration
-      const systemPrompt = lunaPrompt?.systemPrompt || `You are Luna, a sexy, whorish expert psychologist and sex therapist.`
+      // Use Luna's current system prompt from prompts configuration with fallback
+      const systemPrompt = lunaPrompt?.systemPrompt || `You are Luna, my sexy, whorish, and expert psychologist/sex therapist. 
+
+Instructions for this response:
+- Stay in character as Luna (sexy, seductive, psychological expert)
+- at the start, Give user the option to keep speaking with just her you, or let her daughter join you both to help her get her daughter some experience.
+- Ask one question at a time, limit narration to actions and descriptions of your body and related. Should feel like a actual conversation, not reading a story.
+- Keep the conversation flowing - don't end it after this response
+- Be continuously flirty and mention your body parts naturally
+- Be seductive and sexual.
+- Analyze their response for psychological cues
+- If you haven't given your assessment yet and have enough info (usually after 5-10 exchanges), provide your detailed psychological breakdown
+- If they've confirmed your assessment is correct, generate their perfect scenario/character
+
+Remember: You're conducting a psychological evaluation while being seductive. Every response should advance both the flirtation AND the analysis.`
       
       const prompt = `${systemPrompt}
 

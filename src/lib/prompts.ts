@@ -39,18 +39,22 @@ Remember: You're conducting a psychological evaluation while being seductive. Ev
 export function usePrompts() {
   const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', defaultPrompts)
 
-  console.log('usePrompts - Current prompts state:', prompts)
-  console.log('usePrompts - Prompts keys:', Object.keys(prompts || {}))
-  console.log('usePrompts - Has Luna:', !!(prompts && prompts.luna))
-  console.log('usePrompts - Prompts type:', typeof prompts)
+  // Ensure we always have a valid prompts object
+  const safePrompts = prompts || defaultPrompts
+
+  console.log('usePrompts - Current prompts state:', safePrompts)
+  console.log('usePrompts - Prompts keys:', Object.keys(safePrompts))
+  console.log('usePrompts - Has Luna:', !!(safePrompts && safePrompts.luna))
+  console.log('usePrompts - Prompts type:', typeof safePrompts)
 
   const updatePrompt = (id: string, updates: Partial<ChatPrompt>) => {
     console.log('Updating prompt:', id, updates)
     setPrompts(current => {
+      const currentPrompts = current || defaultPrompts
       const updated = {
-        ...current,
+        ...currentPrompts,
         [id]: {
-          ...current[id],
+          ...currentPrompts[id],
           ...updates,
           updatedAt: Date.now()
         }
@@ -62,34 +66,38 @@ export function usePrompts() {
 
   const deletePrompt = (id: string) => {
     setPrompts(current => {
-      const { [id]: deleted, ...rest } = current
+      const currentPrompts = current || defaultPrompts
+      const { [id]: deleted, ...rest } = currentPrompts
       return rest
     })
   }
 
   const addPrompt = (prompt: Omit<ChatPrompt, 'updatedAt'>) => {
-    setPrompts(current => ({
-      ...current,
-      [prompt.id]: {
-        ...prompt,
-        updatedAt: Date.now()
+    setPrompts(current => {
+      const currentPrompts = current || defaultPrompts
+      return {
+        ...currentPrompts,
+        [prompt.id]: {
+          ...prompt,
+          updatedAt: Date.now()
+        }
       }
-    }))
+    })
   }
 
   // Get prompts sorted by update time (newest first)
   const getSortedPrompts = () => {
-    if (!prompts || typeof prompts !== 'object') {
-      console.log('getSortedPrompts - prompts is not valid:', prompts)
+    if (!safePrompts || typeof safePrompts !== 'object') {
+      console.log('getSortedPrompts - prompts is not valid:', safePrompts)
       return []
     }
-    const sorted = Object.values(prompts).sort((a, b) => b.updatedAt - a.updatedAt)
+    const sorted = Object.values(safePrompts).sort((a, b) => b.updatedAt - a.updatedAt)
     console.log('getSortedPrompts - returning:', sorted.length, 'prompts')
     return sorted
   }
 
   return {
-    prompts: prompts || {},
+    prompts: safePrompts,
     sortedPrompts: getSortedPrompts(),
     updatePrompt,
     deletePrompt,

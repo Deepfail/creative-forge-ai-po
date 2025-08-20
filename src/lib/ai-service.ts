@@ -154,7 +154,9 @@ export class AIService {
           const requestBody = {
             model: model,
             prompt: finalPrompt,
-            hide_watermark: true
+            hide_watermark: true,
+            width: options?.width || 512,
+            height: options?.height || 512
           }
           
           console.log('Sending request to Venice AI image/generate:', requestBody)
@@ -265,10 +267,10 @@ export class AIService {
     console.log('Generating SVG placeholder for prompt:', lowerPrompt)
     
     // Determine character features
-    let hairColor = '#8B4513'
-    let skinColor = '#FDBCB4'
-    let outfitColor = '#FF1493'
-    let eyeColor = '#4169E1'
+    let hairColor = '#4A4A4A' // Default dark brown
+    let skinColor = '#F5DEB3' // Default natural skin tone 
+    let outfitColor = '#6B46C1' // Default purple instead of hot pink
+    let eyeColor = '#8B4513' // Default brown eyes
     
     if (lowerPrompt.includes('blonde')) hairColor = '#FFD700'
     else if (lowerPrompt.includes('black hair') || lowerPrompt.includes('dark hair')) hairColor = '#1a1a1a'
@@ -294,8 +296,8 @@ export class AIService {
       <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="bg" cx="50%" cy="30%" r="70%">
-            <stop offset="0%" style="stop-color:rgba(255,255,255,0.1);stop-opacity:1" />
-            <stop offset="100%" style="stop-color:rgba(0,0,0,0.3);stop-opacity:1" />
+            <stop offset="0%" style="stop-color:rgba(200,200,200,0.1);stop-opacity:1" />
+            <stop offset="100%" style="stop-color:rgba(100,100,100,0.3);stop-opacity:1" />
           </radialGradient>
           <linearGradient id="hair" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" style="stop-color:${hairColor};stop-opacity:1" />
