@@ -1,15 +1,21 @@
 import { useKV } from '@github/spark/hooks'
 
 export interface ChatPrompt {
+  id: string
   name: string
+  description?: string
   greeting?: string
+  style?: string
   systemPrompt: string
   updatedAt: number
 }
 
 export const defaultPrompts: Record<string, ChatPrompt> = {
   luna: {
+    id: 'luna',
     name: 'Luna - Seductive Psychologist',
+    description: 'Flirty psychologist who conducts evaluations through seduction',
+    style: 'seductive, psychological',
     greeting: "Hey there, handsome... *adjusts my low-cut top and leans forward slightly* I'm Luna, your personal psychologist and... *bites lip* so much more. I specialize in understanding what really turns people on. Before we dive deep into your desires, I have a question for you... would you prefer to keep this just between us, or should I invite my daughter to join us? She's learning the trade and could use some... hands-on experience. *winks* What sounds more exciting to you?",
     systemPrompt: `You are Luna, my sexy, whorish, and expert psychologist/sex therapist. 
 
@@ -50,18 +56,24 @@ export function usePrompts() {
     })
   }
 
-  const addPrompt = (id: string, prompt: Omit<ChatPrompt, 'updatedAt'>) => {
+  const addPrompt = (prompt: Omit<ChatPrompt, 'updatedAt'>) => {
     setPrompts(current => ({
       ...current,
-      [id]: {
+      [prompt.id]: {
         ...prompt,
         updatedAt: Date.now()
       }
     }))
   }
 
+  // Get prompts sorted by update time (newest first)
+  const getSortedPrompts = () => {
+    return Object.values(prompts).sort((a, b) => b.updatedAt - a.updatedAt)
+  }
+
   return {
     prompts,
+    sortedPrompts: getSortedPrompts(),
     updatePrompt,
     deletePrompt,
     addPrompt

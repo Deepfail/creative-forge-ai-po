@@ -14,7 +14,7 @@ interface PromptsManagerProps {
 }
 
 export default function PromptsManager({ onBack }: PromptsManagerProps) {
-  const { prompts, updatePrompt, addPrompt, deletePrompt } = usePrompts()
+  const { prompts, sortedPrompts, updatePrompt, addPrompt, deletePrompt } = usePrompts()
   const [editingPrompt, setEditingPrompt] = useState<string | null>(null)
   const [newPrompt, setNewPrompt] = useState<Partial<ChatPrompt>>({
     id: '',
@@ -35,6 +35,12 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
   const handleCreate = () => {
     if (!newPrompt.id || !newPrompt.name || !newPrompt.systemPrompt) {
       toast.error('Please fill in all required fields')
+      return
+    }
+
+    // Check if ID already exists
+    if (prompts[newPrompt.id]) {
+      toast.error('A prompt with this ID already exists')
       return
     }
 
@@ -155,7 +161,7 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
 
         {/* Prompts List */}
         <div className="space-y-6">
-          {Object.values(prompts).map((prompt) => (
+          {sortedPrompts.map((prompt) => (
             <Card key={prompt.id} className="relative">
               <CardHeader>
                 <div className="flex items-start justify-between">
