@@ -41,6 +41,13 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
     toast.success('Prompts initialized with defaults')
   }
 
+  // Clear all prompts
+  const clearAllPrompts = () => {
+    setPrompts({})
+    setRefreshKey(prev => prev + 1)
+    toast.success('All prompts cleared')
+  }
+
   // Manual refresh
   const forceRefresh = () => {
     setRefreshKey(prev => prev + 1)
@@ -93,10 +100,6 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
   }
 
   const handleDelete = (promptId: string) => {
-    if (promptId === 'luna') {
-      toast.error('Cannot delete the default Luna prompt')
-      return
-    }
     deletePrompt(promptId)
     toast.success('Prompt deleted successfully!')
   }
@@ -200,11 +203,12 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
             <CardContent className="pt-6">
               <div className="flex flex-wrap gap-2 items-center">
                 <Button 
-                  onClick={initializeDefaults}
+                  onClick={clearAllPrompts}
                   size="sm"
                   variant="outline"
+                  className="border-destructive text-destructive hover:bg-destructive/10"
                 >
-                  Reset to Defaults
+                  Clear All Prompts
                 </Button>
                 <Button 
                   onClick={forceRefresh}
@@ -300,16 +304,14 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
                         <Edit3 size={16} />
                       )}
                     </Button>
-                    {prompt.id !== 'luna' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(prompt.id)}
-                        className="border-destructive text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(prompt.id)}
+                      className="border-destructive text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 size={16} />
+                    </Button>
                   </div>
                 </div>
               </CardHeader>

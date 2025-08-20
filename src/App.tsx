@@ -196,7 +196,7 @@ function App() {
             <CardContent className="p-6 text-center">
               <ChatCircle className="mx-auto mb-3 text-secondary group-hover:scale-110 transition-transform" size={32} weight="duotone" />
               <h3 className="text-lg font-semibold text-foreground mb-2">Build Your Own</h3>
-              <p className="text-sm text-muted-foreground">Chat with AI to create custom scenarios</p>
+              <p className="text-sm text-muted-foreground">Chat with AI to design custom content</p>
             </CardContent>
           </Card>
 

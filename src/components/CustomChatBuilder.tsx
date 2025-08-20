@@ -4,23 +4,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ArrowLeft, Send, Download, Copy } from '@phosphor-icons/react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
 import { aiService } from '@/lib/ai-service'
-import { usePrompts, defaultPrompts } from '@/lib/prompts'
-
-// ---- Stage Definitions ----
-const stageFlow: Record<string, string[]> = {
-  greeting: [],
-  evaluation: ['agePreference', 'dominanceStyle', 'communicationStyle'],
-  analysis: ['bodyPreferences', 'kinks', 'behaviorPatterns'],
-  assessment: [],
-  confirmation: [],
-  generation: [],
-  completed: []
-}
 
 // ---- Interfaces ----
 interface Message {
@@ -31,42 +18,15 @@ interface Message {
 }
 
 interface CreationState {
-  stage: 'greeting' | 'evaluation' | 'analysis' | 'assessment' | 'confirmation' | 'generation' | 'completed'
-  psychProfile: {
-    agePreference?: string
-    dominanceStyle?: string
-    bodyPreferences?: string[]
-    behaviorPatterns?: string[]
-    kinks?: string[]
-    communicationStyle?: string
-    reactions?: string[]
+  preferences: {
+    characterType?: string
+    scenarioType?: string
+    style?: string
+    themes?: string[]
+    setting?: string
   }
-  analysisComplete?: boolean
-  assessmentGiven?: boolean
-  userConfirmed?: boolean
-  name?: string
   generatedContent?: string
-  type?: 'character' | 'scenario'
-}
-
-// ---- FSM Helper ----
-function advanceStageIfComplete(state: CreationState, lowerUser: string, lowerAI: string): CreationState {
-  const requirements = stageFlow[state.stage]
-  const isStageComplete = requirements.every(field => {
-    const val = state.psychProfile[field as keyof typeof state.psychProfile]
-    return val !== undefined && val !== null && val !== '' &&
-           (!Array.isArray(val) || val.length > 0)
-  })
-
-  let newStage = state.stage
-
-  if (state.stage === 'greeting' && isStageComplete) newStage = 'evaluation'
-  else if (state.stage === 'evaluation' && isStageComplete) newStage = 'analysis'
-  else if (state.stage === 'analysis' && isStageComplete) newStage = 'assessment'
-  else if (state.stage === 'assessment' && (lowerAI.includes('assessment') || lowerAI.includes('you are'))) newStage = 'confirmation'
-  else if (state.stage === 'confirmation' && (lowerUser.includes('yes') || lowerUser.includes('correct'))) newStage = 'generation'
-
-  return { ...state, stage: newStage }
+  type: 'character' | 'scenario'
 }
 
 export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
@@ -74,51 +34,26 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   const [currentInput, setCurrentInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [creationState, setCreationState] = useState<CreationState>({
-    stage: 'greeting',
-    psychProfile: {},
-    analysisComplete: false,
-    assessmentGiven: false,
-    userConfirmed: false,
+    preferences: {},
     type: 'character'
   })
   const [showExport, setShowExport] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [chatHistory] = useKV('custom-chat-history', [])
-  const { prompts } = usePrompts()
-
-  // Get Luna's current prompt configuration with fallback
-  const lunaPrompt = prompts?.luna || prompts?.['luna']
-  
-  // Debug log
-  React.useEffect(() => {
-    console.log('Luna prompt updated:', lunaPrompt)
-    console.log('All prompts available:', Object.keys(prompts || {}))
-    console.log('Full prompts object:', prompts)
-  }, [lunaPrompt, prompts])
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   useEffect(() => { scrollToBottom() }, [messages])
 
   useEffect(() => {
-    console.log('Checking Luna prompt and messages:', { 
-      lunaPrompt: !!lunaPrompt, 
-      greeting: !!lunaPrompt?.greeting,
-      messagesLength: messages.length,
-      allPromptKeys: Object.keys(prompts || {}),
-      lunaGreeting: lunaPrompt?.greeting || 'fallback'
-    })
     if (messages.length === 0) {
-      console.log('Adding Luna greeting message')
-      const greetingText = lunaPrompt?.greeting || defaultPrompts.luna.greeting
       const greeting: Message = {
         id: Date.now().toString(),
         role: 'ai',
-        content: greetingText,
+        content: "Hello! I'm here to help you create custom NSFW characters and scenarios. Tell me what kind of content you'd like to create - what themes, settings, or character types interest you?",
         timestamp: new Date()
       }
       setMessages([greeting])
     }
-  }, [lunaPrompt, prompts, messages.length]) // Depend on prompts and lunaPrompt
+  }, [messages.length])
 
   const addMessage = (role: 'user' | 'ai', content: string) =>
     setMessages(prev => [...prev, { id: Date.now().toString(), role, content, timestamp: new Date() }])
@@ -129,130 +64,90 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
     try {
       const conversationContext = messages.map(m => `${m.role}: ${m.content}`).join('\n')
 
-      // Slot-filling stage instructions
-      const requiredFields = stageFlow[creationState.stage]
-      const missingFields = requiredFields.filter(field => {
-        const val = creationState.psychProfile[field as keyof typeof creationState.psychProfile]
-        return val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0)
-      })
-
-      let stageInstructions = `
-Stage instructions:
-- Collect the following missing fields: ${missingFields.length ? missingFields.join(", ") : "none (all met)"}.
-- Do not re-ask completed fields.
-- Once all stage requirements are complete, transition naturally to the next stage.
-`
-
-      if (creationState.stage === 'greeting') {
-        stageInstructions += `\nStyle notes: Be seductive, playful, flirty. Mention your body (tits, ass, etc.) and observe reactions.`
-      }
-      if (creationState.stage === 'assessment') {
-        stageInstructions += `\nStyle notes: Provide a clear psychological breakdown and end with "Is this assessment accurate?".`
-      }
-      if (creationState.stage === 'confirmation') {
-        stageInstructions += `\nStyle notes: If confirmed, prepare for generation. If denied, ask what was wrong and continue collecting.`
-      }
-      if (creationState.stage === 'generation') {
-        stageInstructions += `\nStyle notes: Generate their scenario/character in detail, immersive and explicit.`
-      }
-
-      // Use Luna's current system prompt from prompts configuration with fallback
-      const systemPrompt = lunaPrompt?.systemPrompt || defaultPrompts.luna.systemPrompt
-      
-      const prompt = `${systemPrompt}
-
-Current conversation stage: ${creationState.stage}
-${stageInstructions}
-
-Current psychological profile gathered: ${JSON.stringify(creationState.psychProfile)}
+      const prompt = `You are an AI assistant helping to create custom NSFW content. Based on the conversation, help the user refine their ideas and preferences for characters or scenarios.
 
 Conversation history:
 ${conversationContext}
 
 User's latest message: ${userMessage}
 
-Instructions for this response:
-- Stay in character as Luna (sexy, seductive, psychological expert)
-- At the start, give user the option to keep speaking with just you, or let your daughter join
-- Ask one question at a time, limit narration to actions/body descriptions
-- Should feel like a real conversation, not a story
-- ${stageInstructions}
-- Keep flow natural, don’t end after this reply
-- Flirty, seductive, sexual
-- Analyze responses for cues
-- If not assessed and enough info, give breakdown
-- If assessed and confirmed, generate perfect scenario/character
-`
+Instructions:
+- Ask follow-up questions to understand their preferences better
+- Suggest ideas and variations based on what they've told you
+- Be helpful and creative while staying focused on content creation
+- Keep responses conversational and engaging
+- When they seem ready, offer to generate their custom content
 
-      const response = await aiService.generateText(prompt, { temperature: 0.9, maxTokens: 600 })
+Current preferences gathered: ${JSON.stringify(creationState.preferences)}`
+
+      const response = await aiService.generateText(prompt, { temperature: 0.8, maxTokens: 400 })
       addMessage('ai', response)
-      updateCreationState(userMessage, response)
+      updatePreferences(userMessage, response)
 
-      if (creationState.stage === 'generation' &&
-         (response.toLowerCase().includes('scenario') || response.toLowerCase().includes('character'))) {
+      // Check if user seems ready for generation
+      if (userMessage.toLowerCase().includes('generate') || 
+          userMessage.toLowerCase().includes('create') || 
+          userMessage.toLowerCase().includes('make it') ||
+          response.toLowerCase().includes('shall i create')) {
         setTimeout(() => generateFinalContent(), 1000)
       }
 
     } catch (e) {
-      addMessage('ai', "Mmm, something went wrong baby... Let's keep going 💕")
+      addMessage('ai', "Sorry, something went wrong. Let's continue our conversation.")
       console.error('AI response error:', e)
     } finally { setIsTyping(false) }
   }
 
-  // ---- Update psych profile ----
-  const updateCreationState = (userMessage: string, aiResponse: string) => {
+  // ---- Update preferences ----
+  const updatePreferences = (userMessage: string, aiResponse: string) => {
     const lowerUser = userMessage.toLowerCase()
-    const lowerAI = aiResponse.toLowerCase()
-    const newProfile = { ...creationState.psychProfile }
+    const newPreferences = { ...creationState.preferences }
 
-    // Communication style
-    if (lowerUser.includes('please') || lowerUser.includes('thank you') || lowerUser.includes('sorry')) {
-      newProfile.communicationStyle = 'polite/submissive'
-    } else if (lowerUser.includes('want') || lowerUser.includes('need') || lowerUser.includes('give me')) {
-      newProfile.communicationStyle = 'direct/dominant'
+    // Extract preferences from user message
+    if (lowerUser.includes('character')) {
+      setCreationState(prev => ({ ...prev, type: 'character' }))
+    } else if (lowerUser.includes('scenario') || lowerUser.includes('scene')) {
+      setCreationState(prev => ({ ...prev, type: 'scenario' }))
     }
 
-    // Age preferences
-  if (lowerUser.includes('college girl') || lowerUser.includes('college') || lowerUser.includes('sorority') || lowerUser.includes('barely legal') || lowerUser.includes('18') || lowerUser.includes('19') || lowerUser.includes('20') || lowerUser.includes('21')) {
-    newProfile.agePreference = 'college girl';
-  } else if (lowerUser.includes('20s') || lowerUser.includes('young mom') || lowerUser.includes('22') || lowerUser.includes('23') || lowerUser.includes('24') || lowerUser.includes('25') || lowerUser.includes('26') || lowerUser.includes('27') || lowerUser.includes('28') || lowerUser.includes('29')) {
-    newProfile.agePreference = 'adult/20s';
-  } else if (lowerUser.includes('milf') || lowerUser.includes('mom') || lowerUser.includes('mother') || lowerUser.includes('experienced') || lowerUser.includes('older') || lowerUser.includes('wife') || lowerUser.includes('housewife') || lowerUser.includes('mature')) {
-    newProfile.agePreference = 'milf/mature';
-  }
-
-    // Dominance
-    if (lowerUser.includes('control') || lowerUser.includes('dominate') || lowerUser.includes('command') || lowerUser.includes('obey')) {
-      newProfile.dominanceStyle = 'dominant'
-    } else if (lowerUser.includes('submit') || lowerUser.includes('serve') || lowerUser.includes('please') || lowerUser.includes('worship')) {
-      newProfile.dominanceStyle = 'submissive'
+    // Character types
+    if (lowerUser.includes('milf') || lowerUser.includes('mature')) {
+      newPreferences.characterType = 'milf'
+    } else if (lowerUser.includes('college') || lowerUser.includes('student')) {
+      newPreferences.characterType = 'college'
+    } else if (lowerUser.includes('cheerleader')) {
+      newPreferences.characterType = 'cheerleader'
+    } else if (lowerUser.includes('teacher') || lowerUser.includes('professor')) {
+      newPreferences.characterType = 'teacher'
     }
 
-    // Body preferences
-    if (!newProfile.bodyPreferences) newProfile.bodyPreferences = []
-    if (lowerUser.includes('tits') || lowerUser.includes('boobs') || lowerUser.includes('breasts') || lowerUser.includes('big tits'))
-      if (!newProfile.bodyPreferences.includes('breasts')) newProfile.bodyPreferences.push('breasts')
-    if (lowerUser.includes('ass') || lowerUser.includes('big ass') || lowerUser.includes('butt') || lowerUser.includes('booty'))
-      if (!newProfile.bodyPreferences.includes('ass')) newProfile.bodyPreferences.push('ass')
-    if (lowerUser.includes('petite') || lowerUser.includes('flat chest') || lowerUser.includes('skinny') || lowerUser.includes('tiny'))
-      if (!newProfile.bodyPreferences.includes('petite')) newProfile.bodyPreferences.push('petite')
-    if (lowerUser.includes('lips') || lowerUser.includes('mouth') || lowerUser.includes('kiss'))
-      if (!newProfile.bodyPreferences.includes('lips')) newProfile.bodyPreferences.push('lips')
+    // Settings
+    if (lowerUser.includes('office') || lowerUser.includes('workplace')) {
+      newPreferences.setting = 'office'
+    } else if (lowerUser.includes('school') || lowerUser.includes('classroom')) {
+      newPreferences.setting = 'school'
+    } else if (lowerUser.includes('home') || lowerUser.includes('house')) {
+      newPreferences.setting = 'home'
+    } else if (lowerUser.includes('public')) {
+      newPreferences.setting = 'public'
+    }
 
-    // Behavior patterns
-    if (!newProfile.behaviorPatterns) newProfile.behaviorPatterns = []
-    if (userMessage.length > 50 && !newProfile.behaviorPatterns.includes('detailed communicator'))
-      newProfile.behaviorPatterns.push('detailed communicator')
-    else if (userMessage.length < 20 && !newProfile.behaviorPatterns.includes('brief responses'))
-      newProfile.behaviorPatterns.push('brief responses')
+    // Themes
+    if (!newPreferences.themes) newPreferences.themes = []
+    if (lowerUser.includes('dominant') && !newPreferences.themes.includes('dominant')) {
+      newPreferences.themes.push('dominant')
+    }
+    if (lowerUser.includes('submissive') && !newPreferences.themes.includes('submissive')) {
+      newPreferences.themes.push('submissive')
+    }
+    if (lowerUser.includes('romantic') && !newPreferences.themes.includes('romantic')) {
+      newPreferences.themes.push('romantic')
+    }
+    if (lowerUser.includes('rough') && !newPreferences.themes.includes('rough')) {
+      newPreferences.themes.push('rough')
+    }
 
-    // Reactions
-    if (!newProfile.reactions) newProfile.reactions = []
-    if (lowerUser.includes('mmm') || lowerUser.includes('yes') || lowerUser.includes('like that') || lowerUser.includes('more'))
-      if (!newProfile.reactions.includes('positive to flirtation'))
-        newProfile.reactions.push('positive to flirtation')
-
-    setCreationState(prev => advanceStageIfComplete({ ...prev, psychProfile: newProfile }, lowerUser, lowerAI))
+    setCreationState(prev => ({ ...prev, preferences: newPreferences }))
   }
 
   const handleSendMessage = async () => {
@@ -267,38 +162,63 @@ Instructions for this response:
     setIsTyping(true)
     try {
       const conversationSummary = messages.map(m => m.content).join('\n')
-      const prompt = `Based on Luna's psychological evaluation and conversation, generate a detailed NSFW ${creationState.type} perfectly matching the user's profile.
+      const prompt = `Based on the conversation, generate a detailed NSFW ${creationState.type} that matches the user's preferences.
 
-Psychological Profile:
-- Age Preference: ${creationState.psychProfile.agePreference || 'Not specified'}
-- Dominance Style: ${creationState.psychProfile.dominanceStyle || 'Not specified'}
-- Body Preferences: ${creationState.psychProfile.bodyPreferences?.join(', ') || 'Not specified'}
-- Communication Style: ${creationState.psychProfile.communicationStyle || 'Not specified'}
-- Behavior Patterns: ${creationState.psychProfile.behaviorPatterns?.join(', ') || 'Not specified'}
-- Reactions: ${creationState.psychProfile.reactions?.join(', ') || 'Not specified'}
+Preferences:
+- Character Type: ${creationState.preferences.characterType || 'Not specified'}
+- Setting: ${creationState.preferences.setting || 'Not specified'}
+- Style: ${creationState.preferences.style || 'Not specified'}
+- Themes: ${creationState.preferences.themes?.join(', ') || 'Not specified'}
 
 Conversation Summary:
 ${conversationSummary}
 
-Create explicit, immersive, detailed tailored content.`
+Create explicit, immersive, detailed content tailored to their interests.`
+      
       const generatedContent = await aiService.generateText(prompt, { temperature: 0.8, maxTokens: 2000 })
-      setCreationState(prev => ({ ...prev, stage: 'completed', generatedContent }))
-      addMessage('ai', "Perfect baby! 🔥 I've created your personalized content. Do you want me to export it?")
+      setCreationState(prev => ({ ...prev, generatedContent }))
+      addMessage('ai', "Perfect! I've created your personalized content. Would you like me to export it for you?")
       toast.success("Your custom content has been generated!")
     } catch (e) {
-      addMessage('ai', "Mmm, something went wrong while creating your content baby...")
+      addMessage('ai', "Something went wrong while creating your content. Let's try again.")
       console.error('Generation error:', e)
     } finally { setIsTyping(false) }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage() } }
+  const handleKeyPress = (e: React.KeyboardEvent) => { 
+    if (e.key === 'Enter' && !e.shiftKey) { 
+      e.preventDefault()
+      handleSendMessage() 
+    } 
+  }
+
   const handleCopy = async () => {
     if (creationState.generatedContent) {
       try {
         await navigator.clipboard.writeText(creationState.generatedContent)
         toast.success('Content copied to clipboard!')
-      } catch { toast.error('Failed to copy') }
+      } catch { 
+        toast.error('Failed to copy') 
+      }
     }
+  }
+
+  const handleRestart = () => {
+    setMessages([])
+    setCreationState({
+      preferences: {},
+      type: 'character'
+    })
+    // Add greeting after state reset
+    setTimeout(() => {
+      const greeting: Message = {
+        id: Date.now().toString(),
+        role: 'ai',
+        content: "Hello! I'm here to help you create custom NSFW characters and scenarios. Tell me what kind of content you'd like to create - what themes, settings, or character types interest you?",
+        timestamp: new Date()
+      }
+      setMessages([greeting])
+    }, 100)
   }
 
   return (
@@ -311,8 +231,8 @@ Create explicit, immersive, detailed tailored content.`
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Psychological Evaluation Chat</h1>
-            <p className="text-muted-foreground">Let Luna analyze your desires through intimate conversation</p>
+            <h1 className="text-3xl font-bold">Custom Content Builder</h1>
+            <p className="text-muted-foreground">Chat with AI to create personalized NSFW content</p>
           </div>
         </div>
 
@@ -322,46 +242,22 @@ Create explicit, immersive, detailed tailored content.`
             <Card className="h-[600px] flex flex-col">
               <CardHeader className="border-b">
                 <div className="flex items-center gap-3">
-                  <Avatar className="bg-secondary">
-                    <AvatarFallback className="text-secondary-foreground font-bold">L</AvatarFallback>
+                  <Avatar className="bg-primary">
+                    <AvatarFallback className="text-primary-foreground font-bold">AI</AvatarFallback>
                   </Avatar>
                   <div>
-                    <CardTitle className="text-lg">Luna</CardTitle>
-                    <CardDescription>Your sexy psychologist & content creator</CardDescription>
+                    <CardTitle className="text-lg">AI Assistant</CardTitle>
+                    <CardDescription>Custom content creator</CardDescription>
                   </div>
                   <div className="ml-auto flex gap-2">
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => {
-                        setMessages([])
-                        setCreationState({
-                          stage: 'greeting',
-                          psychProfile: {},
-                          analysisComplete: false,
-                          assessmentGiven: false,
-                          userConfirmed: false,
-                          type: 'character'
-                        })
-                        // Add greeting with current prompt
-                        setTimeout(() => {
-                          const greetingText = lunaPrompt?.greeting || defaultPrompts.luna.greeting
-                          const greeting: Message = {
-                            id: Date.now().toString(),
-                            role: 'ai',
-                            content: greetingText,
-                            timestamp: new Date()
-                          }
-                          setMessages([greeting])
-                        }, 100)
-                      }}
+                      onClick={handleRestart}
                       className="text-xs"
                     >
                       Restart Chat
                     </Button>
-                    <Badge variant="secondary">
-                      {creationState.stage}
-                    </Badge>
                   </div>
                 </div>
               </CardHeader>
@@ -386,7 +282,7 @@ Create explicit, immersive, detailed tailored content.`
                               <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                               <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                             </div>
-                            <span className="text-sm">Luna is typing...</span>
+                            <span className="text-sm">AI is typing...</span>
                           </div>
                         </div>
                       </div>
@@ -400,7 +296,7 @@ Create explicit, immersive, detailed tailored content.`
                         value={currentInput}
                         onChange={(e) => setCurrentInput(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        placeholder="Tell Luna how you're feeling..."
+                        placeholder="Describe what you'd like to create..."
                         className="flex-1"
                         disabled={isTyping}
                       />
@@ -417,25 +313,20 @@ Create explicit, immersive, detailed tailored content.`
           {/* Side Panel */}
           <div className="space-y-6">
             <Card>
-              <CardHeader><CardTitle className="text-lg">Evaluation Progress</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-lg">Content Type</CardTitle></CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {['greeting','evaluation','analysis','assessment','confirmation','generation','completed'].map(stage => (
-                    <div key={stage} className={`flex items-center gap-2 ${creationState.stage === stage ? 'text-primary' : 'text-muted-foreground'}`}>
-                      <div className={`w-2 h-2 rounded-full ${creationState.stage === stage ? 'bg-primary' : 'bg-muted'}`}></div>
-                      <span className="text-sm capitalize">{stage}</span>
-                    </div>
-                  ))}
+                <div className="text-sm">
+                  <p className="text-muted-foreground">Creating: <span className="text-foreground font-medium capitalize">{creationState.type}</span></p>
                 </div>
               </CardContent>
             </Card>
 
-            {Object.keys(creationState.psychProfile).length > 0 && (
+            {Object.keys(creationState.preferences).length > 0 && (
               <Card>
-                <CardHeader><CardTitle className="text-lg">Psychological Profile</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg">Preferences</CardTitle></CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {Object.entries(creationState.psychProfile).map(([key, value]) => (
+                    {Object.entries(creationState.preferences).map(([key, value]) => (
                       value && (
                         <div key={key} className="flex justify-between text-sm">
                           <span className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g,' $1').toLowerCase()}:</span>
@@ -450,7 +341,7 @@ Create explicit, immersive, detailed tailored content.`
 
             {creationState.generatedContent && (
               <Card>
-                <CardHeader><CardTitle className="text-lg">Your Custom Content</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg">Generated Content</CardTitle></CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     <div className="bg-muted p-3 rounded-lg max-h-32 overflow-y-auto">
@@ -472,7 +363,7 @@ Create explicit, immersive, detailed tailored content.`
         onOpenChange={setShowExport}
         content={creationState.generatedContent || ''}
         type={creationState.type || 'character'}
-        title={creationState.name || `Custom ${creationState.type || 'character'}`}
+        title={`Custom ${creationState.type || 'character'}`}
       />
     </div>
   )
