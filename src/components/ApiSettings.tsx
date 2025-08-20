@@ -20,7 +20,7 @@ interface ApiSettingsProps {
   onSave?: (config: ApiConfig) => void
 }
 
-// Venice AI text models
+// Venice AI text models (using correct model IDs)
 const veniceTextModels = [
   { id: 'default', name: 'Venice Auto (Default)', description: 'Auto-selects best model' },
   { id: 'venice-uncensored', name: 'Venice Uncensored 1.1', description: 'Uncensored model' },
@@ -39,21 +39,19 @@ const veniceTextModels = [
   { id: 'deepseek-coder-v2-lite', name: 'DeepSeek Coder V2 Lite', description: 'Lite coding model' }
 ]
 
-// Venice AI image models (from their API docs)
+// Venice AI image models (from their official API docs)
 const veniceImageModels = [
-  { id: 'flux-1.1-pro', name: 'Flux 1.1 Pro', description: 'Highest quality images' },
-  { id: 'flux-1-schnell', name: 'Flux 1 Schnell', description: 'Fast generation' },
-  { id: 'flux-1-dev', name: 'Flux 1 Dev', description: 'Development model' },
-  { id: 'dalle-3', name: 'DALL-E 3', description: 'OpenAI DALL-E 3' },
-  { id: 'stable-diffusion-xl', name: 'Stable Diffusion XL', description: 'High resolution' },
-  { id: 'midjourney', name: 'Midjourney', description: 'Artistic style' }
+  { id: 'venice-sd35', name: 'Venice SD35', description: 'Default stable diffusion model' },
+  { id: 'flux-dev', name: 'Flux Dev', description: 'Highest quality images' },
+  { id: 'hidream', name: 'HiDream', description: 'High detail generation' },
+  { id: 'stable-diffusion-3.5', name: 'Stable Diffusion 3.5', description: 'Latest stable diffusion' }
 ]
 
 export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
   const [apiConfig, setApiConfig] = useKV<ApiConfig>('api-config', {
     apiKey: '',
     textModel: 'default',
-    imageModel: 'flux-1.1-pro'
+    imageModel: 'venice-sd35'
   })
 
   const [showKey, setShowKey] = useState(false)
@@ -64,7 +62,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
     setApiConfig(prev => ({ 
       apiKey: value,
       textModel: prev?.textModel || 'default',
-      imageModel: prev?.imageModel || 'flux-1.1-pro'
+      imageModel: prev?.imageModel || 'venice-sd35'
     }))
     setConnectionStatus('idle')
   }
@@ -73,7 +71,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
     setApiConfig(prev => ({ 
       apiKey: prev?.apiKey || '',
       textModel: model,
-      imageModel: prev?.imageModel || 'flux-1.1-pro'
+      imageModel: prev?.imageModel || 'venice-sd35'
     }))
   }
 
@@ -312,7 +310,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="imageModel">Image Model</Label>
-                <Select value={apiConfig?.imageModel || 'flux-1.1-pro'} onValueChange={handleImageModelChange}>
+                <Select value={apiConfig?.imageModel || 'venice-sd35'} onValueChange={handleImageModelChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select an image model" />
                   </SelectTrigger>

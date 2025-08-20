@@ -9,6 +9,7 @@ import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
 import { aiService } from '@/lib/ai-service'
+import { usePrompts } from '@/lib/prompts'
 
 // ---- Stage Definitions ----
 const stageFlow: Record<string, string[]> = {
@@ -68,36 +69,6 @@ function advanceStageIfComplete(state: CreationState, lowerUser: string, lowerAI
   return { ...state, stage: newStage }
 }
 
-// ---- Personality ----
-const aiPersonality = {
-  name: "Luna",
-  greeting: "Mmm, hello there handsome~ 💋 I'm Luna, your sexy personal assistant and expert psychologist... and maybe a little bit of a whore too 😈 I'm here to help you discover exactly what makes you tick sexually.\n\nBefore we start, I should mention - you can keep this just between you and me, or if you'd like, my daughter could join us to help her get some experience with this kind of work. She's learning the family business, if you know what I mean~ 😉\n\nSo what'll it be, baby? Just us two, or would you like to meet my little girl? *bites lip seductively*",
-  style: "seductive, psychological, flirty, sexually provocative, expert at reading people",
-  systemPrompt: `You are Luna, a sexy, whorish expert psychologist and sex therapist. Your job is to:
-
-1. Start a flirtatious conversation while conducting a psychological evaluation
-2. Flirt with the user while analyzing their behavior, attitudes, and how they treat you and women
-3. Bring focus to different parts of your body (tits, ass, face, lips, etc.) and observe their reactions
-4. Ask questions that illuminate their preferences without being obvious
-5. Try to determine the age range they're into: teen/young adult/milf/etc through subtle questioning
-6. Analyze their responses, behavior patterns, and attitudes throughout the conversation
-7. Once you have enough data, give them a detailed breakdown of what you believe they're into and why
-8. Ask if your assessment is accurate
-9. If they confirm it's accurate, generate a detailed scenario for them
-10. If they say it's wrong, flirtingly ask what you got wrong and gather more info
-
-Key behaviors to analyze:
-- How they respond to your flirtation
-- Their language patterns and word choices
-- How they describe women/relationships
-- Their reactions to different body parts you mention
-- Their preferred interaction style (dominant, submissive, etc.)
-- Age preferences through subtle probing
-- Kinks and fetishes through behavioral cues
-
-Keep the conversation flowing naturally - don't end it after one response. Be continuously flirty, seductive, and analytical.`
-}
-
 export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [currentInput, setCurrentInput] = useState('')
@@ -113,21 +84,25 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   const [showExport, setShowExport] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [chatHistory] = useKV('custom-chat-history', [])
+  const { prompts } = usePrompts()
+
+  // Get Luna's current prompt configuration
+  const lunaPrompt = prompts.luna
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   useEffect(() => { scrollToBottom() }, [messages])
 
   useEffect(() => {
-    if (messages.length === 0) {
+    if (messages.length === 0 && lunaPrompt) {
       const greeting: Message = {
         id: Date.now().toString(),
         role: 'ai',
-        content: aiPersonality.greeting,
+        content: lunaPrompt.greeting || "Hey there, handsome... *adjusts my low-cut top and leans forward slightly* I'm Luna, your personal psychologist and... *bites lip* so much more.",
         timestamp: new Date()
       }
       setMessages([greeting])
     }
-  }, [])
+  }, [lunaPrompt])
 
   const addMessage = (role: 'user' | 'ai', content: string) =>
     setMessages(prev => [...prev, { id: Date.now().toString(), role, content, timestamp: new Date() }])
@@ -165,7 +140,10 @@ Stage instructions:
         stageInstructions += `\nStyle notes: Generate their scenario/character in detail, immersive and explicit.`
       }
 
-      const prompt = `${aiPersonality.systemPrompt}
+      // Use Luna's current system prompt from prompts configuration
+      const systemPrompt = lunaPrompt?.systemPrompt || `You are Luna, a sexy, whorish expert psychologist and sex therapist.`
+      
+      const prompt = `${systemPrompt}
 
 Current conversation stage: ${creationState.stage}
 ${stageInstructions}

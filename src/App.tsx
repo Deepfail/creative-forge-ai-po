@@ -50,7 +50,7 @@ function App() {
   const [apiConfig] = useKV<ApiConfig>('api-config', {
     apiKey: '',
     textModel: 'default',
-    imageModel: 'flux-1.1-pro'
+    imageModel: 'venice-sd35'
   })
 
   // Initialize AI service with saved config
