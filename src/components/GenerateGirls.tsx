@@ -44,7 +44,7 @@ const femaleNames = [
   'Harper', 'Evelyn', 'Abigail', 'Emily', 'Elizabeth', 'Sofia', 'Avery', 'Ella',
   'Madison', 'Scarlett', 'Victoria', 'Aria', 'Grace', 'Chloe', 'Camila', 'Penelope',
   'Riley', 'Layla', 'Lillian', 'Nora', 'Zoe', 'Mila', 'Aubrey', 'Hannah', 'Lily',
-  'Addison', 'Eleanor', 'Natalie', 'Luna', 'Savannah', 'Brooklyn', 'Leah', 'Zara',
+  'Addison', 'Eleanor', 'Natalie', 'Maya', 'Savannah', 'Brooklyn', 'Leah', 'Zara',
   'Stella', 'Hazel', 'Ellie', 'Paisley', 'Audrey', 'Skylar', 'Violet', 'Claire'
 ]
 
