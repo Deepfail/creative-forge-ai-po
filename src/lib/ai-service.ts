@@ -294,8 +294,8 @@ export class AIService {
       <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="bg" cx="50%" cy="30%" r="70%">
-            <stop offset="0%" style="stop-color:rgba(200,200,200,0.1);stop-opacity:1" />
-            <stop offset="100%" style="stop-color:rgba(100,100,100,0.3);stop-opacity:1" />
+            <stop offset="0%" style="stop-color:rgba(100,100,120,0.1);stop-opacity:1" />
+            <stop offset="100%" style="stop-color:rgba(60,60,80,0.3);stop-opacity:1" />
           </radialGradient>
           <linearGradient id="hair" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" style="stop-color:${hairColor};stop-opacity:1" />
@@ -312,7 +312,7 @@ export class AIService {
         </defs>
         
         <!-- Background -->
-        <rect width="100%" height="100%" fill="url(#bg)"/>
+        <rect width="100%" height="100%" fill="#1a1a1a"/>
         
         <!-- Body/Shoulders -->
         <ellipse cx="${width/2}" cy="${height*0.85}" rx="${width*0.4}" ry="${height*0.2}" fill="url(#outfit)"/>

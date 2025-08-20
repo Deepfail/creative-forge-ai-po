@@ -26,10 +26,15 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
   })
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  
+  // Debug logging
+  console.log('PromptsManager render - prompts:', prompts)
+  console.log('PromptsManager render - sortedPrompts length:', sortedPrompts.length)
 
   // Initialize defaults if needed
   const initializeDefaults = () => {
     console.log('Manually initializing default prompts')
+    console.log('Default prompts:', defaultPrompts)
     setPrompts(defaultPrompts)
     setRefreshKey(prev => prev + 1)
     toast.success('Prompts initialized with defaults')
@@ -39,6 +44,20 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
   const forceRefresh = () => {
     setRefreshKey(prev => prev + 1)
     toast.success('Prompts refreshed')
+  }
+
+  // Test function to create a sample prompt
+  const createTestPrompt = () => {
+    const testPrompt = {
+      id: 'test-' + Date.now(),
+      name: 'Test Character',
+      description: 'A test character for debugging',
+      greeting: 'Hello! This is a test prompt.',
+      style: 'friendly',
+      systemPrompt: 'You are a helpful test character. Always be friendly and helpful.'
+    }
+    addPrompt(testPrompt)
+    toast.success('Test prompt created!')
   }
 
   const handleSave = (promptId: string, updates: Partial<ChatPrompt>) => {
@@ -192,6 +211,14 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
                   variant="outline"
                 >
                   Refresh
+                </Button>
+                <Button 
+                  onClick={createTestPrompt}
+                  size="sm"
+                  variant="outline"
+                  className="bg-accent/20"
+                >
+                  Create Test Prompt
                 </Button>
                 <span className="text-sm text-muted-foreground ml-4">
                   Prompts found: {sortedPrompts.length} | Refresh key: {refreshKey}
