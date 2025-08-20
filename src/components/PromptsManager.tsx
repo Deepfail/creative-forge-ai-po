@@ -25,12 +25,20 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
     systemPrompt: ''
   })
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   // Initialize defaults if needed
   const initializeDefaults = () => {
     console.log('Manually initializing default prompts')
     setPrompts(defaultPrompts)
+    setRefreshKey(prev => prev + 1)
     toast.success('Prompts initialized with defaults')
+  }
+
+  // Manual refresh
+  const forceRefresh = () => {
+    setRefreshKey(prev => prev + 1)
+    toast.success('Prompts refreshed')
   }
 
   const handleSave = (promptId: string, updates: Partial<ChatPrompt>) => {
@@ -170,7 +178,7 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
         <div className="mb-6">
           <Card className="bg-muted/30">
             <CardContent className="pt-6">
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
                 <Button 
                   onClick={initializeDefaults}
                   size="sm"
@@ -178,8 +186,18 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
                 >
                   Reset to Defaults
                 </Button>
+                <Button 
+                  onClick={forceRefresh}
+                  size="sm"
+                  variant="outline"
+                >
+                  Refresh
+                </Button>
                 <span className="text-sm text-muted-foreground ml-4">
-                  Prompts found: {sortedPrompts.length}
+                  Prompts found: {sortedPrompts.length} | Refresh key: {refreshKey}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Raw prompts: {Object.keys(prompts || {}).length}
                 </span>
               </div>
             </CardContent>
@@ -187,20 +205,37 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
         </div>
 
         {/* Prompts List */}
-        <div className="space-y-6">
+        <div className="space-y-6" key={refreshKey}>
           {sortedPrompts.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
-                <p className="text-muted-foreground mb-4">
-                  No prompts found. Click "Reset to Defaults" above to load the Luna prompt.
-                </p>
-                <Button 
-                  onClick={initializeDefaults}
-                  className="mt-4"
-                  variant="default"
-                >
-                  Initialize Default Prompts
-                </Button>
+                <div className="space-y-4">
+                  <p className="text-muted-foreground mb-4">
+                    No prompts found. This might be a loading issue with the key-value store.
+                  </p>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div>Debug Info:</div>
+                    <div>Raw prompts object: {JSON.stringify(prompts !== null)}</div>
+                    <div>Prompts keys: {prompts ? Object.keys(prompts).join(', ') : 'null'}</div>
+                    <div>Sorted prompts: {sortedPrompts.length}</div>
+                  </div>
+                  <div className="flex flex-col gap-2 items-center">
+                    <Button 
+                      onClick={initializeDefaults}
+                      className="mt-4"
+                      variant="default"
+                    >
+                      Initialize Default Prompts
+                    </Button>
+                    <Button 
+                      onClick={forceRefresh}
+                      size="sm"
+                      variant="outline"
+                    >
+                      Force Refresh
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           ) : (

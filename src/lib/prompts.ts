@@ -38,48 +38,31 @@ Remember: You're conducting a psychological evaluation while being seductive. Ev
 
 export function usePrompts() {
   const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', defaultPrompts)
-
-  // Ensure we always have a valid prompts object and force initialization if empty
-  const safePrompts = prompts && Object.keys(prompts).length > 0 ? prompts : defaultPrompts
   
-  // Force set if prompts is empty
-  React.useEffect(() => {
+  // Force initialization on first load if prompts is null or empty
+  useEffect(() => {
     if (!prompts || Object.keys(prompts).length === 0) {
-      console.log('usePrompts: No prompts found, initializing with defaults')
+      console.log('usePrompts: Initializing default prompts')
       setPrompts(defaultPrompts)
     }
-  }, [prompts, setPrompts])
+  }, [])
   
-  // Compute sorted prompts directly here instead of in a separate function
+  // Always ensure we have valid prompts
+  const safePrompts = prompts || defaultPrompts
+  
+  // Compute sorted prompts
   const sortedPrompts = useMemo(() => {
-    if (!safePrompts || typeof safePrompts !== 'object') {
-      console.log('sortedPrompts - prompts is not valid:', safePrompts)
-      return []
-    }
-    
     const allPrompts = Object.values(safePrompts)
-    console.log('sortedPrompts - found prompts:', allPrompts.length, allPrompts.map(p => p.id))
-    
-    if (allPrompts.length === 0) {
-      console.log('sortedPrompts - no prompts found, returning empty array')
-      return []
-    }
-    
-    const sorted = allPrompts.sort((a, b) => b.updatedAt - a.updatedAt)
-    console.log('sortedPrompts - returning sorted:', sorted.length, 'prompts')
-    return sorted
+    return allPrompts.sort((a, b) => b.updatedAt - a.updatedAt)
   }, [safePrompts])
 
-  console.log('usePrompts - Current prompts state:', safePrompts)
-  console.log('usePrompts - Prompts keys:', Object.keys(safePrompts))
-  console.log('usePrompts - Has Luna:', !!(safePrompts && safePrompts.luna))
-  console.log('usePrompts - Sorted prompts length:', sortedPrompts.length)
+  console.log('usePrompts - Current prompts:', Object.keys(safePrompts))
+  console.log('usePrompts - Sorted prompts count:', sortedPrompts.length)
 
   const updatePrompt = (id: string, updates: Partial<ChatPrompt>) => {
-    console.log('Updating prompt:', id, updates)
     setPrompts(current => {
       const currentPrompts = current || defaultPrompts
-      const updated = {
+      return {
         ...currentPrompts,
         [id]: {
           ...currentPrompts[id],
@@ -87,8 +70,6 @@ export function usePrompts() {
           updatedAt: Date.now()
         }
       }
-      console.log('New prompts state:', updated)
-      return updated
     })
   }
 
