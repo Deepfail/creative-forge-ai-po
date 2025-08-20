@@ -100,10 +100,7 @@ export class AIService {
         model: this.config.imageModel,
         prompt: finalPrompt,
         width: options?.width || 512,
-        height: options?.height || 512,
-        num_inference_steps: 25,
-        guidance_scale: 7.5,
-        scheduler: "euler_a"
+        height: options?.height || 512
       }
       
       console.log('Sending request to Venice AI image/generate:', requestBody)

@@ -127,10 +127,7 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
           model: apiConfig.imageModel,
           prompt: 'test portrait',
           width: 256,
-          height: 256,
-          num_inference_steps: 10,
-          guidance_scale: 5,
-          scheduler: "euler_a"
+          height: 256
         })
       })
 
