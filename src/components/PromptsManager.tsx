@@ -159,9 +159,33 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
           </Dialog>
         </div>
 
+        {/* Debug Panel */}
+        <Card className="mb-6 bg-muted/30">
+          <CardHeader>
+            <CardTitle className="text-sm">Debug Info</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-xs space-y-1">
+              <p>Prompts in storage: {Object.keys(prompts).length}</p>
+              <p>Sorted prompts: {sortedPrompts.length}</p>
+              <p>Available IDs: {Object.keys(prompts).join(', ')}</p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Prompts List */}
         <div className="space-y-6">
-          {sortedPrompts.map((prompt) => (
+          {sortedPrompts.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <p className="text-muted-foreground mb-4">No prompts found. Click "Create Prompt" to add one.</p>
+                <p className="text-sm text-muted-foreground">
+                  Debug info: Found {Object.keys(prompts).length} prompts in storage
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            sortedPrompts.map((prompt) => (
             <Card key={prompt.id} className="relative">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -239,7 +263,9 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
                 </CardContent>
               )}
             </Card>
-          ))}
+          ))
+          )}
+        </div>
         </div>
       </div>
     </div>

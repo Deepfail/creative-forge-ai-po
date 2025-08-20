@@ -88,21 +88,26 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
 
   // Get Luna's current prompt configuration
   const lunaPrompt = prompts.luna
+  
+  // Debug log
+  React.useEffect(() => {
+    console.log('Luna prompt updated:', lunaPrompt)
+  }, [lunaPrompt])
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   useEffect(() => { scrollToBottom() }, [messages])
 
   useEffect(() => {
-    if (messages.length === 0 && lunaPrompt) {
+    if (messages.length === 0 && lunaPrompt?.greeting) {
       const greeting: Message = {
         id: Date.now().toString(),
         role: 'ai',
-        content: lunaPrompt.greeting || "Hey there, handsome... *adjusts my low-cut top and leans forward slightly* I'm Luna, your personal psychologist and... *bites lip* so much more.",
+        content: lunaPrompt.greeting,
         timestamp: new Date()
       }
       setMessages([greeting])
     }
-  }, [lunaPrompt])
+  }, []) // Only run once on mount
 
   const addMessage = (role: 'user' | 'ai', content: string) =>
     setMessages(prev => [...prev, { id: Date.now().toString(), role, content, timestamp: new Date() }])
@@ -313,9 +318,41 @@ Create explicit, immersive, detailed tailored content.`
                     <CardTitle className="text-lg">Luna</CardTitle>
                     <CardDescription>Your sexy psychologist & content creator</CardDescription>
                   </div>
-                  <Badge variant="secondary" className="ml-auto">
-                    {creationState.stage}
-                  </Badge>
+                  <div className="ml-auto flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setMessages([])
+                        setCreationState({
+                          stage: 'greeting',
+                          psychProfile: {},
+                          analysisComplete: false,
+                          assessmentGiven: false,
+                          userConfirmed: false,
+                          type: 'character'
+                        })
+                        // Add greeting with current prompt
+                        if (lunaPrompt?.greeting) {
+                          setTimeout(() => {
+                            const greeting: Message = {
+                              id: Date.now().toString(),
+                              role: 'ai',
+                              content: lunaPrompt.greeting,
+                              timestamp: new Date()
+                            }
+                            setMessages([greeting])
+                          }, 100)
+                        }
+                      }}
+                      className="text-xs"
+                    >
+                      Restart Chat
+                    </Button>
+                    <Badge variant="secondary">
+                      {creationState.stage}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
 

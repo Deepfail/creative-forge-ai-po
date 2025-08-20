@@ -38,23 +38,38 @@ Remember: You're conducting a psychological evaluation while being seductive. Ev
 
 export function usePrompts() {
   const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', {})
+  const [initialized, setInitialized] = React.useState(false)
 
-  // Initialize default prompts if none exist
+  // Ensure default prompts are merged but allow updates  
   React.useEffect(() => {
-    if (Object.keys(prompts).length === 0) {
-      setPrompts(defaultPrompts)
+    // Only initialize once
+    if (!initialized) {
+      console.log('Current prompts:', prompts)
+      if (Object.keys(prompts).length === 0 || !prompts.luna) {
+        console.log('Initializing prompts with defaults')
+        setPrompts({
+          ...defaultPrompts,
+          ...prompts, // Keep any existing prompts but add defaults for missing ones
+        })
+      }
+      setInitialized(true)
     }
-  }, [prompts, setPrompts])
+  }, [prompts, setPrompts, initialized])
 
   const updatePrompt = (id: string, updates: Partial<ChatPrompt>) => {
-    setPrompts(current => ({
-      ...current,
-      [id]: {
-        ...current[id],
-        ...updates,
-        updatedAt: Date.now()
+    console.log('Updating prompt:', id, updates)
+    setPrompts(current => {
+      const updated = {
+        ...current,
+        [id]: {
+          ...current[id],
+          ...updates,
+          updatedAt: Date.now()
+        }
       }
-    }))
+      console.log('New prompts state:', updated)
+      return updated
+    })
   }
 
   const deletePrompt = (id: string) => {
