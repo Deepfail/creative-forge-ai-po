@@ -8,6 +8,7 @@ import { ArrowLeft, Edit3, Save, X, Plus, Trash2 } from '@phosphor-icons/react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { usePrompts, type ChatPrompt, defaultPrompts } from '@/lib/prompts'
 import { toast } from 'sonner'
+import DebugPrompts from './DebugPrompts'
 
 interface PromptsManagerProps {
   onBack: () => void
@@ -229,6 +230,11 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Debug Section */}
+        <div className="mb-6">
+          <DebugPrompts />
         </div>
 
         {/* Prompts List */}

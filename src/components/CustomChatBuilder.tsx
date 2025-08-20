@@ -9,7 +9,7 @@ import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
 import { aiService } from '@/lib/ai-service'
-import { usePrompts } from '@/lib/prompts'
+import { usePrompts, defaultPrompts } from '@/lib/prompts'
 
 // ---- Stage Definitions ----
 const stageFlow: Record<string, string[]> = {
@@ -87,12 +87,13 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   const { prompts } = usePrompts()
 
   // Get Luna's current prompt configuration with fallback
-  const lunaPrompt = prompts?.luna || prompts['luna']
+  const lunaPrompt = prompts?.luna || prompts?.['luna']
   
   // Debug log
   React.useEffect(() => {
     console.log('Luna prompt updated:', lunaPrompt)
     console.log('All prompts available:', Object.keys(prompts || {}))
+    console.log('Full prompts object:', prompts)
   }, [lunaPrompt, prompts])
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -103,14 +104,16 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
       lunaPrompt: !!lunaPrompt, 
       greeting: !!lunaPrompt?.greeting,
       messagesLength: messages.length,
-      allPromptKeys: Object.keys(prompts || {})
+      allPromptKeys: Object.keys(prompts || {}),
+      lunaGreeting: lunaPrompt?.greeting || 'fallback'
     })
-    if (messages.length === 0 && lunaPrompt?.greeting) {
+    if (messages.length === 0) {
       console.log('Adding Luna greeting message')
+      const greetingText = lunaPrompt?.greeting || defaultPrompts.luna.greeting
       const greeting: Message = {
         id: Date.now().toString(),
         role: 'ai',
-        content: lunaPrompt.greeting,
+        content: greetingText,
         timestamp: new Date()
       }
       setMessages([greeting])
@@ -154,20 +157,7 @@ Stage instructions:
       }
 
       // Use Luna's current system prompt from prompts configuration with fallback
-      const systemPrompt = lunaPrompt?.systemPrompt || `You are Luna, my sexy, whorish, and expert psychologist/sex therapist. 
-
-Instructions for this response:
-- Stay in character as Luna (sexy, seductive, psychological expert)
-- at the start, Give user the option to keep speaking with just her you, or let her daughter join you both to help her get her daughter some experience.
-- Ask one question at a time, limit narration to actions and descriptions of your body and related. Should feel like a actual conversation, not reading a story.
-- Keep the conversation flowing - don't end it after this response
-- Be continuously flirty and mention your body parts naturally
-- Be seductive and sexual.
-- Analyze their response for psychological cues
-- If you haven't given your assessment yet and have enough info (usually after 5-10 exchanges), provide your detailed psychological breakdown
-- If they've confirmed your assessment is correct, generate their perfect scenario/character
-
-Remember: You're conducting a psychological evaluation while being seductive. Every response should advance both the flirtation AND the analysis.`
+      const systemPrompt = lunaPrompt?.systemPrompt || defaultPrompts.luna.systemPrompt
       
       const prompt = `${systemPrompt}
 
@@ -354,17 +344,16 @@ Create explicit, immersive, detailed tailored content.`
                           type: 'character'
                         })
                         // Add greeting with current prompt
-                        if (lunaPrompt?.greeting) {
-                          setTimeout(() => {
-                            const greeting: Message = {
-                              id: Date.now().toString(),
-                              role: 'ai',
-                              content: lunaPrompt.greeting,
-                              timestamp: new Date()
-                            }
-                            setMessages([greeting])
-                          }, 100)
-                        }
+                        setTimeout(() => {
+                          const greetingText = lunaPrompt?.greeting || defaultPrompts.luna.greeting
+                          const greeting: Message = {
+                            id: Date.now().toString(),
+                            role: 'ai',
+                            content: greetingText,
+                            timestamp: new Date()
+                          }
+                          setMessages([greeting])
+                        }, 100)
                       }}
                       className="text-xs"
                     >
