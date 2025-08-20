@@ -1,5 +1,5 @@
 import { useKV } from '@github/spark/hooks'
-import React
+import React from 'react'
 
 export interface ChatPrompt {
   id: string
