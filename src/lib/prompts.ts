@@ -1,5 +1,5 @@
 import { useKV } from '@github/spark/hooks'
-import React, { useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 
 export interface ChatPrompt {
   id: string
@@ -66,7 +66,7 @@ Make it engaging, immersive, and suitable for adult interactive experiences.`,
 
 export function usePrompts() {
   const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', {})
-  const [initialized, setInitialized] = React.useState(false)
+  const [initialized, setInitialized] = useState(false)
   
   // Debug logging to see what's in storage
   useEffect(() => {
@@ -87,7 +87,7 @@ export function usePrompts() {
     } else if (!initialized) {
       setInitialized(true)
     }
-  }, [prompts, initialized])
+  }, [prompts, initialized, setPrompts])
   
   // Use current prompts, even if empty (user might have cleared them intentionally)
   const safePrompts = prompts || {}

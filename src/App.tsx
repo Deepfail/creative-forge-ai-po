@@ -73,53 +73,55 @@ function App() {
     setMode('home')
   }
 
-  if (mode === 'simple') {
-    return <SimpleMode type={selectedType} onBack={handleBack} />
-  }
+  // Render based on current mode
+  const renderCurrentMode = () => {
+    if (mode === 'simple') {
+      return <SimpleMode type={selectedType} onBack={handleBack} />
+    }
 
-  if (mode === 'interactive') {
-    return <InteractiveMode type={selectedType} onBack={handleBack} />
-  }
+    if (mode === 'interactive') {
+      return <InteractiveMode type={selectedType} onBack={handleBack} />
+    }
 
-  if (mode === 'random') {
-    return <RandomGenerator type={selectedType} onBack={handleBack} />
-  }
+    if (mode === 'random') {
+      return <RandomGenerator type={selectedType} onBack={handleBack} />
+    }
 
-  if (mode === 'custom') {
-    return <CustomChatBuilder onBack={handleBack} />
-  }
+    if (mode === 'custom') {
+      return <CustomChatBuilder onBack={handleBack} />
+    }
 
-  if (mode === 'girls') {
-    return <GenerateGirls onBack={handleBack} />
-  }
+    if (mode === 'girls') {
+      return <GenerateGirls onBack={handleBack} />
+    }
 
-  if (mode === 'harem') {
-    return <Harem onBack={handleBack} />
-  }
+    if (mode === 'harem') {
+      return <Harem onBack={handleBack} />
+    }
 
-  if (mode === 'prompts') {
-    return <PromptsManager onBack={handleBack} />
-  }
+    if (mode === 'prompts') {
+      return <PromptsManager onBack={handleBack} />
+    }
 
-  if (mode === 'prompts-test') {
-    return <PromptsTest onBack={handleBack} />
-  }
+    if (mode === 'prompts-test') {
+      return <PromptsTest onBack={handleBack} />
+    }
 
-  if (mode === 'image-test') {
-    return <ImageGenerationTest onBack={handleBack} />
-  }
+    if (mode === 'image-test') {
+      return <ImageGenerationTest onBack={handleBack} />
+    }
 
-  if (showSettings) {
-    return <ApiSettings 
-      onClose={() => setShowSettings(false)} 
-      onSave={(config) => {
-        aiService.setConfig(config)
-        setShowSettings(false)
-      }}
-    />
-  }
+    if (showSettings) {
+      return <ApiSettings 
+        onClose={() => setShowSettings(false)} 
+        onSave={(config) => {
+          aiService.setConfig(config)
+          setShowSettings(false)
+        }}
+      />
+    }
 
-  return (
+    return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
@@ -307,7 +309,10 @@ function App() {
         </div>
       </div>
     </div>
-  )
+    )
+  }
+
+  return renderCurrentMode()
 }
 
 export default App
