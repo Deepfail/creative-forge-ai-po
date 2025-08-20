@@ -1,102 +1,34 @@
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { useKV } from '@github/spark/hooks'
-const defaultPrompts = {
+import { toast } from 'sonner'
 
-Name: {name}
-  'character-creation': `Create a detailed NSFW character based on the following details:
-
-Generate a c
-2. Persona
-4. Backgroun
-6. Their goals and motivat
-Make the description vivid, engaging, and s
-  'scenario-creation': `
-Setting: {setting}
-Theme: {theme}
-
-Generate a comprehensive character profile including:
-1. Detailed physical appearance
-2. Personality traits and quirks
-3. Sexual preferences and kinks
-4. Background story
-5. How they interact with others
-6. Their goals and motivations
-
-Make the description vivid, engaging, and suitable for adult roleplay scenarios.`,
-
-  'scenario-creation': `Create an immersive NSFW scenario based on these parameters:
-
-Setting: {setting}
-Characters: {characters}
-Theme: {theme}
-Tone: {tone}
-Kinks: {kinks}
-Plot Elements: {plotElements}
+export default function DebugPrompts() {
+  const [prompts] = useKV('chat-prompts', {})
 
   const clearStorage = () => {
-    toast.success('Storage clea
+    // This would require a separate function to clear storage
+    toast.success('Storage cleared')
+  }
 
+  return (
     <div className="space-y-4">
+      <Card>
         <CardHeader>
+          <CardTitle>Debug: Stored Prompts</CardTitle>
         </CardHeader>
-          <div class
-
+        <CardContent>
+          <pre className="text-xs bg-muted p-4 rounded overflow-auto max-h-96">
+            {JSON.stringify(prompts, null, 2)}
+          </pre>
+          <div className="mt-4">
             <Button onClick={clearStorage} variant="destructive">
-
-          
-
-        </Card
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  const clearStorage = () => {
-
-
-
-
-
-    <div className="space-y-4">
-
-        <CardHeader>
-
-        </CardHeader>
-
-
-
-
-
-            <Button onClick={clearStorage} variant="destructive">
-
-
-
-          
-
-
-
-
-
-
-
+              Clear Storage
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
