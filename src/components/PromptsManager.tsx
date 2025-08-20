@@ -266,7 +266,6 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
           ))
           )}
         </div>
-        </div>
       </div>
     </div>
   )
