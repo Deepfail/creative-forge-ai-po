@@ -1,5 +1,4 @@
 import React from 'react'
-import { Card, CardContent, CardHeader, CardTit
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useKV } from '@github/spark/hooks'
 const defaultPrompts = {

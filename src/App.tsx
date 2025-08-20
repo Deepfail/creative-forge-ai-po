@@ -315,4 +315,4 @@ function App() {
   return renderCurrentMode()
 }
 
-export default App;
+export default App
