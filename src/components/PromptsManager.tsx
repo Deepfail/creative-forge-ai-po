@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,39 +26,11 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
   })
   const [showCreateDialog, setShowCreateDialog] = useState(false)
 
-  // Force initialization on mount if prompts are empty
-  useEffect(() => {
-    console.log('PromptsManager mounted, checking prompt state')
-    console.log('Prompts object:', prompts)
-    console.log('Prompts keys:', Object.keys(prompts || {}))
-    console.log('Sorted prompts:', sortedPrompts?.length)
-    
-    // If no prompts at all, force initialization
-    if (!prompts || Object.keys(prompts).length === 0) {
-      console.log('No prompts found, forcing initialization')
-      setPrompts(defaultPrompts)
-    }
-  }, []) // Only run on mount
-
-  // Manual initialization function
+  // Initialize defaults if needed
   const initializeDefaults = () => {
     console.log('Manually initializing default prompts')
     setPrompts(defaultPrompts)
     toast.success('Prompts initialized with defaults')
-  }
-
-  // Debug function
-  const debugStorage = async () => {
-    try {
-      const keys = await spark.kv.keys()
-      console.log('All KV keys:', keys)
-      const chatPromptsData = await spark.kv.get('chat-prompts')
-      console.log('Raw chat-prompts data:', chatPromptsData)
-      toast.info(`Found ${keys.length} keys in storage. Check console for details.`)
-    } catch (error) {
-      console.error('Debug storage error:', error)
-      toast.error('Failed to debug storage')
-    }
   }
 
   const handleSave = (promptId: string, updates: Partial<ChatPrompt>) => {
@@ -194,62 +166,41 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
           </Dialog>
         </div>
 
-        {/* Debug Panel */}
-        <Card className="mb-6 bg-muted/30">
-          <CardHeader>
-            <CardTitle className="text-sm">Debug Info</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs space-y-1">
-              <p>Prompts type: {typeof prompts}</p>
-              <p>Prompts is null/undefined: {prompts ? 'No' : 'Yes'}</p>
-              <p>Prompts in storage: {prompts ? Object.keys(prompts).length : 0}</p>
-              <p>Sorted prompts: {sortedPrompts?.length || 0}</p>
-              <p>Available IDs: {prompts ? Object.keys(prompts).join(', ') : 'None'}</p>
-              <p>Luna exists: {prompts?.luna ? 'Yes' : 'No'}</p>
-              <p>Luna greeting exists: {prompts?.luna?.greeting ? 'Yes' : 'No'}</p>
-              <p>Raw prompts object: {JSON.stringify(prompts ? Object.keys(prompts) : null)}</p>
-              <p>Default prompts available: {JSON.stringify(Object.keys(defaultPrompts))}</p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Quick Actions */}
+        <div className="mb-6">
+          <Card className="bg-muted/30">
+            <CardContent className="pt-6">
+              <div className="flex gap-2">
+                <Button 
+                  onClick={initializeDefaults}
+                  size="sm"
+                  variant="outline"
+                >
+                  Reset to Defaults
+                </Button>
+                <span className="text-sm text-muted-foreground ml-4">
+                  Prompts found: {sortedPrompts.length}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Prompts List */}
         <div className="space-y-6">
-          {!sortedPrompts || sortedPrompts.length === 0 ? (
+          {sortedPrompts.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
                 <p className="text-muted-foreground mb-4">
-                  {(!prompts || Object.keys(prompts).length === 0) 
-                    ? "No prompts found. The default Luna prompt should be loading..." 
-                    : `Found ${Object.keys(prompts).length} prompt(s) but not showing in sorted list. Check debug info above.`}
+                  No prompts found. Click "Reset to Defaults" above to load the Luna prompt.
                 </p>
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => window.location.reload()} 
-              className="mt-4"
-              variant="outline"
-            >
-              Refresh Page
-            </Button>
-            <Button 
-              onClick={() => {
-                // Force re-initialization of prompts
-                initializeDefaults()
-              }}
-              className="mt-4"
-              variant="outline"
-            >
-              Initialize Defaults
-            </Button>
-            <Button 
-              onClick={debugStorage}
-              className="mt-4"
-              variant="outline"
-            >
-              Debug Storage
-            </Button>
-          </div>
+                <Button 
+                  onClick={initializeDefaults}
+                  className="mt-4"
+                  variant="default"
+                >
+                  Initialize Default Prompts
+                </Button>
               </CardContent>
             </Card>
           ) : (

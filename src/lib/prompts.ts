@@ -1,5 +1,5 @@
 import { useKV } from '@github/spark/hooks'
-import React from 'react'
+import React, { useMemo, useEffect } from 'react'
 
 export interface ChatPrompt {
   id: string
@@ -39,13 +39,41 @@ Remember: You're conducting a psychological evaluation while being seductive. Ev
 export function usePrompts() {
   const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', defaultPrompts)
 
-  // Ensure we always have a valid prompts object
-  const safePrompts = prompts || defaultPrompts
+  // Ensure we always have a valid prompts object and force initialization if empty
+  const safePrompts = prompts && Object.keys(prompts).length > 0 ? prompts : defaultPrompts
+  
+  // Force set if prompts is empty
+  React.useEffect(() => {
+    if (!prompts || Object.keys(prompts).length === 0) {
+      console.log('usePrompts: No prompts found, initializing with defaults')
+      setPrompts(defaultPrompts)
+    }
+  }, [prompts, setPrompts])
+  
+  // Compute sorted prompts directly here instead of in a separate function
+  const sortedPrompts = useMemo(() => {
+    if (!safePrompts || typeof safePrompts !== 'object') {
+      console.log('sortedPrompts - prompts is not valid:', safePrompts)
+      return []
+    }
+    
+    const allPrompts = Object.values(safePrompts)
+    console.log('sortedPrompts - found prompts:', allPrompts.length, allPrompts.map(p => p.id))
+    
+    if (allPrompts.length === 0) {
+      console.log('sortedPrompts - no prompts found, returning empty array')
+      return []
+    }
+    
+    const sorted = allPrompts.sort((a, b) => b.updatedAt - a.updatedAt)
+    console.log('sortedPrompts - returning sorted:', sorted.length, 'prompts')
+    return sorted
+  }, [safePrompts])
 
   console.log('usePrompts - Current prompts state:', safePrompts)
   console.log('usePrompts - Prompts keys:', Object.keys(safePrompts))
   console.log('usePrompts - Has Luna:', !!(safePrompts && safePrompts.luna))
-  console.log('usePrompts - Prompts type:', typeof safePrompts)
+  console.log('usePrompts - Sorted prompts length:', sortedPrompts.length)
 
   const updatePrompt = (id: string, updates: Partial<ChatPrompt>) => {
     console.log('Updating prompt:', id, updates)
@@ -85,20 +113,9 @@ export function usePrompts() {
     })
   }
 
-  // Get prompts sorted by update time (newest first)
-  const getSortedPrompts = () => {
-    if (!safePrompts || typeof safePrompts !== 'object') {
-      console.log('getSortedPrompts - prompts is not valid:', safePrompts)
-      return []
-    }
-    const sorted = Object.values(safePrompts).sort((a, b) => b.updatedAt - a.updatedAt)
-    console.log('getSortedPrompts - returning:', sorted.length, 'prompts')
-    return sorted
-  }
-
   return {
     prompts: safePrompts,
-    sortedPrompts: getSortedPrompts(),
+    sortedPrompts,
     updatePrompt,
     deletePrompt,
     addPrompt,
