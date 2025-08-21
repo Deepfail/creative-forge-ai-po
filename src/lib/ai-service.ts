@@ -267,7 +267,7 @@ export class AIService {
     // Determine character features
     let hairColor = '#4A4A4A' // Default dark brown
     let skinColor = '#F5DEB3' // Default natural skin tone 
-    let outfitColor = '#6B46C1' // Default purple instead of hot pink
+    let outfitColor = '#6366f1' // Default indigo
     let eyeColor = '#8B4513' // Default brown eyes
     
     if (lowerPrompt.includes('blonde')) hairColor = '#FFD700'
@@ -285,7 +285,7 @@ export class AIService {
     
     // Generate style-based outfit  
     if (lowerPrompt.includes('goth') || lowerPrompt.includes('emo')) outfitColor = '#2F2F2F'
-    else if (lowerPrompt.includes('cheerleader')) outfitColor = '#FF4500'
+    else if (lowerPrompt.includes('cheerleader')) outfitColor = '#ef4444'
     else if (lowerPrompt.includes('business')) outfitColor = '#4A4A4A'
     
     console.log('SVG colors determined:', { hairColor, skinColor, outfitColor, eyeColor })

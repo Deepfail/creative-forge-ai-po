@@ -12,14 +12,14 @@ import GenerateGirls from './components/GenerateGirls'
 import ApiSettings from './components/ApiSettings'
 import Harem from './components/Harem'
 import PromptsManager from './components/PromptsManager'
-import PromptsTest from './components/PromptsTest'
+import PromptsDebug from './components/PromptsDebug'
 import ImageGenerationTest from './components/ImageGenerationTest'
 import { aiService } from './lib/ai-service'
 import { useKV } from '@github/spark/hooks'
 import type { ApiConfig } from './components/ApiSettings'
 
 type CreationType = 'character' | 'scenario'
-type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'prompts-test' | 'image-test'
+type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'prompts-test' | 'image-test' | 'prompts-debug'
 
 const creationTypes: Array<{
   id: CreationType
@@ -111,6 +111,10 @@ function App() {
       return <ImageGenerationTest onBack={handleBack} />
     }
 
+    if (mode === 'prompts-debug') {
+      return <PromptsDebug />
+    }
+
     if (showSettings) {
       return <ApiSettings 
         onClose={() => setShowSettings(false)} 
@@ -156,7 +160,21 @@ function App() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setMode('prompts-debug')}
+                className="border-secondary/30 hover:bg-secondary/10"
+              >
+                <Sparkle size={16} className="mr-2" />
+                Debug Prompts
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setMode('prompts')}
+                className="border-secondary/30 hover:bg-secondary/10"
+              >
+                <Chat size={16} className="mr-2" />
+                Prompts
+              </Button>
                 className="border-secondary/30 hover:bg-secondary/10"
               >
                 <Chat size={16} className="mr-2" />

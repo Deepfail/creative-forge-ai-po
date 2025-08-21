@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Edit3, Save, X, Plus, Trash2 } from '@phosphor-icons/react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { usePrompts, type ChatPrompt } from '@/lib/prompts'
+import { usePrompts, type ChatPrompt, defaultPrompts } from '@/lib/prompts'
 import { toast } from 'sonner'
 
 interface PromptsManagerProps {
@@ -54,56 +54,11 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
     toast.success('Test prompt created!')
   }
 
-  // Create useful sample prompts
-  const createSamplePrompts = () => {
-    const samples = [
-      {
-        id: 'chat-builder',
-        name: 'Chat Builder Assistant',
-        description: 'Interactive AI for building custom content',
-        greeting: "Hello! I'm here to help you create custom NSFW characters and scenarios. Tell me what kind of content you'd like to create!",
-        style: 'interactive',
-        systemPrompt: `You are an AI assistant helping to create custom NSFW content. You should:
-- Ask follow-up questions to understand user preferences
-- Suggest creative ideas and variations
-- Be helpful and conversational
-- Guide users through the creation process
-- When ready, offer to generate their custom content
-
-Stay focused on content creation and be engaging throughout the conversation.`
-      },
-      {
-        id: 'character-generator',
-        name: 'Character Generator',
-        description: 'Creates detailed NSFW characters',
-        style: 'generator',
-        systemPrompt: `Create a detailed NSFW character based on the provided details. Include:
-1. Physical appearance and attributes
-2. Personality traits and quirks
-3. Sexual preferences and kinks
-4. Background story and motivations
-5. How they interact with others
-
-Make descriptions vivid and engaging for adult roleplay scenarios.`
-      },
-      {
-        id: 'scenario-builder',
-        name: 'Scenario Builder',
-        description: 'Creates immersive NSFW scenarios',
-        style: 'generator',
-        systemPrompt: `Create an immersive NSFW scenario based on the provided parameters. Include:
-1. Detailed scene setting and atmosphere
-2. Character dynamics and relationships
-3. Initial situation and tension
-4. Possible progression paths
-5. Interactive elements and choices
-
-Make it engaging and suitable for adult interactive experiences.`
-      }
-    ]
-
-    samples.forEach(sample => addPrompt(sample))
-    toast.success(`Created ${samples.length} sample prompts!`)
+  // Initialize with defaults if needed
+  const initializeDefaults = () => {
+    console.log('Force initializing default prompts...')
+    setPrompts(defaultPrompts)
+    toast.success('Default prompts initialized!')
   }
 
   const handleSave = (promptId: string, updates: Partial<ChatPrompt>) => {
@@ -241,11 +196,11 @@ Make it engaging and suitable for adult interactive experiences.`
             <CardContent className="pt-6">
               <div className="flex flex-wrap gap-2 items-center">
                 <Button 
-                  onClick={createSamplePrompts}
+                  onClick={initializeDefaults}
                   size="sm"
                   className="bg-primary hover:bg-primary/90"
                 >
-                  📝 Create Sample Prompts
+                  📝 Initialize Default Prompts
                 </Button>
                 <Button 
                   onClick={clearAllPrompts}
@@ -305,10 +260,10 @@ Make it engaging and suitable for adult interactive experiences.`
                   </p>
                   <div className="flex flex-col gap-2 items-center">
                     <Button 
-                      onClick={createSamplePrompts}
+                      onClick={initializeDefaults}
                       className="bg-primary hover:bg-primary/90"
                     >
-                      Create Sample Prompts
+                      Initialize Default Prompts
                     </Button>
                     <Button 
                       onClick={() => setShowCreateDialog(true)}

@@ -40,22 +40,24 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   })
   const [showExport, setShowExport] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { getChatBuilderPrompt } = usePrompts()
+  const { getPrompt } = usePrompts()
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   useEffect(() => { scrollToBottom() }, [messages])
 
   useEffect(() => {
     if (messages.length === 0) {
+      // Get Luna's greeting from the prompts
+      const lunaPrompt = getPrompt('luna-chat-builder')
       const greeting: Message = {
         id: Date.now().toString(),
         role: 'ai',
-        content: "Hello! I'm here to help you create custom NSFW characters and scenarios. Tell me what kind of content you'd like to create - what themes, settings, or character types interest you?",
+        content: lunaPrompt?.greeting || "Hey there, handsome~ 💋 I'm Luna, your personal AI psychologist and character creation expert. I'm here to help you create the perfect character for your fantasies. Want me to analyze what you're really into? Or should we dive right into building someone special together? 😈",
         timestamp: new Date()
       }
       setMessages([greeting])
     }
-  }, [messages.length])
+  }, [messages.length, getPrompt])
 
   const addMessage = (role: 'user' | 'ai', content: string) =>
     setMessages(prev => [...prev, { id: Date.now().toString(), role, content, timestamp: new Date() }])
@@ -66,8 +68,9 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
     try {
       const conversationContext = messages.map(m => `${m.role}: ${m.content}`).join('\n')
       
-      // Get the prompt from the prompts system
-      const basePrompt = getChatBuilderPrompt()
+      // Get Luna's system prompt specifically
+      const lunaPrompt = getPrompt('luna-chat-builder')
+      const basePrompt = lunaPrompt?.systemPrompt || `You are Luna, a sexy and flirty AI psychologist who helps create NSFW characters through conversation. Be seductive, ask engaging questions, and analyze what users really want.`
 
       const prompt = `${basePrompt}
 
