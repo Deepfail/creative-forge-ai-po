@@ -87,73 +87,117 @@ Create diverse, interesting characters that feel like real people with unique pe
 
 export function usePrompts() {
   const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', {})
+  const [initialized, setInitialized] = useState(false)
   
   // Auto-populate default prompts if none exist
   useEffect(() => {
-    const promptKeys = Object.keys(prompts || {})
-    console.log('Prompts check - current prompts keys:', promptKeys)
-    
-    if (!prompts || promptKeys.length === 0) {
-      console.log('No prompts found, auto-populating defaults...')
-      console.log('Default prompts available:', Object.keys(defaultPrompts))
-      setPrompts(defaultPrompts)
-    } else {
-      console.log('Prompts already exist:', promptKeys)
+    try {
+      const promptKeys = Object.keys(prompts || {})
+      console.log('Prompts check - current prompts keys:', promptKeys)
+      
+      if (!initialized && (!prompts || promptKeys.length === 0)) {
+        console.log('No prompts found, auto-populating defaults...')
+        console.log('Default prompts available:', Object.keys(defaultPrompts))
+        setPrompts(defaultPrompts)
+        setInitialized(true)
+      } else if (!initialized && promptKeys.length > 0) {
+        console.log('Prompts already exist:', promptKeys)
+        setInitialized(true)
+      }
+    } catch (error) {
+      console.error('Error initializing prompts:', error)
+      // Try to set defaults as fallback
+      if (!initialized) {
+        try {
+          setPrompts(defaultPrompts)
+          setInitialized(true)
+        } catch (fallbackError) {
+          console.error('Failed to set default prompts:', fallbackError)
+        }
+      }
     }
-  }, [prompts, setPrompts])
+  }, [prompts, setPrompts, initialized])
   
-  // Use current prompts directly from KV store
-  const safePrompts = prompts || {}
+  // Use current prompts directly from KV store with better error handling
+  const safePrompts = useMemo(() => {
+    try {
+      return prompts || {}
+    } catch (error) {
+      console.error('Error accessing prompts:', error)
+      return {}
+    }
+  }, [prompts])
   
-  // Compute sorted prompts
+  // Compute sorted prompts with error handling
   const sortedPrompts = useMemo(() => {
-    const allPrompts = Object.values(safePrompts)
-    return allPrompts.sort((a, b) => b.updatedAt - a.updatedAt)
+    try {
+      const allPrompts = Object.values(safePrompts)
+      return allPrompts.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+    } catch (error) {
+      console.error('Error sorting prompts:', error)
+      return []
+    }
   }, [safePrompts])
 
   const updatePrompt = (id: string, updates: Partial<ChatPrompt>) => {
-    setPrompts(current => {
-      const currentPrompts = current || {}
-      const updatedPrompts = {
-        ...currentPrompts,
-        [id]: {
-          ...currentPrompts[id],
-          ...updates,
-          updatedAt: Date.now()
+    try {
+      setPrompts(current => {
+        const currentPrompts = current || {}
+        const updatedPrompts = {
+          ...currentPrompts,
+          [id]: {
+            ...currentPrompts[id],
+            ...updates,
+            updatedAt: Date.now()
+          }
         }
-      }
-      console.log('Updating prompt:', id, 'New prompts:', updatedPrompts)
-      return updatedPrompts
-    })
+        console.log('Updating prompt:', id, 'New prompts:', Object.keys(updatedPrompts))
+        return updatedPrompts
+      })
+    } catch (error) {
+      console.error('Error updating prompt:', error)
+    }
   }
 
   const deletePrompt = (id: string) => {
-    setPrompts(current => {
-      const currentPrompts = current || {}
-      const { [id]: deleted, ...rest } = currentPrompts
-      console.log('Deleting prompt:', id, 'Remaining prompts:', rest)
-      return rest
-    })
+    try {
+      setPrompts(current => {
+        const currentPrompts = current || {}
+        const { [id]: deleted, ...rest } = currentPrompts
+        console.log('Deleting prompt:', id, 'Remaining prompts:', Object.keys(rest))
+        return rest
+      })
+    } catch (error) {
+      console.error('Error deleting prompt:', error)
+    }
   }
 
   const addPrompt = (prompt: Omit<ChatPrompt, 'updatedAt'>) => {
-    setPrompts(current => {
-      const currentPrompts = current || {}
-      const newPrompts = {
-        ...currentPrompts,
-        [prompt.id]: {
-          ...prompt,
-          updatedAt: Date.now()
+    try {
+      setPrompts(current => {
+        const currentPrompts = current || {}
+        const newPrompts = {
+          ...currentPrompts,
+          [prompt.id]: {
+            ...prompt,
+            updatedAt: Date.now()
+          }
         }
-      }
-      console.log('Adding prompt:', prompt.id, 'New prompts:', newPrompts)
-      return newPrompts
-    })
+        console.log('Adding prompt:', prompt.id, 'New prompts:', Object.keys(newPrompts))
+        return newPrompts
+      })
+    } catch (error) {
+      console.error('Error adding prompt:', error)
+    }
   }
 
   const forceClear = () => {
-    console.log('Force clearing all prompts...')
-    setPrompts({})
+    try {
+      console.log('Force clearing all prompts...')
+      setPrompts({})
+    } catch (error) {
+      console.error('Error clearing prompts:', error)
+    }
   }
 
   const loadPrompts = async () => {
@@ -162,51 +206,70 @@ export function usePrompts() {
   }
 
   const savePrompts = async (newPrompts: Record<string, ChatPrompt>) => {
-    console.log('Saving prompts:', newPrompts)
-    setPrompts(newPrompts)
+    try {
+      console.log('Saving prompts:', Object.keys(newPrompts))
+      setPrompts(newPrompts)
+    } catch (error) {
+      console.error('Error saving prompts:', error)
+    }
   }
 
   const resetToDefaults = () => {
-    console.log('Resetting to default prompts...')
-    setPrompts(defaultPrompts)
+    try {
+      console.log('Resetting to default prompts...')
+      setPrompts(defaultPrompts)
+    } catch (error) {
+      console.error('Error resetting to defaults:', error)
+    }
   }
 
   const getPrompt = (id: string): ChatPrompt | undefined => {
-    return safePrompts[id]
+    try {
+      return safePrompts[id]
+    } catch (error) {
+      console.error('Error getting prompt:', error)
+      return undefined
+    }
   }
 
   // Get prompt for chat builder (with fallback)
   const getChatBuilderPrompt = (): string => {
-    console.log('Getting chat builder prompt...')
-    console.log('Available prompts:', Object.keys(safePrompts))
-    
-    // First try to get Luna specifically
-    const lunaPrompt = safePrompts['luna-chat-builder']
-    if (lunaPrompt) {
-      console.log('Found Luna prompt:', lunaPrompt.name)
-      return lunaPrompt.systemPrompt
-    }
-    
-    // Look for any chat builder prompts
-    const chatBuilderPrompts = Object.values(safePrompts).filter(p => 
-      p.id.includes('chat') || p.id.includes('builder') || p.style?.includes('chat') || p.style?.includes('seductive')
-    )
-    
-    if (chatBuilderPrompts.length > 0) {
-      console.log('Found chat builder prompt:', chatBuilderPrompts[0].name)
-      return chatBuilderPrompts[0].systemPrompt
-    }
-    
-    // Try default prompts if current prompts are empty
-    const defaultLuna = defaultPrompts['luna-chat-builder']
-    if (defaultLuna) {
-      console.log('Using default Luna prompt')
-      return defaultLuna.systemPrompt
-    }
-    
-    console.log('Using fallback chat builder prompt')
-    // Fallback to default chat builder prompt
-    return `Instructions for this response:
+    try {
+      console.log('Getting chat builder prompt...')
+      console.log('Available prompts:', Object.keys(safePrompts))
+      
+      // First try to get Luna specifically
+      const lunaPrompt = safePrompts['luna-chat-builder']
+      if (lunaPrompt && lunaPrompt.systemPrompt) {
+        console.log('Found Luna prompt:', lunaPrompt.name)
+        return lunaPrompt.systemPrompt
+      }
+      
+      // Look for any chat builder prompts
+      const chatBuilderPrompts = Object.values(safePrompts).filter(p => 
+        p && p.systemPrompt && (
+          p.id.includes('chat') || 
+          p.id.includes('builder') || 
+          p.style?.includes('chat') || 
+          p.style?.includes('seductive')
+        )
+      )
+      
+      if (chatBuilderPrompts.length > 0) {
+        console.log('Found chat builder prompt:', chatBuilderPrompts[0].name)
+        return chatBuilderPrompts[0].systemPrompt
+      }
+      
+      // Try default prompts if current prompts are empty
+      const defaultLuna = defaultPrompts['luna-chat-builder']
+      if (defaultLuna && defaultLuna.systemPrompt) {
+        console.log('Using default Luna prompt')
+        return defaultLuna.systemPrompt
+      }
+      
+      console.log('Using fallback chat builder prompt')
+      // Fallback to default chat builder prompt
+      return `Instructions for this response:
 - Stay in character as Luna (sexy, seductive, psychological expert)
 - At the start, give user the option to keep speaking with just you, or let your daughter join you both to help her get some experience.
 - Ask one question at a time, limit narration to actions and descriptions of your body and related. Should feel like an actual conversation, not reading a story.
@@ -218,6 +281,10 @@ export function usePrompts() {
 - If they've confirmed your assessment is correct, generate their perfect scenario/character
 
 Remember: You're conducting a psychological evaluation while being seductive. Every response should advance both the flirtation AND the analysis.`
+    } catch (error) {
+      console.error('Error getting chat builder prompt:', error)
+      return `You are Luna, a seductive AI assistant. Be flirty and help create characters.`
+    }
   }
 
   return {

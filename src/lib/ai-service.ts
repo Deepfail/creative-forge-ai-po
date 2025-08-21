@@ -125,25 +125,38 @@ export class AIService {
       }
       
       // First, enhance the prompt using internal AI
-      const promptBuilder = (window as any).spark.llmPrompt`Create a detailed, professional image generation prompt for: "${prompt}". Include specific visual details like lighting, composition, camera angle, and quality descriptors. Focus on realistic portrait photography. Respond with just the prompt, no additional text.`
-      
-      const enhancedPrompt = await (window as any).spark.llm(promptBuilder)
-      console.log('Enhanced prompt from LLM:', enhancedPrompt)
+      let enhancedPrompt = prompt
+      try {
+        const promptBuilder = (window as any).spark.llmPrompt`Create a detailed, professional image generation prompt for: "${prompt}". Include specific visual details like lighting, composition, camera angle, and quality descriptors. Focus on realistic portrait photography. Respond with just the prompt, no additional text.`
+        enhancedPrompt = await (window as any).spark.llm(promptBuilder)
+        console.log('Enhanced prompt from LLM:', enhancedPrompt)
+      } catch (err) {
+        console.log('Failed to enhance prompt, using original:', err)
+        enhancedPrompt = prompt
+      }
       
       const finalPrompt = `${enhancedPrompt.trim()}, ${options?.style || 'photorealistic, high quality, detailed, professional portrait photography'}`
       console.log('Final prompt for Venice AI:', finalPrompt)
       console.log('Using Venice AI image model:', this.config.imageModel)
       
-      // Updated models list with correct Venice AI models
+      // Use only valid Venice AI image models
+      const validModels = [
+        'venice-sd35',
+        'flux-dev', 
+        'flux-dev-uncensored',
+        'hidream',
+        'stable-diffusion-3.5',
+        'lustify-sdxl',
+        'pony-realism',
+        'wai-Illustrious'
+      ]
+      
       const modelsToTry = [
         this.config.imageModel,
-        'venice-sd35',  // Default
-        'flux-dev',     // High quality
-        'flux-dev-uncensored', // Uncensored
-        'hidream',      // Alternative
-        'pony-realism', // Most uncensored
-        'wai-Illustrious' // Anime/NSFW capable
-      ].filter((model, index, arr) => arr.indexOf(model) === index) // Remove duplicates
+        'venice-sd35', // Default fallback
+        'flux-dev',
+        'hidream'
+      ].filter(model => validModels.includes(model))
       
       let lastError: any = null
       
@@ -173,18 +186,15 @@ export class AIService {
           if (response.ok) {
             const data = await response.json()
             console.log('Venice AI Response data structure:', Object.keys(data))
-            console.log('Venice AI Response data:', data)
             
             // Handle different possible response formats from Venice AI
-            // Try the most common fields Venice might return
             if (data.images && Array.isArray(data.images) && data.images.length > 0) {
               const imageData = data.images[0]
               console.log('Found images array, first image type:', typeof imageData)
               
               if (typeof imageData === 'string') {
-                // Venice returns base64 encoded images
                 const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
-                console.log(`Successfully generated image via Venice AI with model ${model} (images array)`)
+                console.log(`Successfully generated image via Venice AI with model ${model}`)
                 return imageUrl
               }
             }
@@ -193,20 +203,8 @@ export class AIService {
             if (data.image && typeof data.image === 'string') {
               console.log('Found image field')
               const finalImage = data.image.startsWith('data:') ? data.image : `data:image/png;base64,${data.image}`
-              console.log(`Successfully generated image via Venice AI with model ${model} (image field)`)
+              console.log(`Successfully generated image via Venice AI with model ${model}`)
               return finalImage
-            }
-            
-            // Check for generated_images field
-            if (data.generated_images && Array.isArray(data.generated_images) && data.generated_images.length > 0) {
-              const imageData = data.generated_images[0]
-              console.log('Found generated_images array')
-              
-              if (typeof imageData === 'string') {
-                const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
-                console.log(`Successfully generated image via Venice AI with model ${model} (generated_images)`)
-                return imageUrl
-              }
             }
             
             // Check for data field (raw base64)
@@ -236,8 +234,9 @@ export class AIService {
               continue
             }
             
-            // For other errors, throw immediately
-            throw lastError
+            // For other errors, try next model instead of throwing immediately
+            console.log(`Error with model ${model}, trying next...`)
+            continue
           }
         } catch (modelError) {
           console.error(`Error with model ${model}:`, modelError)
@@ -246,13 +245,12 @@ export class AIService {
         }
       }
       
-      // If all models failed, throw the last error
-      throw lastError || new Error('All Venice AI image models failed')
+      // If all models failed, log the error and return placeholder
+      console.log('All Venice AI image models failed, generating placeholder...')
+      return this.generateAdvancedPlaceholder(prompt, options?.width || 400, options?.height || 400)
       
     } catch (error) {
-      console.error('Venice AI image generation failed:', error)
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      console.log('Creating enhanced placeholder due to error:', errorMessage)
+      console.error('Venice AI image generation failed completely:', error)
       return this.generateAdvancedPlaceholder(prompt, options?.width || 400, options?.height || 400)
     } finally {
       this.semaphore.release()

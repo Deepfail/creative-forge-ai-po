@@ -9,18 +9,16 @@ interface ErrorFallbackProps {
 }
 
 export const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
-  // When encountering an error in the development mode, rethrow it and don't display the boundary.
-  // The parent UI will take care of showing a more helpful dialog.
-  if (import.meta.env.DEV) throw error;
-
+  console.error('Error boundary triggered:', error)
+  
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Alert variant="destructive" className="mb-6">
           <Warning />
-          <AlertTitle>This spark has encountered a runtime error</AlertTitle>
+          <AlertTitle>Application encountered an error</AlertTitle>
           <AlertDescription>
-            Something unexpected happened while running the application. The error details are shown below. Contact the spark author and let them know about this issue.
+            Something unexpected happened. You can try reloading or check the console for more details.
           </AlertDescription>
         </Alert>
         
@@ -31,14 +29,23 @@ export const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps)
           </pre>
         </div>
         
-        <Button 
-          onClick={resetErrorBoundary} 
-          className="w-full"
-          variant="outline"
-        >
-          <ArrowClockwise />
-          Try Again
-        </Button>
+        <div className="space-y-2">
+          <Button 
+            onClick={resetErrorBoundary} 
+            className="w-full"
+            variant="outline"
+          >
+            <ArrowClockwise />
+            Try Again
+          </Button>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="w-full"
+            size="sm"
+          >
+            Reload Page
+          </Button>
+        </div>
       </div>
     </div>
   );

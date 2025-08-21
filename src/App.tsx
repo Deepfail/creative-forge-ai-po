@@ -4,20 +4,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Sparkle, Lightning, User, GameController, DiceOne, ChatCircle, Users, Gear, Crown, Chat } from '@phosphor-icons/react'
-import SimpleMode from './components/SimpleMode'
-import InteractiveMode from './components/InteractiveMode'
-import RandomGenerator from './components/RandomGenerator'
-import CustomChatBuilder from './components/CustomChatBuilder'
-import GenerateGirls from './components/GenerateGirls'
-import ApiSettings from './components/ApiSettings'
-import Harem from './components/Harem'
-import PromptsManager from './components/PromptsManager'
-import PromptsDebug from './components/PromptsDebug'
-import PromptsTest from './components/PromptsTest'
-import ImageGenerationTest from './components/ImageGenerationTest'
+import { ErrorBoundary } from 'react-error-boundary'
+import SafeApp from './components/SafeApp'
+
+// Lazy load components to prevent initial load crashes
+const SimpleMode = React.lazy(() => import('./components/SimpleMode'))
+const InteractiveMode = React.lazy(() => import('./components/InteractiveMode'))
+const RandomGenerator = React.lazy(() => import('./components/RandomGenerator'))
+const CustomChatBuilder = React.lazy(() => import('./components/CustomChatBuilder'))
+const GenerateGirls = React.lazy(() => import('./components/GenerateGirls'))
+const ApiSettings = React.lazy(() => import('./components/ApiSettings'))
+const Harem = React.lazy(() => import('./components/Harem'))
+const PromptsManager = React.lazy(() => import('./components/PromptsManager'))
+const PromptsDebug = React.lazy(() => import('./components/PromptsDebug'))
+const PromptsTest = React.lazy(() => import('./components/PromptsTest'))
+const ImageGenerationTest = React.lazy(() => import('./components/ImageGenerationTest'))
+
 import { aiService } from './lib/ai-service'
 import { useKV } from '@github/spark/hooks'
 import type { ApiConfig } from './components/ApiSettings'
+
+// Error fallback component
+function ErrorFallback({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) {
+  console.error('App-level error:', error)
+  
+  // If there's a critical error, fall back to safe mode
+  return <SafeApp />
+}
 
 type CreationType = 'character' | 'scenario'
 type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'prompts-test' | 'image-test' | 'prompts-debug'
@@ -49,81 +62,164 @@ function App() {
   const [mode, setMode] = useState<AppMode>('home')
   const [selectedType, setSelectedType] = useState<CreationType>('character')
   const [showSettings, setShowSettings] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isStable, setIsStable] = useState(false)
+  
   const [apiConfig] = useKV<ApiConfig>('api-config', {
     apiKey: '',
     textModel: 'default',
     imageModel: 'flux-dev'
   })
 
-  // Initialize AI service with saved config
+  // Check system stability
   useEffect(() => {
-    console.log('Initializing AI service with config:', apiConfig)
-    if (apiConfig) {
-      // Always set the config, even if there's no API key for better debugging
-      aiService.setConfig(apiConfig)
-      console.log('AI service configured with textModel:', apiConfig.textModel, 'imageModel:', apiConfig.imageModel, 'hasKey:', !!apiConfig.apiKey)
+    try {
+      // Basic stability checks
+      const checks = [
+        typeof window !== 'undefined',
+        window.spark !== undefined,
+        typeof useKV === 'function'
+      ]
+      
+      if (checks.every(check => check)) {
+        console.log('System stability checks passed')
+        setIsStable(true)
+        
+        // Initialize AI service
+        if (apiConfig) {
+          aiService.setConfig(apiConfig)
+          console.log('AI service configured')
+        }
+      } else {
+        console.log('System stability checks failed')
+        setIsStable(false)
+      }
+    } catch (error) {
+      console.error('Stability check error:', error)
+      setIsStable(false)
     }
   }, [apiConfig])
 
+  // If system is not stable, use safe mode
+  if (!isStable) {
+    return <SafeApp />
+  }
+
   const handleModeSelect = (newMode: AppMode, type?: CreationType) => {
-    if (type) setSelectedType(type)
-    setMode(newMode)
+    try {
+      if (type) setSelectedType(type)
+      setMode(newMode)
+      setError(null)
+    } catch (error) {
+      console.error('Error changing mode:', error)
+      setError('Failed to change mode')
+    }
   }
 
   const handleBack = () => {
-    setMode('home')
+    try {
+      setMode('home')
+      setError(null)
+    } catch (error) {
+      console.error('Error going back:', error)
+      setError('Failed to go back')
+    }
   }
 
-  // Render based on current mode
+  // Render based on current mode with Suspense for lazy loading
   const renderCurrentMode = () => {
     if (mode === 'simple') {
-      return <SimpleMode type={selectedType} onBack={handleBack} />
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <SimpleMode type={selectedType} onBack={handleBack} />
+        </React.Suspense>
+      )
     }
 
     if (mode === 'interactive') {
-      return <InteractiveMode type={selectedType} onBack={handleBack} />
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <InteractiveMode type={selectedType} onBack={handleBack} />
+        </React.Suspense>
+      )
     }
 
     if (mode === 'random') {
-      return <RandomGenerator type={selectedType} onBack={handleBack} />
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <RandomGenerator type={selectedType} onBack={handleBack} />
+        </React.Suspense>
+      )
     }
 
     if (mode === 'custom') {
-      return <CustomChatBuilder onBack={handleBack} />
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <CustomChatBuilder onBack={handleBack} />
+        </React.Suspense>
+      )
     }
 
     if (mode === 'girls') {
-      return <GenerateGirls onBack={handleBack} />
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <GenerateGirls onBack={handleBack} />
+        </React.Suspense>
+      )
     }
 
     if (mode === 'harem') {
-      return <Harem onBack={handleBack} />
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <Harem onBack={handleBack} />
+        </React.Suspense>
+      )
     }
 
     if (mode === 'prompts') {
-      return <PromptsManager onBack={handleBack} />
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <PromptsManager onBack={handleBack} />
+        </React.Suspense>
+      )
     }
 
     if (mode === 'prompts-test') {
-      return <PromptsTest onBack={handleBack} />
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <PromptsTest onBack={handleBack} />
+        </React.Suspense>
+      )
     }
 
     if (mode === 'image-test') {
-      return <ImageGenerationTest onBack={handleBack} />
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <ImageGenerationTest onBack={handleBack} />
+        </React.Suspense>
+      )
     }
 
     if (mode === 'prompts-debug') {
-      return <PromptsDebug />
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <PromptsDebug />
+        </React.Suspense>
+      )
     }
 
     if (showSettings) {
-      return <ApiSettings 
-        onClose={() => setShowSettings(false)} 
-        onSave={(config) => {
-          aiService.setConfig(config)
-          setShowSettings(false)
-        }}
-      />
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <ApiSettings 
+            onClose={() => setShowSettings(false)} 
+            onSave={(config) => {
+              aiService.setConfig(config)
+              setShowSettings(false)
+            }}
+          />
+        </React.Suspense>
+      )
     }
 
     return (
@@ -326,7 +422,15 @@ function App() {
     )
   }
 
-  return renderCurrentMode()
+  if (error) {
+    return <SafeApp />
+  }
+
+  return (
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      {renderCurrentMode()}
+    </ErrorBoundary>
+  )
 }
 
 export default App
