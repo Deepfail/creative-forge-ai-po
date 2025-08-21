@@ -1,25 +1,24 @@
 import React from 'react'
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Sparkle, Gear, DiceOne, ChatCircle, Users, Crown } from '@phosphor-icons/react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { toast } from 'sonner'
 
-// Safe error fallback
 function SafeErrorFallback({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) {
-  return (
+
+// Safe error fallbackry }: { error: Error, resetErrorBoundary: () => void }) {
+function SafeErrorFallback({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) {
+  return (lassName="min-h-screen bg-background flex items-center justify-center p-4">
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="max-w-md">
+      <Card className="max-w-md">t-6 text-center">
         <CardContent className="pt-6 text-center">
           <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
-          <p className="text-sm text-muted-foreground mb-4">
             {error.message || 'An error occurred'}
-          </p>
+            {error.message || 'An error occurred'}
           <div className="space-y-2">
-            <Button onClick={resetErrorBoundary} variant="outline" className="w-full">
+          <div className="space-y-2">
               Try Again
             </Button>
             <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
