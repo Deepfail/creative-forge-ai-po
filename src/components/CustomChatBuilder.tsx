@@ -40,15 +40,18 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   })
   const [showExport, setShowExport] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { getPrompt } = usePrompts()
+  const { getPrompt, getChatBuilderPrompt } = usePrompts()
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   useEffect(() => { scrollToBottom() }, [messages])
 
   useEffect(() => {
     if (messages.length === 0) {
-      // Get Luna's greeting from the prompts
+      // Get Luna's greeting from the prompts system
       const lunaPrompt = getPrompt('luna-chat-builder')
+      
+      console.log('Initializing chat with Luna prompt:', lunaPrompt?.name || 'fallback')
+      
       const greeting: Message = {
         id: Date.now().toString(),
         role: 'ai',
@@ -68,11 +71,12 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
     try {
       const conversationContext = messages.map(m => `${m.role}: ${m.content}`).join('\n')
       
-      // Get Luna's system prompt specifically
-      const lunaPrompt = getPrompt('luna-chat-builder')
-      const basePrompt = lunaPrompt?.systemPrompt || `You are Luna, a sexy and flirty AI psychologist who helps create NSFW characters through conversation. Be seductive, ask engaging questions, and analyze what users really want.`
+      // Get Luna's system prompt using the hook function
+      const systemPrompt = getChatBuilderPrompt()
+      
+      console.log('Using system prompt for AI response')
 
-      const prompt = `${basePrompt}
+      const prompt = `${systemPrompt}
 
 Conversation history:
 ${conversationContext}

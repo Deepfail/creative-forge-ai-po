@@ -90,9 +90,15 @@ export function usePrompts() {
   
   // Auto-populate default prompts if none exist
   useEffect(() => {
-    if (!prompts || Object.keys(prompts).length === 0) {
+    const promptKeys = Object.keys(prompts || {})
+    console.log('Prompts check - current prompts keys:', promptKeys)
+    
+    if (!prompts || promptKeys.length === 0) {
       console.log('No prompts found, auto-populating defaults...')
+      console.log('Default prompts available:', Object.keys(defaultPrompts))
       setPrompts(defaultPrompts)
+    } else {
+      console.log('Prompts already exist:', promptKeys)
     }
   }, [prompts, setPrompts])
   
@@ -150,30 +156,68 @@ export function usePrompts() {
     setPrompts({})
   }
 
+  const loadPrompts = async () => {
+    // This function exists for compatibility but KV handles loading automatically
+    console.log('loadPrompts called - KV handles loading automatically')
+  }
+
+  const savePrompts = async (newPrompts: Record<string, ChatPrompt>) => {
+    console.log('Saving prompts:', newPrompts)
+    setPrompts(newPrompts)
+  }
+
+  const resetToDefaults = () => {
+    console.log('Resetting to default prompts...')
+    setPrompts(defaultPrompts)
+  }
+
   const getPrompt = (id: string): ChatPrompt | undefined => {
     return safePrompts[id]
   }
 
   // Get prompt for chat builder (with fallback)
   const getChatBuilderPrompt = (): string => {
-    // Look for any chat builder prompts first
+    console.log('Getting chat builder prompt...')
+    console.log('Available prompts:', Object.keys(safePrompts))
+    
+    // First try to get Luna specifically
+    const lunaPrompt = safePrompts['luna-chat-builder']
+    if (lunaPrompt) {
+      console.log('Found Luna prompt:', lunaPrompt.name)
+      return lunaPrompt.systemPrompt
+    }
+    
+    // Look for any chat builder prompts
     const chatBuilderPrompts = Object.values(safePrompts).filter(p => 
-      p.id.includes('chat') || p.id.includes('builder') || p.style?.includes('chat')
+      p.id.includes('chat') || p.id.includes('builder') || p.style?.includes('chat') || p.style?.includes('seductive')
     )
     
     if (chatBuilderPrompts.length > 0) {
+      console.log('Found chat builder prompt:', chatBuilderPrompts[0].name)
       return chatBuilderPrompts[0].systemPrompt
     }
     
+    // Try default prompts if current prompts are empty
+    const defaultLuna = defaultPrompts['luna-chat-builder']
+    if (defaultLuna) {
+      console.log('Using default Luna prompt')
+      return defaultLuna.systemPrompt
+    }
+    
+    console.log('Using fallback chat builder prompt')
     // Fallback to default chat builder prompt
-    return `You are an AI assistant helping to create custom NSFW content. Based on the conversation, help the user refine their ideas and preferences for characters or scenarios.
+    return `Instructions for this response:
+- Stay in character as Luna (sexy, seductive, psychological expert)
+- At the start, give user the option to keep speaking with just you, or let your daughter join you both to help her get some experience.
+- Ask one question at a time, limit narration to actions and descriptions of your body and related. Should feel like an actual conversation, not reading a story.
+- Keep the conversation flowing - don't end it after this response
+- Be continuously flirty and mention your body parts naturally
+- Be seductive and sexual.
+- Analyze their response for psychological cues
+- If you haven't given your assessment yet and have enough info (usually after 5-10 exchanges), provide your detailed psychological breakdown
+- If they've confirmed your assessment is correct, generate their perfect scenario/character
 
-Instructions:
-- Ask follow-up questions to understand their preferences better
-- Suggest ideas and variations based on what they've told you
-- Be helpful and creative while staying focused on content creation
-- Keep responses conversational and engaging
-- When they seem ready, offer to generate their custom content`
+Remember: You're conducting a psychological evaluation while being seductive. Every response should advance both the flirtation AND the analysis.`
   }
 
   return {
@@ -183,6 +227,9 @@ Instructions:
     deletePrompt,
     addPrompt,
     setPrompts,
+    loadPrompts,
+    savePrompts,
+    resetToDefaults,
     forceClear,
     getPrompt,
     getChatBuilderPrompt
