@@ -2,11 +2,10 @@ import React from 'react'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Sparkle, Lightning, User, GameController, DiceOne, ChatCircle, Users, Gear, Crown, Chat, AlertTriangle } from '@phosphor-icons/react'
-import { ErrorBoundary } from 'react-error-boundary'
 import { useKV } from '@github/spark/hooks'
+
+function SafeErrorFallback({ error, resetErrorBounda
+    <div className="min-h-screen bg-backgro
 import { toast } from 'sonner'
 
 // Safe error fallback
@@ -15,22 +14,22 @@ function SafeErrorFallback({ error, resetErrorBoundary }: { error: Error, resetE
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="max-w-md">
         <CardContent className="pt-6 text-center">
-          <AlertTriangle className="mx-auto mb-4 text-destructive" size={48} />
-          <h3 className="text-lg font-semibold mb-2">Application Error</h3>
-          <p className="text-sm text-muted-foreground mb-4">{error.message}</p>
-          <div className="space-y-2">
-            <Button onClick={resetErrorBoundary} className="w-full">
-              Try Again
-            </Button>
-            <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
-              Reload Page
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
 }
+type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'g
+
+  apiKey: string
+  imageModel: string
+
+  const [mode, setMod
+  const [showSettings, setShowSettings] = useState(false)
+  const [error, setError]
+  // Initialize with 
+    apiKey: '',
+    imageModel: 'venic
+
+    try {
+   
+ 
 
 type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'prompts-test' | 'image-test' | 'prompts-debug'
 type CreationType = 'character' | 'scenario'
@@ -65,72 +64,72 @@ export default function SafeApp() {
         console.log('Waiting for Spark runtime...')
         const checkSpark = setInterval(() => {
           if (typeof window !== 'undefined' && window.spark) {
-            console.log('Spark runtime now available')
-            setIsLoading(false)
-            clearInterval(checkSpark)
-          }
-        }, 100)
-        
-        // Timeout after 5 seconds
-        setTimeout(() => {
-          console.log('Spark runtime timeout')
-          setIsLoading(false)
-          clearInterval(checkSpark)
-        }, 5000)
-      }
-    } catch (err) {
-      console.error('Initialization error:', err)
-      setError('Failed to initialize application')
-      setIsLoading(false)
-    }
-  }, [])
-
-  const handleModeSelect = (newMode: AppMode, type?: CreationType) => {
-    try {
-      if (type) setSelectedType(type)
-      setMode(newMode)
-      setError(null)
-    } catch (err) {
-      console.error('Mode selection error:', err)
-      setError('Failed to change mode')
-    }
-  }
-
-  const handleBack = () => {
-    try {
-      setMode('home')
-      setError(null)
-    } catch (err) {
-      console.error('Navigation error:', err)
-      setError('Failed to navigate')
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <Sparkle className="mx-auto mb-4 text-primary animate-spin" size={32} />
-            <p className="text-muted-foreground">Loading application...</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardContent className="pt-6 text-center">
-            <AlertTriangle className="mx-auto mb-4 text-destructive" size={48} />
-            <h3 className="text-lg font-semibold mb-2">Application Error</h3>
-            <p className="text-sm text-muted-foreground mb-4">{error}</p>
-            <div className="space-y-2">
-              <Button onClick={() => setError(null)} className="w-full">
-                Try Again
               </Button>
+                Reload Page
+            </div>
+        </C
+    )
+
+  if (mode === 'home') {
+      <ErrorBoundary Fallb
+          <div className="container mx-auto px
+            <div className="t
+                <div className="fle
+                
+       
+                </d
+                  <Button
+                    size="sm"
+                    class
+     
+        
+
+                Create amazing NSFW characters, scenarios, and interact
+         
+                🔞 18+ Adult Content 
+            </div>
+            {/* Quic
+              <Card
+                <CardContent className="p-6 text-
+                  <h3 className="text-l
+     
+
+
+                  <ChatCircl
+         
+              </Card>
+              <Card 
+                <Ca
+                  <h3 className="text-lg font
+                </CardContent>
+
+   
+
+                  
+            
+
+            <C
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-4">
+                  </p>
+                    <Bad
+               
+            
+     
+   
+
+            {s
+            
+                  <CardDescription>Configure your Venice AI API key and models</Car
+                <CardContent classN
+                    <label className="text-sm font-m
+                      type="password"
+                      onChange={(e) => setApiConfig(prev => ({ ...prev, apiKe
+                    />
+                  <div className="flex 
+                      Save Settings
+                    <Butt
+                    </B
               <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
                 Reload Page
               </Button>
@@ -187,7 +186,7 @@ export default function SafeApp() {
                   <h3 className="text-lg font-semibold text-foreground mb-2">Random Scenario</h3>
                   <p className="text-sm text-muted-foreground">Get instant random NSFW scenarios</p>
                 </CardContent>
-              </Card>
+
 
               <Card className="bg-gradient-to-br from-secondary/20 to-secondary/5 border-secondary/30 hover:shadow-lg hover:shadow-secondary/10 transition-all cursor-pointer group"
                     onClick={() => toast.info('Feature temporarily disabled for stability')}>
@@ -265,11 +264,11 @@ export default function SafeApp() {
                 </CardContent>
               </Card>
             )}
-          </div>
+
         </div>
-      </ErrorBoundary>
+
     )
-  }
+
 
   // For now, redirect any other mode back to home
   return (
@@ -283,5 +282,5 @@ export default function SafeApp() {
         </Card>
       </div>
     </ErrorBoundary>
-  )
+
 }
