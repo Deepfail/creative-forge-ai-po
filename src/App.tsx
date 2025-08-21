@@ -13,6 +13,7 @@ import ApiSettings from './components/ApiSettings'
 import Harem from './components/Harem'
 import PromptsManager from './components/PromptsManager'
 import PromptsDebug from './components/PromptsDebug'
+import PromptsTest from './components/PromptsTest'
 import ImageGenerationTest from './components/ImageGenerationTest'
 import { aiService } from './lib/ai-service'
 import { useKV } from '@github/spark/hooks'
@@ -170,11 +171,6 @@ function App() {
                 variant="outline"
                 size="sm"
                 onClick={() => setMode('prompts')}
-                className="border-secondary/30 hover:bg-secondary/10"
-              >
-                <Chat size={16} className="mr-2" />
-                Prompts
-              </Button>
                 className="border-secondary/30 hover:bg-secondary/10"
               >
                 <Chat size={16} className="mr-2" />
