@@ -19,6 +19,7 @@ const PromptsManager = React.lazy(() => import('./components/PromptsManager'))
 const PromptsDebug = React.lazy(() => import('./components/PromptsDebug'))
 const PromptsTest = React.lazy(() => import('./components/PromptsTest'))
 const ImageGenerationTest = React.lazy(() => import('./components/ImageGenerationTest'))
+const AITestComponent = React.lazy(() => import('./components/AITestComponent'))
 
 import { aiService } from './lib/ai-service'
 import { useKV } from '@github/spark/hooks'
@@ -33,7 +34,7 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error, resetError
 }
 
 type CreationType = 'character' | 'scenario'
-type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'prompts-test' | 'image-test' | 'prompts-debug'
+type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'prompts-test' | 'image-test' | 'prompts-debug' | 'ai-test'
 
 const creationTypes: Array<{
   id: CreationType
@@ -200,6 +201,14 @@ function App() {
       )
     }
 
+    if (mode === 'ai-test') {
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <AITestComponent onBack={handleBack} />
+        </React.Suspense>
+      )
+    }
+
     if (mode === 'prompts-debug') {
       return (
         <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
@@ -236,6 +245,15 @@ function App() {
               </h1>
             </div>
             <div className="flex-1 flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setMode('ai-test')}
+                className="border-accent/30 hover:bg-accent/10"
+              >
+                <Sparkle size={16} className="mr-2" />
+                Test AI
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

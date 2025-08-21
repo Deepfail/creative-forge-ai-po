@@ -12,6 +12,7 @@ import { ArrowLeft, Sparkle, Download, Copy, Plus } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
+import { aiService } from '@/lib/ai-service'
 
 type CreationType = 'character' | 'scenario' | 'game' | 'prompt'
 
@@ -100,8 +101,7 @@ export default function SimpleMode({ type, onBack }: SimpleModeProps) {
 
     setIsGenerating(true)
     try {
-      const prompt = (window as any).spark.llmPrompt`
-        Create a detailed ${type} with the following specifications:
+      const prompt = `Create a detailed ${type} with the following specifications:
         
         Name: ${formData.name}
         Description: ${formData.description || 'No specific description provided'}
@@ -153,12 +153,13 @@ export default function SimpleMode({ type, onBack }: SimpleModeProps) {
         Make it engaging, well-structured, and ready to use. Format it with clear sections and bullet points where appropriate.
       `
       
-      const result = await (window as any).spark.llm(prompt)
+      const result = await aiService.generateText(prompt)
       setGeneratedContent(result)
       toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully!`)
     } catch (error) {
-      toast.error('Failed to generate content. Please try again.')
       console.error('Generation error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate content. Please try again.'
+      toast.error(errorMessage)
     } finally {
       setIsGenerating(false)
     }

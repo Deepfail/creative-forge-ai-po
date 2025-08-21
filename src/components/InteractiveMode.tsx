@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Sparkle, Download, Copy } from '@phosphor-icons/
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
+import { aiService } from '@/lib/ai-service'
 
 type CreationType = 'character' | 'scenario' | 'game' | 'prompt'
 
@@ -255,8 +256,7 @@ export default function InteractiveMode({ type, onBack }: InteractiveModeProps) 
         return `${step.question}: ${answerText}`
       }).join('\n')
 
-      const prompt = (window as any).spark.llmPrompt`
-        Based on this interactive questionnaire about creating a ${type}, generate comprehensive content:
+      const prompt = `Based on this interactive questionnaire about creating a ${type}, generate comprehensive content:
 
         User Responses:
         ${answerSummary}
@@ -276,12 +276,13 @@ export default function InteractiveMode({ type, onBack }: InteractiveModeProps) 
         Format with clear sections and make it immediately usable.
       `
 
-      const result = await (window as any).spark.llm(prompt)
+      const result = await aiService.generateText(prompt)
       setGeneratedContent(result)
       toast.success('Your creation is ready!')
     } catch (error) {
-      toast.error('Failed to generate content. Please try again.')
       console.error('Generation error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate content. Please try again.'
+      toast.error(errorMessage)
     } finally {
       setIsGenerating(false)
     }
