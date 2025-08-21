@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Sparkle, Download, Copy } from '@phosphor-icons/react'
+import { ArrowLeft, Sparkle, Download, Copy, Plus } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
@@ -48,6 +48,8 @@ const tagOptions = {
 }
 
 export default function SimpleMode({ type, onBack }: SimpleModeProps) {
+  const [customTags, setCustomTags] = useKV<string[]>('custom-tags', [])
+  const [newCustomTag, setNewCustomTag] = useState('')
   const [formData, setFormData] = useState<FormData>({
     name: '',
     description: '',
@@ -61,6 +63,25 @@ export default function SimpleMode({ type, onBack }: SimpleModeProps) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [showExport, setShowExport] = useState(false)
   const [projects] = useKV<any[]>('simple-projects', [])
+
+  // Combine predefined and custom tags
+  const allTags = [...tagOptions[type], ...(customTags || [])]
+
+  const addCustomTag = () => {
+    if (!newCustomTag.trim()) return
+    const trimmedTag = newCustomTag.trim()
+    
+    // Check if tag already exists (case insensitive)
+    const exists = allTags.some(tag => tag.toLowerCase() === trimmedTag.toLowerCase())
+    if (exists) {
+      toast.error('Tag already exists')
+      return
+    }
+    
+    setCustomTags(current => [...(current || []), trimmedTag])
+    setNewCustomTag('')
+    toast.success('Custom tag added!')
+  }
 
   const handleTagToggle = (tag: string) => {
     setFormData(prev => ({
@@ -242,8 +263,8 @@ export default function SimpleMode({ type, onBack }: SimpleModeProps) {
 
               <div className="space-y-3">
                 <Label>Tags & Characteristics</Label>
-                <div className="flex flex-wrap gap-2">
-                  {tagOptions[type].map(tag => (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {allTags.map(tag => (
                     <Badge
                       key={tag}
                       variant={formData.tags.includes(tag) ? "default" : "outline"}
@@ -253,6 +274,37 @@ export default function SimpleMode({ type, onBack }: SimpleModeProps) {
                       {tag}
                     </Badge>
                   ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add custom tag..."
+                    value={newCustomTag}
+                    onChange={(e) => setNewCustomTag(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addCustomTag()
+                        if (newCustomTag.trim()) {
+                          handleTagToggle(newCustomTag.trim())
+                        }
+                      }
+                    }}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      addCustomTag()
+                      if (newCustomTag.trim()) {
+                        handleTagToggle(newCustomTag.trim())
+                      }
+                    }}
+                    className="px-3"
+                  >
+                    <Plus size={16} />
+                  </Button>
                 </div>
               </div>
 

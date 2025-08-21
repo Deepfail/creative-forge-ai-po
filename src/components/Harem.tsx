@@ -144,6 +144,8 @@ export default function Harem({ onBack }: HaremProps) {
     setCustomTasks(current => (current || []).filter(task => task !== taskToRemove))
     toast.success('Custom task removed')
   }
+
+  const toggleFavorite = (girlId: string) => {
     setSavedGirls(current => 
       (current || []).map(girl => 
         girl.id === girlId ? { ...girl, favorited: !girl.favorited } : girl
