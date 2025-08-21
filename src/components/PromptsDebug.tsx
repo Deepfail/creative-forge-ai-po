@@ -1,43 +1,43 @@
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { usePrompts, defaultPrompts } from '@/l
 import { usePrompts, defaultPrompts } from '@/lib/prompts'
 
-export default function PromptsDebug() {
-  const { prompts, loadPrompts, savePrompts, resetToDefaults } = usePrompts()
-
-  const showDebugInfo = () => {
-    console.log('=== PROMPTS DEBUG INFO ===')
-    console.log('Current prompts:', prompts)
-    console.log('Default prompts:', defaultPrompts)
+    console.log('Current prompts:', prom
     console.log('Number of prompts:', Object.keys(prompts || {}).length)
-    console.log('Prompt keys:', Object.keys(prompts || {}))
-    console.log('===================')
-  }
 
-  const forceLoadDefaults = () => {
-    console.log('Force loading default prompts...')
-    resetToDefaults()
+
+    console.log('Force loading default prompt
     console.log('Default prompts loaded')
-  }
 
-  const sortedPrompts = Object.entries(prompts || {}).sort(([a], [b]) => a.localeCompare(b))
 
-  return (
     <div className="min-h-screen bg-background p-8">
-      <Card className="max-w-4xl mx-auto">
         <CardHeader>
-          <CardTitle>Prompts Debug</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Button onClick={showDebugInfo} size="sm">
+   
+
               Log Debug Info
+            <Button onClick={forceLoadDefaults} siz
             </Button>
-            <Button onClick={forceLoadDefaults} size="sm" variant="outline">
-              Force Load Defaults
-            </Button>
+
+   
+
+                  <div className="font-medium text-sm">{key}</div>
+
+          
+              {sortedPrompts.length === 0 && (
+                  No prompts found. Try cl
+              )}
           </div>
+      </Card>
+  )
+
+
+
+
+
+
+
+
 
           <div>
             <h3 className="text-lg font-semibold mb-4">Available Prompts ({sortedPrompts.length})</h3>
