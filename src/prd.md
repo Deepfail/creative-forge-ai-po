@@ -62,11 +62,18 @@ A comprehensive AI-powered tool that helps users create NSFW characters and scen
 - **Success criteria**: Users can seamlessly use Venice AI for optimal adult content generation or switch providers as needed
 
 ### Harem Management System
-- **Functionality**: Save, organize, and manage generated female characters with roles, tags, tasks, ratings, and favorites
-- **Purpose**: Allows users to build and maintain a persistent collection of favorite characters with detailed metadata
+- **Functionality**: Save, organize, and manage generated female characters with roles, tags, tasks, ratings, and favorites. Users can create custom tags, roles, and tasks beyond the predefined options.
+- **Purpose**: Allows users to build and maintain a persistent collection of favorite characters with detailed metadata and personalized organization system
 - **Trigger**: User clicks "Save to Harem" on any generated girl or accesses "My Harem" from main menu
-- **Progression**: Save characters → Assign roles/tags/tasks → Rate and favorite → Filter and search collection → Edit details
-- **Success criteria**: Users can effectively organize and retrieve their favorite characters with rich metadata for different scenarios
+- **Progression**: Save characters → Assign roles/tags/tasks (predefined or custom) → Rate and favorite → Filter and search collection → Edit details → Manage custom tags/roles/tasks
+- **Success criteria**: Users can effectively organize and retrieve their favorite characters with rich metadata for different scenarios, and can create custom organizational systems that match their preferences
+
+### Custom Tag Management
+- **Functionality**: Create, edit, and delete custom tags, roles, and tasks for organizing characters beyond predefined options
+- **Purpose**: Provides personalized organization system that adapts to user's specific interests and categorization needs
+- **Trigger**: User clicks "Manage Tags" button in Harem section or creates new tags during character editing
+- **Progression**: Access tag manager → Add custom tags/roles/tasks → Remove unwanted custom items → Use in character assignment
+- **Success criteria**: Users can create unlimited custom organizational categories and seamlessly use them throughout the character management system
 
 ### Venice AI Integration
 - **Functionality**: Built-in Venice AI for uncensored image generation using auto model selection, integrated text and image generation pipeline

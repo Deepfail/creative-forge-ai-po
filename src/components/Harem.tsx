@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, Heart, HeartStraight, Plus, Trash, Pencil, Tag, Star, Crown, Shield } from '@phosphor-icons/react'
+import { ArrowLeft, Heart, HeartStraight, Plus, Trash, Pencil, Tag, Star, Crown, Shield, X } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 
@@ -51,6 +51,9 @@ const predefinedTasks = [
 
 export default function Harem({ onBack }: HaremProps) {
   const [savedGirls, setSavedGirls] = useKV<SavedGirl[]>('saved-girls', [])
+  const [customTags, setCustomTags] = useKV<string[]>('custom-tags', [])
+  const [customRoles, setCustomRoles] = useKV<string[]>('custom-roles', [])
+  const [customTasks, setCustomTasks] = useKV<string[]>('custom-tasks', [])
   const [selectedGirl, setSelectedGirl] = useState<SavedGirl | null>(null)
   const [editMode, setEditMode] = useState(false)
   const [editedGirl, setEditedGirl] = useState<SavedGirl | null>(null)
@@ -58,6 +61,15 @@ export default function Harem({ onBack }: HaremProps) {
   const [filterTag, setFilterTag] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  const [newCustomTag, setNewCustomTag] = useState('')
+  const [newCustomRole, setNewCustomRole] = useState('')
+  const [newCustomTask, setNewCustomTask] = useState('')
+  const [showCustomTagManager, setShowCustomTagManager] = useState(false)
+
+  // Get all available tags (predefined + custom)
+  const allTags = [...predefinedTags, ...(customTags || [])]
+  const allRoles = [...predefinedRoles, ...(customRoles || [])]
+  const allTasks = [...predefinedTasks, ...(customTasks || [])]
 
   const filteredGirls = (savedGirls || []).filter(girl => {
     const matchesSearch = searchQuery === '' || 
@@ -72,7 +84,66 @@ export default function Harem({ onBack }: HaremProps) {
     return matchesSearch && matchesRole && matchesTag && matchesFavorites
   })
 
-  const toggleFavorite = (girlId: string) => {
+  const addCustomTag = () => {
+    if (!newCustomTag.trim()) return
+    const trimmedTag = newCustomTag.trim()
+    
+    // Check if tag already exists (case insensitive)
+    const exists = allTags.some(tag => tag.toLowerCase() === trimmedTag.toLowerCase())
+    if (exists) {
+      toast.error('Tag already exists')
+      return
+    }
+    
+    setCustomTags(current => [...(current || []), trimmedTag])
+    setNewCustomTag('')
+    toast.success('Custom tag added!')
+  }
+
+  const addCustomRole = () => {
+    if (!newCustomRole.trim()) return
+    const trimmedRole = newCustomRole.trim()
+    
+    const exists = allRoles.some(role => role.toLowerCase() === trimmedRole.toLowerCase())
+    if (exists) {
+      toast.error('Role already exists')
+      return
+    }
+    
+    setCustomRoles(current => [...(current || []), trimmedRole])
+    setNewCustomRole('')
+    toast.success('Custom role added!')
+  }
+
+  const addCustomTask = () => {
+    if (!newCustomTask.trim()) return
+    const trimmedTask = newCustomTask.trim()
+    
+    const exists = allTasks.some(task => task.toLowerCase() === trimmedTask.toLowerCase())
+    if (exists) {
+      toast.error('Task already exists')
+      return
+    }
+    
+    setCustomTasks(current => [...(current || []), trimmedTask])
+    setNewCustomTask('')
+    toast.success('Custom task added!')
+  }
+
+  const removeCustomTag = (tagToRemove: string) => {
+    setCustomTags(current => (current || []).filter(tag => tag !== tagToRemove))
+    toast.success('Custom tag removed')
+  }
+
+  const removeCustomRole = (roleToRemove: string) => {
+    setCustomRoles(current => (current || []).filter(role => role !== roleToRemove))
+    toast.success('Custom role removed')
+  }
+
+  const removeCustomTask = (taskToRemove: string) => {
+    setCustomTasks(current => (current || []).filter(task => task !== taskToRemove))
+    toast.success('Custom task removed')
+  }
     setSavedGirls(current => 
       (current || []).map(girl => 
         girl.id === girlId ? { ...girl, favorited: !girl.favorited } : girl
@@ -150,26 +221,37 @@ export default function Harem({ onBack }: HaremProps) {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onBack}
-            className="border-primary/30 hover:bg-primary/10"
-          >
-            <ArrowLeft size={16} className="mr-2" />
-            Back
-          </Button>
-          <div className="flex items-center gap-3">
-            <Crown className="text-accent" size={32} weight="fill" />
-            <h1 className="text-3xl font-bold text-foreground">
-              My Harem
-            </h1>
+          <div className="flex items-center gap-4 mb-8">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onBack}
+              className="border-primary/30 hover:bg-primary/10"
+            >
+              <ArrowLeft size={16} className="mr-2" />
+              Back
+            </Button>
+            <div className="flex items-center gap-3">
+              <Crown className="text-accent" size={32} weight="fill" />
+              <h1 className="text-3xl font-bold text-foreground">
+                My Harem
+              </h1>
+            </div>
+            <div className="flex gap-2 ml-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCustomTagManager(true)}
+                className="border-secondary/30 hover:bg-secondary/10"
+              >
+                <Tag size={16} className="mr-2" />
+                Manage Tags
+              </Button>
+              <Badge variant="secondary">
+                {savedGirls?.length || 0} Girls
+              </Badge>
+            </div>
           </div>
-          <Badge variant="secondary" className="ml-auto">
-            {savedGirls?.length || 0} Girls
-          </Badge>
-        </div>
 
         {/* Filters */}
         <Card className="mb-6">
@@ -192,7 +274,7 @@ export default function Harem({ onBack }: HaremProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Roles</SelectItem>
-                    {predefinedRoles.map(role => (
+                    {allRoles.map(role => (
                       <SelectItem key={role} value={role}>{role}</SelectItem>
                     ))}
                   </SelectContent>
@@ -206,7 +288,7 @@ export default function Harem({ onBack }: HaremProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Tags</SelectItem>
-                    {predefinedTags.map(tag => (
+                    {allTags.map(tag => (
                       <SelectItem key={tag} value={tag}>{tag}</SelectItem>
                     ))}
                   </SelectContent>
@@ -543,7 +625,7 @@ export default function Harem({ onBack }: HaremProps) {
                       <SelectValue placeholder="Add role..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {predefinedRoles.filter(role => !editedGirl.roles.includes(role)).map(role => (
+                      {allRoles.filter(role => !editedGirl.roles.includes(role)).map(role => (
                         <SelectItem key={role} value={role}>{role}</SelectItem>
                       ))}
                     </SelectContent>
@@ -559,16 +641,49 @@ export default function Harem({ onBack }: HaremProps) {
                       </Badge>
                     ))}
                   </div>
-                  <Select onValueChange={addTag}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Add tag..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {predefinedTags.filter(tag => !editedGirl.tags.includes(tag)).map(tag => (
-                        <SelectItem key={tag} value={tag}>{tag}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <Select onValueChange={addTag}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Add tag..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allTags.filter(tag => !editedGirl.tags.includes(tag)).map(tag => (
+                          <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex gap-1">
+                      <Input
+                        placeholder="Custom tag..."
+                        value={newCustomTag}
+                        onChange={(e) => setNewCustomTag(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            addCustomTag()
+                            if (newCustomTag.trim()) {
+                              addTag(newCustomTag.trim())
+                            }
+                          }
+                        }}
+                        className="w-32"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          addCustomTag()
+                          if (newCustomTag.trim()) {
+                            addTag(newCustomTag.trim())
+                          }
+                        }}
+                        className="px-2"
+                      >
+                        <Plus size={14} />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -585,7 +700,7 @@ export default function Harem({ onBack }: HaremProps) {
                       <SelectValue placeholder="Add task..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {predefinedTasks.filter(task => !editedGirl.tasks.includes(task)).map(task => (
+                      {allTasks.filter(task => !editedGirl.tasks.includes(task)).map(task => (
                         <SelectItem key={task} value={task}>{task}</SelectItem>
                       ))}
                     </SelectContent>
@@ -602,6 +717,153 @@ export default function Harem({ onBack }: HaremProps) {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Custom Tag Manager Dialog */}
+        <Dialog open={showCustomTagManager} onOpenChange={setShowCustomTagManager}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Manage Custom Tags, Roles & Tasks</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+              {/* Custom Tags */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <Tag size={20} className="text-secondary" />
+                  Custom Tags
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add new tag..."
+                      value={newCustomTag}
+                      onChange={(e) => setNewCustomTag(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          addCustomTag()
+                        }
+                      }}
+                    />
+                    <Button onClick={addCustomTag} size="sm">
+                      <Plus size={16} />
+                    </Button>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto space-y-1">
+                    {(customTags || []).map(tag => (
+                      <div key={tag} className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                        <span className="text-sm">{tag}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeCustomTag(tag)}
+                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                        >
+                          <X size={12} />
+                        </Button>
+                      </div>
+                    ))}
+                    {(!customTags || customTags.length === 0) && (
+                      <p className="text-sm text-muted-foreground italic">No custom tags yet</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Custom Roles */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <Crown size={20} className="text-accent" />
+                  Custom Roles
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add new role..."
+                      value={newCustomRole}
+                      onChange={(e) => setNewCustomRole(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          addCustomRole()
+                        }
+                      }}
+                    />
+                    <Button onClick={addCustomRole} size="sm">
+                      <Plus size={16} />
+                    </Button>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto space-y-1">
+                    {(customRoles || []).map(role => (
+                      <div key={role} className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                        <span className="text-sm">{role}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeCustomRole(role)}
+                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                        >
+                          <X size={12} />
+                        </Button>
+                      </div>
+                    ))}
+                    {(!customRoles || customRoles.length === 0) && (
+                      <p className="text-sm text-muted-foreground italic">No custom roles yet</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Custom Tasks */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <Shield size={20} className="text-primary" />
+                  Custom Tasks
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add new task..."
+                      value={newCustomTask}
+                      onChange={(e) => setNewCustomTask(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          addCustomTask()
+                        }
+                      }}
+                    />
+                    <Button onClick={addCustomTask} size="sm">
+                      <Plus size={16} />
+                    </Button>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto space-y-1">
+                    {(customTasks || []).map(task => (
+                      <div key={task} className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                        <span className="text-sm">{task}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeCustomTask(task)}
+                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                        >
+                          <X size={12} />
+                        </Button>
+                      </div>
+                    ))}
+                    {(!customTasks || customTasks.length === 0) && (
+                      <p className="text-sm text-muted-foreground italic">No custom tasks yet</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 pt-6 border-t border-border">
+              <Button onClick={() => setShowCustomTagManager(false)} variant="outline">
+                Close
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
