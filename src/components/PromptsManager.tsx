@@ -6,16 +6,15 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Edit3, Save, X, Plus, Trash2 } from '@phosphor-icons/react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { usePrompts, type ChatPrompt, defaultPrompts } from '@/lib/prompts'
+import { usePrompts, type ChatPrompt } from '@/lib/prompts'
 import { toast } from 'sonner'
-import DebugPrompts from './DebugPrompts'
 
 interface PromptsManagerProps {
   onBack: () => void
 }
 
 export default function PromptsManager({ onBack }: PromptsManagerProps) {
-  const { prompts, sortedPrompts, updatePrompt, addPrompt, deletePrompt, setPrompts, forceReset, forceClear } = usePrompts()
+  const { prompts, sortedPrompts, updatePrompt, addPrompt, deletePrompt, setPrompts, forceClear } = usePrompts()
   const [editingPrompt, setEditingPrompt] = useState<string | null>(null)
   const [newPrompt, setNewPrompt] = useState<Partial<ChatPrompt>>({
     id: '',
@@ -27,34 +26,6 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
   })
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
-  
-  // Debug logging
-  console.log('PromptsManager render - prompts:', prompts)
-  console.log('PromptsManager render - sortedPrompts length:', sortedPrompts.length)
-
-  // Initialize defaults if needed
-  const initializeDefaults = () => {
-    console.log('Manually initializing default prompts')
-    forceReset()
-    setRefreshKey(prev => prev + 1)
-    toast.success('Prompts initialized with defaults')
-  }
-
-  // Complete system reset
-  const completeReset = async () => {
-    try {
-      // Clear the chat-prompts key entirely
-      await spark.kv.delete('chat-prompts')
-      
-      // Set to defaults
-      setPrompts(defaultPrompts)
-      setRefreshKey(prev => prev + 1)
-      toast.success('Complete prompts reset performed')
-    } catch (error) {
-      console.error('Error in complete reset:', error)
-      toast.error('Error performing complete reset')
-    }
-  }
 
   // Clear all prompts
   const clearAllPrompts = () => {
@@ -83,47 +54,56 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
     toast.success('Test prompt created!')
   }
 
-  // Comprehensive Luna cleanup function
-  const killLuna = async () => {
-    try {
-      // First try to get all KV keys to see if there are any luna-related keys
-      const allKeys = await spark.kv.keys()
-      console.log('All KV keys:', allKeys)
-      
-      // Delete any keys that might contain luna
-      const lunaKeys = allKeys.filter(key => key.toLowerCase().includes('luna'))
-      console.log('Found Luna keys to delete:', lunaKeys)
-      
-      for (const key of lunaKeys) {
-        await spark.kv.delete(key)
-        console.log('Deleted KV key:', key)
+  // Create useful sample prompts
+  const createSamplePrompts = () => {
+    const samples = [
+      {
+        id: 'chat-builder',
+        name: 'Chat Builder Assistant',
+        description: 'Interactive AI for building custom content',
+        greeting: "Hello! I'm here to help you create custom NSFW characters and scenarios. Tell me what kind of content you'd like to create!",
+        style: 'interactive',
+        systemPrompt: `You are an AI assistant helping to create custom NSFW content. You should:
+- Ask follow-up questions to understand user preferences
+- Suggest creative ideas and variations
+- Be helpful and conversational
+- Guide users through the creation process
+- When ready, offer to generate their custom content
+
+Stay focused on content creation and be engaging throughout the conversation.`
+      },
+      {
+        id: 'character-generator',
+        name: 'Character Generator',
+        description: 'Creates detailed NSFW characters',
+        style: 'generator',
+        systemPrompt: `Create a detailed NSFW character based on the provided details. Include:
+1. Physical appearance and attributes
+2. Personality traits and quirks
+3. Sexual preferences and kinks
+4. Background story and motivations
+5. How they interact with others
+
+Make descriptions vivid and engaging for adult roleplay scenarios.`
+      },
+      {
+        id: 'scenario-builder',
+        name: 'Scenario Builder',
+        description: 'Creates immersive NSFW scenarios',
+        style: 'generator',
+        systemPrompt: `Create an immersive NSFW scenario based on the provided parameters. Include:
+1. Detailed scene setting and atmosphere
+2. Character dynamics and relationships
+3. Initial situation and tension
+4. Possible progression paths
+5. Interactive elements and choices
+
+Make it engaging and suitable for adult interactive experiences.`
       }
-      
-      // Also clean the chat-prompts
-      const currentPrompts = prompts || {}
-      const filteredPrompts: Record<string, ChatPrompt> = {}
-      
-      Object.entries(currentPrompts).forEach(([key, prompt]) => {
-        const hasLuna = key.toLowerCase().includes('luna') || 
-                       prompt.name.toLowerCase().includes('luna') || 
-                       prompt.systemPrompt.toLowerCase().includes('luna') ||
-                       prompt.description?.toLowerCase().includes('luna') ||
-                       prompt.greeting?.toLowerCase().includes('luna')
-        
-        if (!hasLuna) {
-          filteredPrompts[key] = prompt
-        } else {
-          console.log('Removing Luna prompt:', key, prompt.name)
-        }
-      })
-      
-      setPrompts(filteredPrompts)
-      setRefreshKey(prev => prev + 1)
-      toast.success(`Luna prompts removed! Deleted ${Object.keys(currentPrompts).length - Object.keys(filteredPrompts).length} prompts and ${lunaKeys.length} KV keys`)
-    } catch (error) {
-      console.error('Error killing Luna:', error)
-      toast.error('Error removing Luna prompts')
-    }
+    ]
+
+    samples.forEach(sample => addPrompt(sample))
+    toast.success(`Created ${samples.length} sample prompts!`)
   }
 
   const handleSave = (promptId: string, updates: Partial<ChatPrompt>) => {
@@ -261,27 +241,26 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
             <CardContent className="pt-6">
               <div className="flex flex-wrap gap-2 items-center">
                 <Button 
-                  onClick={killLuna}
+                  onClick={createSamplePrompts}
                   size="sm"
-                  variant="outline"
-                  className="border-destructive text-destructive hover:bg-destructive/10"
+                  className="bg-primary hover:bg-primary/90"
                 >
-                  🗡️ Kill Luna
+                  📝 Create Sample Prompts
                 </Button>
                 <Button 
-                  onClick={completeReset}
+                  onClick={clearAllPrompts}
                   size="sm"
                   variant="outline"
                   className="border-destructive text-destructive hover:bg-destructive/10"
                 >
-                  💥 Complete Reset
+                  🗑️ Clear All
                 </Button>
                 <Button 
                   onClick={forceRefresh}
                   size="sm"
                   variant="outline"
                 >
-                  Refresh
+                  🔄 Refresh
                 </Button>
                 <Button 
                   onClick={createTestPrompt}
@@ -289,13 +268,10 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
                   variant="outline"
                   className="bg-accent/20"
                 >
-                  Create Test Prompt
+                  🧪 Test Prompt
                 </Button>
                 <span className="text-sm text-muted-foreground ml-4">
-                  Prompts found: {sortedPrompts.length} | Refresh key: {refreshKey}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Raw prompts: {Object.keys(prompts || {}).length}
+                  Total prompts: {sortedPrompts.length}
                 </span>
               </div>
             </CardContent>
@@ -304,7 +280,17 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
 
         {/* Debug Section */}
         <div className="mb-6">
-          <DebugPrompts />
+          <Card className="bg-muted/20">
+            <CardContent className="pt-6">
+              <div className="text-xs text-muted-foreground space-y-1">
+                <div>Debug Info:</div>
+                <div>Prompts object exists: {prompts !== null ? 'Yes' : 'No'}</div>
+                <div>Prompts keys: {prompts ? Object.keys(prompts).join(', ') || 'empty' : 'null'}</div>
+                <div>Sorted prompts count: {sortedPrompts.length}</div>
+                <div>Refresh key: {refreshKey}</div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Prompts List */}
@@ -313,29 +299,23 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
             <Card>
               <CardContent className="text-center py-12">
                 <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">No Prompts Found</h3>
                   <p className="text-muted-foreground mb-4">
-                    No prompts found. This might be a loading issue with the key-value store.
+                    Your prompts collection is empty. Create some prompts to get started.
                   </p>
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <div>Debug Info:</div>
-                    <div>Raw prompts object: {JSON.stringify(prompts !== null)}</div>
-                    <div>Prompts keys: {prompts ? Object.keys(prompts).join(', ') : 'null'}</div>
-                    <div>Sorted prompts: {sortedPrompts.length}</div>
-                  </div>
                   <div className="flex flex-col gap-2 items-center">
                     <Button 
-                      onClick={initializeDefaults}
-                      className="mt-4"
-                      variant="default"
+                      onClick={createSamplePrompts}
+                      className="bg-primary hover:bg-primary/90"
                     >
-                      Initialize Default Prompts
+                      Create Sample Prompts
                     </Button>
                     <Button 
-                      onClick={forceRefresh}
+                      onClick={() => setShowCreateDialog(true)}
                       size="sm"
                       variant="outline"
                     >
-                      Force Refresh
+                      Create Custom Prompt
                     </Button>
                   </div>
                 </div>

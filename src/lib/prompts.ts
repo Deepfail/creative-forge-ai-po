@@ -11,85 +11,13 @@ export interface ChatPrompt {
   updatedAt: number
 }
 
-export const defaultPrompts: Record<string, ChatPrompt> = {
-  'character-creation': {
-    id: 'character-creation',
-    name: 'Character Creator',
-    description: 'Creates detailed NSFW characters based on user inputs',
-    systemPrompt: `Create a detailed NSFW character based on the following details:
-
-Name: {name}
-Age: {age}
-Type: {type}
-Personality: {personality}
-Physical Description: {physicalDescription}
-Background: {background}
-Kinks/Fetishes: {kinks}
-Sexual Preferences: {sexualPreferences}
-
-Generate a comprehensive character profile including:
-1. Detailed physical appearance
-2. Personality traits and quirks
-3. Sexual preferences and kinks
-4. Background story
-5. How they interact with others
-6. Their goals and motivations
-
-Make the description vivid, engaging, and suitable for adult roleplay scenarios.`,
-    updatedAt: Date.now()
-  },
-  'scenario-creation': {
-    id: 'scenario-creation',
-    name: 'Scenario Builder',
-    description: 'Creates immersive NSFW scenarios and interactive experiences',
-    systemPrompt: `Create an immersive NSFW scenario based on these parameters:
-
-Setting: {setting}
-Characters: {characters}
-Theme: {theme}
-Tone: {tone}
-Kinks: {kinks}
-Plot Elements: {plotElements}
-
-Generate a detailed scenario including:
-1. Scene setting and atmosphere
-2. Character introductions and dynamics
-3. Initial situation and tension
-4. Possible progression paths
-5. Interactive elements
-6. Climactic moments
-
-Make it engaging, immersive, and suitable for adult interactive experiences.`,
-    updatedAt: Date.now()
-  }
-}
+// Empty default prompts - user must create their own
+export const defaultPrompts: Record<string, ChatPrompt> = {}
 
 export function usePrompts() {
   const [prompts, setPrompts] = useKV<Record<string, ChatPrompt>>('chat-prompts', {})
-  const [initialized, setInitialized] = useState(false)
   
-  // Debug logging to see what's in storage
-  useEffect(() => {
-    console.log('Current prompts in storage:', prompts)
-    if (prompts) {
-      Object.entries(prompts).forEach(([key, prompt]) => {
-        console.log(`Prompt ${key}:`, prompt.name)
-      })
-    }
-  }, [prompts])
-  
-  // Only initialize with defaults on first load if completely empty AND not yet initialized
-  useEffect(() => {
-    if (!initialized && (!prompts || Object.keys(prompts).length === 0)) {
-      console.log('First time initialization with defaults...')
-      setPrompts(defaultPrompts)
-      setInitialized(true)
-    } else if (!initialized) {
-      setInitialized(true)
-    }
-  }, [prompts, initialized, setPrompts])
-  
-  // Use current prompts, even if empty (user might have cleared them intentionally)
+  // Use current prompts directly from KV store
   const safePrompts = prompts || {}
   
   // Compute sorted prompts
@@ -109,6 +37,7 @@ export function usePrompts() {
           updatedAt: Date.now()
         }
       }
+      console.log('Updating prompt:', id, 'New prompts:', updatedPrompts)
       return updatedPrompts
     })
   }
@@ -117,6 +46,7 @@ export function usePrompts() {
     setPrompts(current => {
       const currentPrompts = current || {}
       const { [id]: deleted, ...rest } = currentPrompts
+      console.log('Deleting prompt:', id, 'Remaining prompts:', rest)
       return rest
     })
   }
@@ -131,18 +61,40 @@ export function usePrompts() {
           updatedAt: Date.now()
         }
       }
+      console.log('Adding prompt:', prompt.id, 'New prompts:', newPrompts)
       return newPrompts
     })
-  }
-
-  const forceReset = () => {
-    console.log('Force resetting prompts to defaults...')
-    setPrompts(defaultPrompts)
   }
 
   const forceClear = () => {
     console.log('Force clearing all prompts...')
     setPrompts({})
+  }
+
+  const getPrompt = (id: string): ChatPrompt | undefined => {
+    return safePrompts[id]
+  }
+
+  // Get prompt for chat builder (with fallback)
+  const getChatBuilderPrompt = (): string => {
+    // Look for any chat builder prompts first
+    const chatBuilderPrompts = Object.values(safePrompts).filter(p => 
+      p.id.includes('chat') || p.id.includes('builder') || p.style?.includes('chat')
+    )
+    
+    if (chatBuilderPrompts.length > 0) {
+      return chatBuilderPrompts[0].systemPrompt
+    }
+    
+    // Fallback to default chat builder prompt
+    return `You are an AI assistant helping to create custom NSFW content. Based on the conversation, help the user refine their ideas and preferences for characters or scenarios.
+
+Instructions:
+- Ask follow-up questions to understand their preferences better
+- Suggest ideas and variations based on what they've told you
+- Be helpful and creative while staying focused on content creation
+- Keep responses conversational and engaging
+- When they seem ready, offer to generate their custom content`
   }
 
   return {
@@ -152,7 +104,8 @@ export function usePrompts() {
     deletePrompt,
     addPrompt,
     setPrompts,
-    forceReset,
-    forceClear
+    forceClear,
+    getPrompt,
+    getChatBuilderPrompt
   }
 }

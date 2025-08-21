@@ -2,7 +2,7 @@ import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from '@phosphor-icons/react'
-import { usePrompts, defaultPrompts } from '@/lib/prompts'
+import { usePrompts } from '@/lib/prompts'
 import { toast } from 'sonner'
 
 interface PromptsTestProps {
@@ -19,16 +19,8 @@ export default function PromptsTest({ onBack }: PromptsTestProps) {
     console.log('prompts keys:', prompts ? Object.keys(prompts) : 'null')
     console.log('sortedPrompts:', sortedPrompts)
     console.log('sortedPrompts length:', sortedPrompts.length)
-    console.log('defaultPrompts:', defaultPrompts)
-    console.log('defaultPrompts keys:', Object.keys(defaultPrompts))
     
     toast.info(`Found ${sortedPrompts.length} prompts. Check console for details.`)
-  }
-
-  const forceInit = () => {
-    console.log('Force initializing prompts with defaults')
-    setPrompts(defaultPrompts)
-    toast.success('Forced initialization complete')
   }
 
   const clearStorage = async () => {
@@ -62,9 +54,6 @@ export default function PromptsTest({ onBack }: PromptsTestProps) {
                 <Button onClick={testPrompts} variant="outline">
                   Test Prompts
                 </Button>
-                <Button onClick={forceInit} variant="outline">
-                  Force Init
-                </Button>
                 <Button onClick={clearStorage} variant="destructive">
                   Clear Storage
                 </Button>
@@ -82,7 +71,6 @@ export default function PromptsTest({ onBack }: PromptsTestProps) {
                 <p>Prompts exists: {prompts ? 'Yes' : 'No'}</p>
                 <p>Prompts keys: {prompts ? Object.keys(prompts).join(', ') : 'None'}</p>
                 <p>Sorted prompts length: {sortedPrompts.length}</p>
-                <p>Default prompts available: {Object.keys(defaultPrompts).join(', ')}</p>
               </div>
             </CardContent>
           </Card>

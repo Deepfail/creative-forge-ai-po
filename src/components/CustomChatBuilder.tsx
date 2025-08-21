@@ -8,6 +8,7 @@ import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
 import { aiService } from '@/lib/ai-service'
+import { usePrompts } from '@/lib/prompts'
 
 // ---- Interfaces ----
 interface Message {
@@ -39,6 +40,7 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   })
   const [showExport, setShowExport] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const { getChatBuilderPrompt } = usePrompts()
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   useEffect(() => { scrollToBottom() }, [messages])
@@ -63,22 +65,24 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
     setIsTyping(true)
     try {
       const conversationContext = messages.map(m => `${m.role}: ${m.content}`).join('\n')
+      
+      // Get the prompt from the prompts system
+      const basePrompt = getChatBuilderPrompt()
 
-      const prompt = `You are an AI assistant helping to create custom NSFW content. Based on the conversation, help the user refine their ideas and preferences for characters or scenarios.
+      const prompt = `${basePrompt}
 
 Conversation history:
 ${conversationContext}
 
 User's latest message: ${userMessage}
 
-Instructions:
-- Ask follow-up questions to understand their preferences better
-- Suggest ideas and variations based on what they've told you
-- Be helpful and creative while staying focused on content creation
-- Keep responses conversational and engaging
-- When they seem ready, offer to generate their custom content
+Current preferences gathered: ${JSON.stringify(creationState.preferences)}
 
-Current preferences gathered: ${JSON.stringify(creationState.preferences)}`
+Response instructions:
+- Continue the conversation naturally
+- Ask follow-up questions to understand their preferences
+- Keep responses engaging and conversational
+- When they seem ready, offer to generate their content`
 
       const response = await aiService.generateText(prompt, { temperature: 0.8, maxTokens: 400 })
       addMessage('ai', response)
