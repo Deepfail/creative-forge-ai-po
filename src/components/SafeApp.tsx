@@ -1,5 +1,6 @@
-import React from 'react'
-import { Card, CardContent, CardDescription
+import React, { useState } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Sparkle, Gear, DiceOne, ChatCircle, Users, Crown } from '@phosphor-icons/react'
@@ -7,18 +8,16 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { toast } from 'sonner'
 
 function SafeErrorFallback({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) {
-
-// Safe error fallbackry }: { error: Error, resetErrorBoundary: () => void }) {
-function SafeErrorFallback({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) {
-  return (lassName="min-h-screen bg-background flex items-center justify-center p-4">
+  return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="max-w-md">t-6 text-center">
+      <Card className="max-w-md">
         <CardContent className="pt-6 text-center">
           <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
+          <p className="text-muted-foreground mb-4">
             {error.message || 'An error occurred'}
-            {error.message || 'An error occurred'}
+          </p>
           <div className="space-y-2">
-          <div className="space-y-2">
+            <Button onClick={resetErrorBoundary} className="w-full">
               Try Again
             </Button>
             <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
