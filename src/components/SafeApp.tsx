@@ -1,54 +1,54 @@
 import React, { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { ErrorBoundary } from 'react-error-bo
 import { Sparkle, Gear, DiceOne, ChatCircle, Users, Crown } from '@phosphor-icons/react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { toast } from 'sonner'
 
 function SafeErrorFallback({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) {
-  return (
+          
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="max-w-md">
+          <div className="space-y
         <CardContent className="pt-6 text-center">
           <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
           <p className="text-muted-foreground mb-4">
             {error.message || 'An error occurred'}
           </p>
-          <div className="space-y-2">
+      </Card>
             <Button onClick={resetErrorBoundary} className="w-full">
               Try Again
-            </Button>
+
             <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
               Reload Page
             </Button>
           </div>
-        </CardContent>
+    console.error('Saf
       </Card>
-    </div>
+  }
   )
-}
+ 
 
-type CreationType = 'character' | 'scenario'
+    } catch (error) {
 
 const SafeApp: React.FC = () => {
   const [mode, setMode] = useState<'home' | 'random' | 'custom' | 'girls' | 'settings'>('home')
   const [error, setError] = useState<string | null>(null)
 
-  const handleError = (error: string) => {
+          {/* Header */}
     console.error('Safe mode error:', error)
-    setError(error)
+              <Spar
     toast.error(error)
-  }
+   
 
-  const handleBack = () => {
+              Safe mode is a
     try {
-      setMode('home')
+              🔞 18+ 
       setError(null)
-    } catch (error) {
+
       handleError('Failed to go back')
-    }
+     
   }
 
   return (
@@ -62,78 +62,78 @@ const SafeApp: React.FC = () => {
               <h1 className="text-4xl font-bold text-foreground">
                 NSFW AI Generator
               </h1>
-            </div>
+              </Ca
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Safe mode is active. Limited functionality available.
             </p>
-            <div className="mt-4 text-sm text-accent font-medium">
-              🔞 18+ Adult Content Only
-            </div>
-          </div>
+                    className="w-full"
+                    <DiceOne className=
+                  
+                
 
-          {error && (
-            <div className="mb-8 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <p className="text-destructive text-center">{error}</p>
-            </div>
-          )}
-
-          {/* Safe Mode Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-            <Card className="bg-gradient-to-br from-primary/20 to-primary/5 border-primary/30 hover:shadow-lg hover:shadow-primary/10 transition-all cursor-pointer group"
-                  onClick={() => setMode('random')}>
-              <CardContent className="p-6 text-center">
-                <DiceOne className="mx-auto mb-3 text-primary group-hover:scale-110 transition-transform" size={32} weight="duotone" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">Random Content</h3>
-                <p className="text-sm text-muted-foreground">Basic random generation</p>
-              </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-secondary/20 to-secondary/5 border-secondary/30 hover:shadow-lg hover:shadow-secondary/10 transition-all cursor-pointer group"
-                  onClick={() => setMode('custom')}>
-              <CardContent className="p-6 text-center">
-                <ChatCircle className="mx-auto mb-3 text-secondary group-hover:scale-110 transition-transform" size={32} weight="duotone" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">Basic Builder</h3>
-                <p className="text-sm text-muted-foreground">Simple content creation</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-accent/20 to-accent/5 border-accent/30 hover:shadow-lg hover:shadow-accent/10 transition-all cursor-pointer group"
-                  onClick={() => setMode('girls')}>
-              <CardContent className="p-6 text-center">
-                <Users className="mx-auto mb-3 text-accent group-hover:scale-110 transition-transform" size={32} weight="duotone" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">Character Gen</h3>
-                <p className="text-sm text-muted-foreground">Basic character creation</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-muted/20 to-muted/5 border-muted/30 hover:shadow-lg hover:shadow-muted/10 transition-all cursor-pointer group"
-                  onClick={() => setMode('settings')}>
-              <CardContent className="p-6 text-center">
-                <Gear className="mx-auto mb-3 text-muted-foreground group-hover:scale-110 transition-transform" size={32} weight="duotone" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">Settings</h3>
-                <p className="text-sm text-muted-foreground">Basic configuration</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Current Mode Content */}
-          {mode === 'random' && (
             <Card>
+                <C
+            
+
+                  <Button className
+                    Create Content
+                  <Button variant="outline" onClick={handleBack} className="w-full">
+                  </Button>
+              </CardContent>
+          )}
+          {mode === 'girls' && (
               <CardHeader>
-                <CardTitle>Random Content Generator</CardTitle>
-                <CardDescription>Generate random NSFW content (Safe Mode)</CardDescription>
-              </CardHeader>
+                <CardDescrip
+              <Card
+
+                      <div className="w-16 h-16 bg-muted rounded-full mx-auto mb-2"></div>
+                      <p className="text-sm text-mut
+                    <div className="p-4 border rounded-
+                      <h4 className="font-medium">Character 2</h4>
+                    </div>
+                  <Button className="w-full">
+                    Generate
+                  <
+
+              </CardContent>
+          )}
+          {mode === 'settings' && (
+              <CardHeader>
+                <CardDescription>Configure basic options (Safe Mode)</CardDescription>
               <CardContent>
-                <div className="space-y-4">
-                  <Button 
-                    onClick={() => {
-                      try {
-                        // Basic random generation logic would go here
-                        toast.success('Random content generated!')
-                      } catch (error) {
-                        handleError('Failed to generate content')
-                      }
-                    }}
+                  <div class
+                   
+
+                    Save Settings
+                  <Button variant="outline" onClick={h
+                  </Button>
+              </CardContent>
+          )}
+      </div>
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                     className="w-full"
                   >
                     <DiceOne className="mr-2" size={16} />
