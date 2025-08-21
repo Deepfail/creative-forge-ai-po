@@ -7,17 +7,14 @@ import { defaultPrompts } from '../data/chat-prompts'
 export default function PromptsDebug() {
   const { 
     prompts, 
-    loadPrompts, 
-    deletePrompt, 
-    resetToDefaults: forceLoadDefaults 
+  
   } = usePrompts()
-  
   const sortedPrompts = Object.entries(prompts || {}).sort(([a], [b]) => a.localeCompare(b))
-  
+
   console.log('=== PROMPTS DEBUG INFO ===')
   console.log('Number of prompts:', Object.keys(prompts || {}).length)
-  console.log('Default prompts available:', Object.keys(defaultPrompts).length)
-  console.log('Current prompts:', prompts)
+    console.log('Default prompts:', defaultPrompts)keys(defaultPrompts).length)
+
   console.log('Default prompts:', defaultPrompts)
 
   const handleForceDefaults = () => {
