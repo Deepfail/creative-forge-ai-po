@@ -1,12 +1,12 @@
 import React from 'react'
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Sparkle, Gear, DiceOne, ChatCircle, Us
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Sparkle, Gear, DiceOne, ChatCircle, Users, Crown } from '@phosphor-icons/react'
 import { ErrorBoundary } from 'react-error-boundary'
-import { useKV } from '@github/spark/hooks'
+function SafeErrorFallback({ error, resetEr
 import { toast } from 'sonner'
 
 // Safe error fallback
@@ -22,99 +22,99 @@ function SafeErrorFallback({ error, resetErrorBoundary }: { error: Error, resetE
           <div className="space-y-2">
             <Button onClick={resetErrorBoundary} variant="outline" className="w-full">
               Try Again
-            </Button>
+type CreationType = '
             <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
               Reload Page
             </Button>
-          </div>
+}
         </CardContent>
-      </Card>
+  const [mode
     </div>
-  )
+  c
 }
 
-type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'prompts-test' | 'image-test' | 'prompts-debug'
-type CreationType = 'character' | 'scenario'
-
-interface ApiConfig {
-  apiKey: string
-  textModel: string
-  imageModel: string
-}
-
-export default function SafeApp() {
-  const [mode, setMode] = useState<AppMode>('home')
-  const [selectedType, setSelectedType] = useState<CreationType>('character')
-  const [showSettings, setShowSettings] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  // Initialize with safe defaults
-  const [apiConfig, setApiConfig] = useKV<ApiConfig>('api-config', {
-    apiKey: '',
-    textModel: 'default',
-    imageModel: 'venice-sd35'
-  })
-
-  useEffect(() => {
-    try {
-      // Basic initialization check
-      if (typeof window !== 'undefined' && window.spark) {
-        console.log('Spark runtime available')
-        setIsLoading(false)
-      } else {
-        console.log('Waiting for Spark runtime...')
-        const checkSpark = setInterval(() => {
-          if (typeof window !== 'undefined' && window.spark) {
-            console.log('Spark runtime now available')
-            setIsLoading(false)
             clearInterval(checkSpark)
-          }
         }, 100)
-        
-        // Clear interval after 10 seconds
-        setTimeout(() => clearInterval(checkSpark), 10000)
+
       }
-    } catch (error) {
-      console.error('SafeApp initialization error:', error)
-      setError('Failed to initialize application')
-      setIsLoading(false)
-    }
+      console.er
+      setIsLoading(
   }, [])
+ 
 
-  const handleBack = () => {
-    setMode('home')
-    setError(null)
-  }
 
-  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
         <Card>
-          <CardContent className="pt-6 text-center">
-            <Sparkle className="animate-spin mx-auto mb-4" size={32} />
-            <p className="text-muted-foreground">Loading application...</p>
+            <Sparkle className="animate-spin mx-auto mb-4
           </CardContent>
-        </Card>
       </div>
-    )
-  }
 
   if (error) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <h3 className="text-lg font-semibold mb-2">Application Error</h3>
-            <p className="text-sm text-muted-foreground mb-4">{error}</p>
-            <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
+      <div className="min-h-screen bg-background flex items-center j
+          <Card
+            <p className=
               Reload Page
-            </Button>
+    
+
+  }
+  // Safe
+    return (
+        <div className="min-h-screen bg-background">
+            {/* Header */}
+              <div classNam
+              
+                  <h1 className="text-5xl font-bold
+                  </h1>
+                <div className="flex-1 flex justify-end gap-2"
+                    variant="outline"
+                    onClick={()
+                  >
+           
+               
+        
+                Choose your creation type 
+              <div className="mt-4 text-sm text-accent fon
+       
+
+            <div className="grid grid-cols-1 md:grid-cols-2
+                    onClick={() => toast.info('Fea
+                  <DiceOn
+     
+        
+
+                <CardContent
+                  <
+                </
+
+
+                  
+            
+              </Card>
+              
+                <CardContent className="p-6 text-cen
+                  <h3 className="text-lg font-semibold text-foreground 
+                </CardContent>
           </CardContent>
         </Card>
       </div>
     )
   }
+
+              
+            
+                    </Badge>
+              
+            </Card>
+            {/* Settings Panel */}
+              <Card className="bg-card/95 backdrop-blur">
+                  <CardTitle>API Settings</CardTitle>
+                </CardHea
+                  <di
+                    <Inp
+               
+            
+     
+   
 
   // Safe mode selector that only renders the home page initially
   if (mode === 'home') {
@@ -234,17 +234,17 @@ export default function SafeApp() {
                       Save Settings
                     </Button>
                     <Button variant="outline" onClick={() => setShowSettings(false)}>
-                      Cancel
+
                     </Button>
-                  </div>
+
                 </CardContent>
-              </Card>
+
             )}
-          </div>
+
         </div>
-      </ErrorBoundary>
+
     )
-  }
+
 
   // For now, redirect any other mode back to home
   return (
@@ -258,5 +258,5 @@ export default function SafeApp() {
         </Card>
       </div>
     </ErrorBoundary>
-  )
+
 }
