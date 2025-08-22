@@ -9,6 +9,7 @@ import { Shuffle, Sparkle, Heart, Download, Crown, ArrowLeft, Image, Settings } 
 import ExportDialog from './ExportDialog'
 import { aiService } from '@/lib/ai-service'
 import { useKV } from '@github/spark/hooks'
+import { useTemplateSystem } from '@/hooks/useTemplateSystem'
 import { toast } from 'sonner'
 import type { SavedGirl } from './Harem'
 
@@ -63,24 +64,21 @@ const defaultPromptTemplates: PromptTemplates = {
   imagePrompt: `Portrait of {name}, a beautiful {type}, {physicalDescription}, realistic portrait, detailed, high quality, professional photography, attractive, {personality} expression`
 }
 
-const generateRandomGirl = async (templates: PromptTemplates): Promise<GeneratedGirl> => {
+const generateRandomGirl = async (templateSystem: ReturnType<typeof useTemplateSystem>): Promise<GeneratedGirl> => {
   const name = femaleNames[Math.floor(Math.random() * femaleNames.length)]
   const age = Math.floor(Math.random() * 13) + 18 // 18-30
   const type = girlTypes[Math.floor(Math.random() * girlTypes.length)]
   const personality = personalities[Math.floor(Math.random() * personalities.length)]
   
-  // Replace template variables
-  const summaryPrompt = templates.summaryPrompt
-    .replace('{name}', name)
-    .replace('{age}', age.toString())
-    .replace('{type}', type)
-    .replace('{personality}', personality)
+  const values = { name, age: age.toString(), type, personality }
   
-  const physicalPrompt = templates.physicalPrompt
-    .replace('{name}', name)
-    .replace('{age}', age.toString())
-    .replace('{type}', type)
-    .replace('{personality}', personality)
+  // Get templates from the template system
+  const summaryTemplate = templateSystem.getCharacterSummaryTemplate()
+  const physicalTemplate = templateSystem.getPhysicalDescriptionTemplate()
+  
+  // Replace template variables
+  const summaryPrompt = templateSystem.replaceVariables(summaryTemplate, values)
+  const physicalPrompt = templateSystem.replaceVariables(physicalTemplate, values)
   
   let summary = ''
   let physicalDescription = ''
@@ -133,6 +131,9 @@ export default function GenerateGirls({ onBack }: GenerateGirlsProps) {
   const [showTemplateEditor, setShowTemplateEditor] = useState(false)
   const [tempTemplates, setTempTemplates] = useState<PromptTemplates>(defaultPromptTemplates)
   const [apiConfig] = useKV<any>('api-config', { apiKey: '', textModel: 'default', imageModel: 'flux-dev' })
+  
+  // Use the new template system
+  const templateSystem = useTemplateSystem()
 
   const generateNewGirls = async () => {
     setIsGenerating(true)
@@ -140,7 +141,7 @@ export default function GenerateGirls({ onBack }: GenerateGirlsProps) {
     try {
       // Generate girls without images initially
       const newGirls = await Promise.all(
-        Array.from({ length: 4 }, () => generateRandomGirl(promptTemplates))
+        Array.from({ length: 4 }, () => generateRandomGirl(templateSystem))
       )
       setGirls(newGirls)
     } catch (error) {
@@ -177,12 +178,16 @@ export default function GenerateGirls({ onBack }: GenerateGirlsProps) {
     ))
 
     try {
-      // Build prompt from template
-      const imagePrompt = promptTemplates.imagePrompt
-        .replace('{name}', girl.name)
-        .replace('{type}', girl.type)
-        .replace('{physicalDescription}', girl.physicalDescription || 'attractive appearance')
-        .replace('{personality}', girl.personality)
+      // Get image template and replace variables
+      const imageTemplate = templateSystem.getImageGenerationTemplate()
+      const values = {
+        name: girl.name,
+        type: girl.type,
+        physicalDescription: girl.physicalDescription || 'attractive appearance',
+        personality: girl.personality
+      }
+      
+      const imagePrompt = templateSystem.replaceVariables(imageTemplate, values)
 
       console.log('Generating image with prompt:', imagePrompt)
 
@@ -328,48 +333,59 @@ This character was designed for adult interactive experiences and can be adapted
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Edit Prompt Templates</DialogTitle>
+                  <DialogTitle>Template Information</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6">
-                  <div>
-                    <Label>Summary Prompt Template</Label>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Variables: {'{name}'}, {'{age}'}, {'{type}'}, {'{personality}'}
+                  <div className="bg-muted/30 p-4 rounded-lg">
+                    <h3 className="font-semibold text-foreground mb-2">Template System Upgrade</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Template editing has been moved to the global Template Editor for better organization and reusability across the application.
                     </p>
-                    <Textarea
-                      value={tempTemplates.summaryPrompt}
-                      onChange={(e) => setTempTemplates(prev => ({ ...prev, summaryPrompt: e.target.value }))}
-                      className="min-h-[100px]"
-                    />
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Currently using these templates from the Template Editor:
+                    </p>
+                    <div className="space-y-3 text-sm">
+                      <div>
+                        <strong>Character Summary:</strong> 
+                        <div className="text-xs text-muted-foreground font-mono bg-background p-2 rounded mt-1">
+                          {templateSystem.getCharacterSummaryTemplate()}
+                        </div>
+                      </div>
+                      <div>
+                        <strong>Physical Description:</strong>
+                        <div className="text-xs text-muted-foreground font-mono bg-background p-2 rounded mt-1">
+                          {templateSystem.getPhysicalDescriptionTemplate()}
+                        </div>
+                      </div>
+                      <div>
+                        <strong>Image Generation:</strong>
+                        <div className="text-xs text-muted-foreground font-mono bg-background p-2 rounded mt-1">
+                          {templateSystem.getImageGenerationTemplate()}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div>
-                    <Label>Physical Description Template</Label>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Variables: {'{name}'}, {'{age}'}, {'{type}'}, {'{personality}'}
-                    </p>
-                    <Textarea
-                      value={tempTemplates.physicalPrompt}
-                      onChange={(e) => setTempTemplates(prev => ({ ...prev, physicalPrompt: e.target.value }))}
-                      className="min-h-[100px]"
-                    />
-                  </div>
-                  <div>
-                    <Label>Image Generation Template</Label>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Variables: {'{name}'}, {'{type}'}, {'{physicalDescription}'}, {'{personality}'}
-                    </p>
-                    <Textarea
-                      value={tempTemplates.imagePrompt}
-                      onChange={(e) => setTempTemplates(prev => ({ ...prev, imagePrompt: e.target.value }))}
-                      className="min-h-[100px]"
-                    />
+                    <h4 className="font-medium text-foreground mb-2">Available Variables:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.keys(templateSystem.variables).map(varName => (
+                        <Badge key={varName} variant="outline" className="text-xs">
+                          {'{' + varName + '}'}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={saveTemplates} className="bg-primary hover:bg-primary/90">
-                      Save Templates
-                    </Button>
-                    <Button onClick={resetTemplates} variant="outline">
-                      Reset to Defaults
+                    <Button 
+                      onClick={() => {
+                        setShowTemplateEditor(false)
+                        // Navigate to template editor would go here if we had router
+                        toast.info('Use the Templates button in the main navigation to edit templates')
+                      }} 
+                      className="bg-primary hover:bg-primary/90"
+                    >
+                      <Settings size={16} className="mr-2" />
+                      Open Template Editor
                     </Button>
                   </div>
                 </div>

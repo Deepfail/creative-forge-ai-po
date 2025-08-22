@@ -21,6 +21,7 @@ const PromptsTest = React.lazy(() => import('./components/PromptsTest'))
 const ImageGenerationTest = React.lazy(() => import('./components/ImageGenerationTest'))
 const AITestComponent = React.lazy(() => import('./components/AITestComponent'))
 const ReasoningTest = React.lazy(() => import('./components/ReasoningTest'))
+const TemplateEditor = React.lazy(() => import('./components/TemplateEditor'))
 
 import { aiService } from './lib/ai-service'
 import { useKV } from '@github/spark/hooks'
@@ -35,7 +36,7 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error, resetError
 }
 
 type CreationType = 'character' | 'scenario'
-type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'prompts-test' | 'image-test' | 'prompts-debug' | 'ai-test' | 'reasoning-test'
+type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'prompts-test' | 'image-test' | 'prompts-debug' | 'ai-test' | 'reasoning-test' | 'template-editor'
 
 const creationTypes: Array<{
   id: CreationType
@@ -218,6 +219,14 @@ function App() {
       )
     }
 
+    if (mode === 'template-editor') {
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <TemplateEditor onBack={handleBack} />
+        </React.Suspense>
+      )
+    }
+
     if (mode === 'prompts-debug') {
       return (
         <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
@@ -298,6 +307,15 @@ function App() {
               >
                 <Sparkle size={16} className="mr-2" />
                 Debug Prompts
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setMode('template-editor')}
+                className="border-accent/30 hover:bg-accent/10"
+              >
+                <Settings size={16} className="mr-2" />
+                Templates
               </Button>
               <Button
                 variant="outline"
