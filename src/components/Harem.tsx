@@ -588,29 +588,29 @@ Respond as ${activeScenario.girl.name} in character. Be engaging, immersive, and
                               e.stopPropagation()
                               toggleFavorite(girl.id)
                             }}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Heart 
-                              size={16} 
-                              weight={girl.favorited ? "fill" : "regular"}
-                              className={girl.favorited ? "text-red-500" : "text-muted-foreground"}
-                            />
-                          </Button>
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                size={12}
-                                weight={i < girl.rating ? "fill" : "regular"}
-                                className={i < girl.rating ? "text-yellow-400" : "text-muted-foreground"}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                        {girl.personality}
-                      </p>
+                <div>
+                  <Label htmlFor="edit-type">Type</Label>
+                  <Input
+                    id="edit-type"
+                    value={editedGirl.type}
+                    onChange={(e) => setEditedGirl(prev => prev ? { ...prev, type: e.target.value } : null)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-personality">Personality</Label>
+                  <Textarea
+                    id="edit-personality"
+                    value={editedGirl.personality}
+                    onChange={(e) => setEditedGirl(prev => prev ? { ...prev, personality: e.target.value } : null)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-summary">Summary</Label>
+                  <Textarea
+                    id="edit-summary"
+                    value={editedGirl.summary}
                       <div className="flex flex-wrap gap-1 mb-2">
                         {girl.roles.slice(0, 2).map(role => (
                           <Badge key={role} variant="secondary" className="text-xs">
