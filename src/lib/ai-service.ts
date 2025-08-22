@@ -86,8 +86,6 @@ export class AIService {
             temperature: options?.temperature ?? 0.8,
             max_tokens: options?.maxTokens ?? 2000
           }
-          
-          // Venice AI doesn't support hide_reasoning parameter
 
           const response = await fetch('https://api.venice.ai/api/v1/chat/completions', {
             method: 'POST',
@@ -112,7 +110,7 @@ export class AIService {
           }
           
           // Filter out reasoning for reasoning models (only for specific models that show reasoning)
-          const reasoningModels = ['deepseek-r1-671b', 'qwen-2.5-qwq-32b', 'qwen-2.5-qwq-32b-preview']
+          const reasoningModels = ['deepseek-r1-671b', 'qwen-2.5-qwq-32b']
           if (reasoningModels.includes(this.config.textModel) && result.length > 100) {
             console.log('Applying reasoning filter for model:', this.config.textModel)
             

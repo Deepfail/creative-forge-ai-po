@@ -103,7 +103,7 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
       console.log('System prompt preview:', systemPrompt.substring(0, 200) + '...')
 
       // Use cleaner, less explicit prompt to avoid content filtering
-      const prompt = `Context: ${systemPrompt}
+      const promptText = `Context: ${systemPrompt}
 
 Previous conversation:
 ${conversationContext}
@@ -112,7 +112,7 @@ Latest user message: ${userMessage}
 
 Instructions: Continue as Luna, the seductive assistant. Keep responses conversational (1-3 sentences). Ask follow-up questions. Stay in character. Keep the conversation flowing.`
 
-      const response = await aiService.generateText(prompt, { 
+      const response = await aiService.generateText(promptText, { 
         temperature: 0.8, 
         maxTokens: 400
       })
@@ -207,7 +207,7 @@ Instructions: Continue as Luna, the seductive assistant. Keep responses conversa
       const conversationSummary = messages.map(m => m.content).join('\n')
       
       // Use a more generic prompt to avoid content filtering
-      const prompt = `Create a detailed ${creationState.type} based on this conversation summary. 
+      const promptText = `Create a detailed ${creationState.type} based on this conversation summary. 
 
 Preferences:
 - Character Type: ${creationState.preferences.characterType || 'Not specified'}
@@ -220,7 +220,7 @@ ${conversationSummary}
 
 Create engaging, detailed content tailored to their interests. Include personality, background, and interaction style.`
       
-      const generatedContent = await aiService.generateText(prompt, { 
+      const generatedContent = await aiService.generateText(promptText, { 
         temperature: 0.8, 
         maxTokens: 2000
       })

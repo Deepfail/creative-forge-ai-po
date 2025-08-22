@@ -254,7 +254,7 @@ export default function Harem({ onBack }: HaremProps) {
     setIsGeneratingScenario(true)
     
     try {
-      const prompt = spark.llmPrompt`Create a detailed NSFW interactive scenario for this character:
+      const promptText = `Create a detailed NSFW interactive scenario for this character:
 
 Character Profile:
 - Name: ${girl.name}
@@ -278,13 +278,40 @@ Make it engaging, immersive, and true to the character's personality. Keep it NS
 Return as JSON:
 {
   "title": "scenario title",
-  "setting": "location description",
+  "setting": "location description", 
   "mood": "mood/tone",
   "scenario": "opening scene description"
 }`
 
-      const response = await aiService.generateText(prompt)
-      const scenarioData = JSON.parse(response)
+      const response = await aiService.generateText(promptText)
+      
+      // Try to parse JSON, but handle non-JSON responses gracefully
+      let scenarioData
+      try {
+        scenarioData = JSON.parse(response)
+      } catch (parseError) {
+        console.log('Response was not JSON, attempting to extract scenario data...')
+        // Extract data from non-JSON response
+        const lines = response.split('\n').filter(line => line.trim())
+        scenarioData = {
+          title: userPrompt.substring(0, 50) + '...',
+          setting: 'Private setting',
+          mood: 'Intimate',
+          scenario: response.substring(0, 500) + '...'
+        }
+        
+        // Try to find title in response
+        const titleMatch = response.match(/title[\":\s]*([^\n\",}]+)/i)
+        if (titleMatch) scenarioData.title = titleMatch[1].trim()
+        
+        // Try to find setting in response  
+        const settingMatch = response.match(/setting[\":\s]*([^\n\",}]+)/i)
+        if (settingMatch) scenarioData.setting = settingMatch[1].trim()
+        
+        // Try to find mood in response
+        const moodMatch = response.match(/mood[\":\s]*([^\n\",}]+)/i)
+        if (moodMatch) scenarioData.mood = moodMatch[1].trim()
+      }
       
       const newScenario: GeneratedScenario = {
         id: Date.now().toString(),
@@ -350,7 +377,7 @@ Return as JSON:
         .map(msg => `${msg.role}: ${msg.content}`)
         .join('\n\n')
       
-      const prompt = spark.llmPrompt`You are roleplaying as ${activeScenario.girl.name}, a ${activeScenario.girl.age}-year-old ${activeScenario.girl.type}.
+      const promptText = `You are roleplaying as ${activeScenario.girl.name}, a ${activeScenario.girl.age}-year-old ${activeScenario.girl.type}.
 
 Character Details:
 - Personality: ${activeScenario.girl.personality}
@@ -367,7 +394,7 @@ ${chatHistory}
 
 Respond as ${activeScenario.girl.name} in character. Be engaging, immersive, and true to her personality. Keep responses conversational and interactive. This is NSFW content, so be appropriately mature but tasteful.`
 
-      const response = await aiService.generateText(prompt)
+      const response = await aiService.generateText(promptText)
       
       // Add AI response
       const newAIMessage = {
