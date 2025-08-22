@@ -58,7 +58,20 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
   const initializeDefaults = () => {
     console.log('Force initializing default prompts...')
     setPrompts(defaultPrompts)
-    toast.success('Default prompts initialized!')
+    setRefreshKey(prev => prev + 1)
+    toast.success('All default prompts loaded!')
+  }
+
+  // Load all comprehensive prompts 
+  const loadComprehensivePrompts = () => {
+    console.log('Loading comprehensive prompt set...')
+    // Clear existing first
+    forceClear()
+    setTimeout(() => {
+      setPrompts(defaultPrompts)
+      setRefreshKey(prev => prev + 1)
+      toast.success(`${Object.keys(defaultPrompts).length} prompts loaded successfully!`)
+    }, 100)
   }
 
   const handleSave = (promptId: string, updates: Partial<ChatPrompt>) => {
@@ -108,7 +121,10 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
           </Button>
           <div className="flex-1">
             <h1 className="text-3xl font-bold">Prompts Manager</h1>
-            <p className="text-muted-foreground">Manage AI personality prompts and responses</p>
+            <p className="text-muted-foreground">
+              Manage all AI personality prompts and system instructions used throughout the application.
+              Load the complete prompt set to access all available generators and assistants.
+            </p>
           </div>
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
@@ -196,11 +212,19 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
             <CardContent className="pt-6">
               <div className="flex flex-wrap gap-2 items-center">
                 <Button 
-                  onClick={initializeDefaults}
+                  onClick={loadComprehensivePrompts}
                   size="sm"
                   className="bg-primary hover:bg-primary/90"
                 >
-                  📝 Initialize Default Prompts
+                  ⭐ Load All Prompts ({Object.keys(defaultPrompts).length})
+                </Button>
+                <Button 
+                  onClick={initializeDefaults}
+                  size="sm"
+                  variant="outline"
+                  className="border-primary/30 hover:bg-primary/10"
+                >
+                  📝 Reset to Defaults
                 </Button>
                 <Button 
                   onClick={clearAllPrompts}
@@ -226,7 +250,7 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
                   🧪 Test Prompt
                 </Button>
                 <span className="text-sm text-muted-foreground ml-4">
-                  Total prompts: {sortedPrompts.length}
+                  Loaded: {sortedPrompts.length} / Available: {Object.keys(defaultPrompts).length}
                 </span>
               </div>
             </CardContent>
@@ -256,14 +280,14 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">No Prompts Found</h3>
                   <p className="text-muted-foreground mb-4">
-                    Your prompts collection is empty. Create some prompts to get started.
+                    Your prompts collection is empty. Load the comprehensive prompt set to get started.
                   </p>
                   <div className="flex flex-col gap-2 items-center">
                     <Button 
-                      onClick={initializeDefaults}
+                      onClick={loadComprehensivePrompts}
                       className="bg-primary hover:bg-primary/90"
                     >
-                      Initialize Default Prompts
+                      ⭐ Load All Prompts ({Object.keys(defaultPrompts).length})
                     </Button>
                     <Button 
                       onClick={() => setShowCreateDialog(true)}
@@ -277,83 +301,104 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
               </CardContent>
             </Card>
           ) : (
-            sortedPrompts.map((prompt) => (
-            <Card key={prompt.id} className="relative">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      {prompt.name}
-                      <Badge variant="secondary">{prompt.id}</Badge>
+            // Group prompts by style for better organization
+            (() => {
+              const groupedPrompts = sortedPrompts.reduce((acc, prompt) => {
+                const style = prompt.style || 'misc'
+                if (!acc[style]) acc[style] = []
+                acc[style].push(prompt)
+                return acc
+              }, {} as Record<string, typeof sortedPrompts>)
+
+              return Object.entries(groupedPrompts).map(([style, prompts]) => (
+                <Card key={style} className="mb-6">
+                  <CardHeader>
+                    <CardTitle className="capitalize text-lg text-primary">
+                      {style === 'misc' ? 'Miscellaneous' : style} Prompts ({prompts.length})
                     </CardTitle>
-                    {prompt.description && <CardDescription>{prompt.description}</CardDescription>}
-                    {prompt.style && (
-                      <Badge variant="outline" className="mt-2">
-                        {prompt.style}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingPrompt(editingPrompt === prompt.id ? null : prompt.id)}
-                    >
-                      {editingPrompt === prompt.id ? (
-                        <X size={16} />
-                      ) : (
-                        <Edit3 size={16} />
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(prompt.id)}
-                      className="border-destructive text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              {editingPrompt === prompt.id ? (
-                <CardContent>
-                  <PromptEditor
-                    prompt={prompt}
-                    onSave={(updates) => handleSave(prompt.id, updates)}
-                    onCancel={() => setEditingPrompt(null)}
-                  />
-                </CardContent>
-              ) : (
-                <CardContent>
-                  <div className="space-y-4">
-                    {prompt.greeting && (
-                      <div>
-                        <h4 className="text-sm font-medium mb-2">Greeting</h4>
-                        <div className="bg-muted p-3 rounded-lg">
-                          <p className="text-sm whitespace-pre-wrap line-clamp-3">
-                            {prompt.greeting}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">System Prompt</h4>
-                      <div className="bg-muted p-3 rounded-lg">
-                        <p className="text-xs text-muted-foreground line-clamp-4">
-                          {prompt.systemPrompt}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Last updated: {new Date(prompt.updatedAt).toLocaleString()}
-                    </div>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          ))
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {prompts.map((prompt) => (
+                      <Card key={prompt.id} className="relative border-border/50">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <CardTitle className="flex items-center gap-2">
+                                {prompt.name}
+                                <Badge variant="secondary">{prompt.id}</Badge>
+                              </CardTitle>
+                              {prompt.description && <CardDescription>{prompt.description}</CardDescription>}
+                              {prompt.style && (
+                                <Badge variant="outline" className="mt-2">
+                                  {prompt.style}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setEditingPrompt(editingPrompt === prompt.id ? null : prompt.id)}
+                              >
+                                {editingPrompt === prompt.id ? (
+                                  <X size={16} />
+                                ) : (
+                                  <Edit3 size={16} />
+                                )}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDelete(prompt.id)}
+                                className="border-destructive text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        
+                        {editingPrompt === prompt.id ? (
+                          <CardContent>
+                            <PromptEditor
+                              prompt={prompt}
+                              onSave={(updates) => handleSave(prompt.id, updates)}
+                              onCancel={() => setEditingPrompt(null)}
+                            />
+                          </CardContent>
+                        ) : (
+                          <CardContent>
+                            <div className="space-y-4">
+                              {prompt.greeting && (
+                                <div>
+                                  <h4 className="text-sm font-medium mb-2">Greeting</h4>
+                                  <div className="bg-muted p-3 rounded-lg">
+                                    <p className="text-sm whitespace-pre-wrap line-clamp-3">
+                                      {prompt.greeting}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="text-sm font-medium mb-2">System Prompt</h4>
+                                <div className="bg-muted p-3 rounded-lg">
+                                  <p className="text-xs text-muted-foreground line-clamp-4">
+                                    {prompt.systemPrompt}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                Last updated: {new Date(prompt.updatedAt).toLocaleString()}
+                              </div>
+                            </div>
+                          </CardContent>
+                        )}
+                      </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+              ))
+            })()
           )}
         </div>
       </div>

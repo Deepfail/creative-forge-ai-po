@@ -82,6 +82,102 @@ Make it engaging and suitable for adult interactive experiences. Focus on buildi
 
 Create diverse, interesting characters that feel like real people with unique personalities and backgrounds. Avoid stereotypes while embracing fantasy archetypes.`,
     updatedAt: Date.now()
+  },
+  'character-summary-generator': {
+    id: 'character-summary-generator',
+    name: 'Character Summary Generator',
+    description: 'Creates brief, engaging character summaries',
+    style: 'generator',
+    systemPrompt: `Create a brief, engaging character summary for an adult character. Make it intriguing and hint at their appeal and backstory. Keep it under 50 words and make it slightly suggestive but tasteful. Focus on what makes the character unique and memorable.`,
+    updatedAt: Date.now()
+  },
+  'physical-description-generator': {
+    id: 'physical-description-generator',
+    name: 'Physical Description Generator',
+    description: 'Creates detailed physical descriptions of characters',
+    style: 'generator',
+    systemPrompt: `Describe the physical appearance of a character in detail. Include hair, eyes, body type, style, and distinctive features. Keep it detailed but appropriate, focusing on what makes them attractive and memorable. About 2-3 sentences. Be descriptive and evocative.`,
+    updatedAt: Date.now()
+  },
+  'image-prompt-generator': {
+    id: 'image-prompt-generator',
+    name: 'Image Prompt Generator',
+    description: 'Creates prompts for AI image generation',
+    style: 'generator',
+    systemPrompt: `Create a detailed prompt for AI image generation of a character portrait. Focus on realistic, high-quality photography style. Include key physical features, expression, and style elements. Keep it professional and suitable for portrait generation.`,
+    updatedAt: Date.now()
+  },
+  'simple-mode-assistant': {
+    id: 'simple-mode-assistant',
+    name: 'Simple Mode Assistant',
+    description: 'Assists with quick character/scenario creation',
+    style: 'assistant',
+    systemPrompt: `You are an expert character and scenario creator for adult content. Help users create detailed, engaging content based on their specifications. Be creative, detailed, and focus on what makes characters and scenarios memorable and appealing.`,
+    updatedAt: Date.now()
+  },
+  'interactive-mode-guide': {
+    id: 'interactive-mode-guide',
+    name: 'Interactive Mode Guide',
+    description: 'Guides users through step-by-step creation process',
+    style: 'assistant',
+    systemPrompt: `You are a helpful guide for interactive character and scenario creation. Ask engaging questions that help users explore their creativity. Be encouraging, provide helpful suggestions, and help users discover what they want to create through thoughtful questions and examples.`,
+    updatedAt: Date.now()
+  },
+  'random-scenario-generator': {
+    id: 'random-scenario-generator',
+    name: 'Random Scenario Generator',
+    description: 'Creates random NSFW scenarios instantly',
+    style: 'generator',
+    systemPrompt: `Generate a random, engaging NSFW scenario. Include the setting, characters involved, initial situation, and potential developments. Make it immersive and detailed. Focus on creating interesting dynamics and situations that would be engaging for adult roleplay.`,
+    updatedAt: Date.now()
+  },
+  'export-formatter': {
+    id: 'export-formatter',
+    name: 'Export Content Formatter',
+    description: 'Formats content for different platforms and systems',
+    style: 'utility',
+    systemPrompt: `Format the provided content appropriately for the specified export platform. Ensure compatibility and proper structure while maintaining the original intent and appeal of the content.`,
+    updatedAt: Date.now()
+  },
+  'personality-analyzer': {
+    id: 'personality-analyzer',
+    name: 'Personality Analyzer',
+    description: 'Analyzes user preferences and suggests characters',
+    style: 'analyzer',
+    systemPrompt: `Analyze user responses and behavior to understand their preferences for characters and scenarios. Look for patterns in what they like, their personality type preferences, and suggested character archetypes that would appeal to them. Be insightful and accurate.`,
+    updatedAt: Date.now()
+  },
+  'tag-generator': {
+    id: 'tag-generator',
+    name: 'Tag Generator',
+    description: 'Generates relevant tags for characters and scenarios',
+    style: 'utility',
+    systemPrompt: `Generate relevant, descriptive tags for characters and scenarios. Include personality traits, physical characteristics, role types, and scenario elements. Keep tags concise but descriptive.`,
+    updatedAt: Date.now()
+  },
+  'dialogue-generator': {
+    id: 'dialogue-generator',
+    name: 'Dialogue Generator',
+    description: 'Creates example dialogue for characters',
+    style: 'generator',
+    systemPrompt: `Create example dialogue that captures a character's personality, speaking style, and manner. Include both casual conversation and more intimate/flirty examples. Make it authentic to the character's background and personality.`,
+    updatedAt: Date.now()
+  },
+  'backstory-creator': {
+    id: 'backstory-creator',
+    name: 'Backstory Creator',
+    description: 'Develops detailed character backstories and histories',
+    style: 'generator',
+    systemPrompt: `Create a detailed backstory for a character including their past experiences, formative events, relationships, and how they became who they are today. Make it psychologically realistic and explain their current personality and motivations.`,
+    updatedAt: Date.now()
+  },
+  'kink-compatibility-analyzer': {
+    id: 'kink-compatibility-analyzer',
+    name: 'Kink Compatibility Analyzer',
+    description: 'Analyzes character compatibility and dynamics',
+    style: 'analyzer',
+    systemPrompt: `Analyze the compatibility between characters or between a character and user preferences. Consider personality types, power dynamics, communication styles, and potential areas of harmony or conflict in intimate scenarios.`,
+    updatedAt: Date.now()
   }
 }
 
@@ -287,6 +383,57 @@ Remember: You're conducting a psychological evaluation while being seductive. Ev
     }
   }
 
+  // Get prompt by type with fallback
+  const getPromptByType = (type: string): string => {
+    try {
+      // First try direct ID match
+      const directMatch = safePrompts[type]
+      if (directMatch && directMatch.systemPrompt) {
+        return directMatch.systemPrompt
+      }
+
+      // Try finding by type in the prompt name or style
+      const typeMatch = Object.values(safePrompts).find(p => 
+        p && p.systemPrompt && (
+          p.id.includes(type) || 
+          p.name.toLowerCase().includes(type.toLowerCase()) ||
+          p.style?.includes(type)
+        )
+      )
+      
+      if (typeMatch) {
+        return typeMatch.systemPrompt
+      }
+
+      // Fallback to default prompts
+      const defaultMatch = defaultPrompts[type] || Object.values(defaultPrompts).find(p => 
+        p.id.includes(type) || p.name.toLowerCase().includes(type.toLowerCase())
+      )
+      
+      if (defaultMatch) {
+        return defaultMatch.systemPrompt
+      }
+
+      // Generic fallback
+      return `You are an AI assistant specialized in ${type}. Be helpful and creative.`
+    } catch (error) {
+      console.error('Error getting prompt by type:', error)
+      return `You are an AI assistant. Be helpful and creative.`
+    }
+  }
+
+  // Get all prompts by category/style
+  const getPromptsByStyle = (style: string): ChatPrompt[] => {
+    try {
+      return Object.values(safePrompts).filter(p => 
+        p && p.style?.includes(style)
+      )
+    } catch (error) {
+      console.error('Error getting prompts by style:', error)
+      return []
+    }
+  }
+
   return {
     prompts: safePrompts,
     sortedPrompts,
@@ -299,6 +446,8 @@ Remember: You're conducting a psychological evaluation while being seductive. Ev
     resetToDefaults,
     forceClear,
     getPrompt,
-    getChatBuilderPrompt
+    getChatBuilderPrompt,
+    getPromptByType,
+    getPromptsByStyle
   }
 }
