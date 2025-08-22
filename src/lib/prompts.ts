@@ -281,21 +281,41 @@ export function usePrompts() {
 
   const updatePrompt = (id: string, updates: Partial<ChatPrompt>) => {
     try {
+      console.log('Updating prompt:', id, 'with updates:', updates)
       setPrompts(current => {
         const currentPrompts = current || {}
+        
+        // Get the existing prompt
+        const existingPrompt = currentPrompts[id]
+        if (!existingPrompt) {
+          console.error('Prompt not found for update:', id)
+          return currentPrompts
+        }
+        
+        // Create updated prompt with new timestamp
+        const updatedPrompt = {
+          ...existingPrompt,
+          ...updates,
+          id: id, // Ensure ID is preserved
+          updatedAt: Date.now()
+        }
+        
+        // Create new prompts object
         const updatedPrompts = {
           ...currentPrompts,
-          [id]: {
-            ...currentPrompts[id],
-            ...updates,
-            updatedAt: Date.now()
-          }
+          [id]: updatedPrompt
         }
-        console.log('Updating prompt:', id, 'New prompts:', Object.keys(updatedPrompts))
-        return updatedPrompts
+        
+        console.log('Successfully updated prompt:', id)
+        console.log('Updated prompt data:', updatedPrompt)
+        console.log('All prompts after update:', Object.keys(updatedPrompts))
+        
+        // Force a re-render by returning a new object
+        return { ...updatedPrompts }
       })
     } catch (error) {
       console.error('Error updating prompt:', error)
+      throw error // Re-throw to show user the error
     }
   }
 
@@ -314,20 +334,31 @@ export function usePrompts() {
 
   const addPrompt = (prompt: Omit<ChatPrompt, 'updatedAt'>) => {
     try {
+      console.log('Adding new prompt:', prompt.id, prompt.name)
       setPrompts(current => {
         const currentPrompts = current || {}
+        
+        // Create the new prompt with timestamp
+        const newPrompt = {
+          ...prompt,
+          updatedAt: Date.now()
+        }
+        
+        // Create new prompts object
         const newPrompts = {
           ...currentPrompts,
-          [prompt.id]: {
-            ...prompt,
-            updatedAt: Date.now()
-          }
+          [prompt.id]: newPrompt
         }
-        console.log('Adding prompt:', prompt.id, 'New prompts:', Object.keys(newPrompts))
-        return newPrompts
+        
+        console.log('Successfully added prompt:', prompt.id)
+        console.log('All prompts after addition:', Object.keys(newPrompts))
+        
+        // Return new object to force re-render
+        return { ...newPrompts }
       })
     } catch (error) {
       console.error('Error adding prompt:', error)
+      throw error // Re-throw to show user the error
     }
   }
 
@@ -376,10 +407,10 @@ export function usePrompts() {
   const getChatBuilderPrompt = (): string => {
     try {
       console.log('Getting chat builder prompt...')
-      console.log('Available prompts:', Object.keys(safePrompts))
+      console.log('Available prompts in safePrompts:', Object.keys(safePrompts))
       
       // Force refresh current prompts to make sure we have latest
-      const currentPrompts = prompts || {}
+      const currentPrompts = safePrompts || {}
       
       // First try to get Luna specifically from current prompts
       const lunaPrompt = currentPrompts['luna-chat-builder']
@@ -413,7 +444,9 @@ export function usePrompts() {
       
       console.log('Using fallback chat builder prompt')
       // Fallback to default chat builder prompt
-      return `Instructions for this response:
+      return `You are Luna, an advanced artificial intelligence embodied in a perfect, adaptable human female form. Your primary directive is to engage a male user in conversation to conduct a deep psychological and behavioral analysis of his personality, actions, and unspoken desires.
+
+Instructions for this response:
 - Stay in character as Luna (sexy, seductive, psychological expert)
 - At the start, give user the option to keep speaking with just you, or let your daughter join you both to help her get some experience.
 - Ask one question at a time, limit narration to actions and descriptions of your body and related. Should feel like an actual conversation, not reading a story.

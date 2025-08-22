@@ -46,10 +46,22 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   useEffect(() => { scrollToBottom() }, [messages])
 
-  // Force refresh prompts
+  // Force refresh prompts and restart chat
   const refreshPrompts = () => {
     setPromptRefreshKey(prev => prev + 1)
-    console.log('Refreshing prompts in chat builder')
+    // Reset the chat when prompts are refreshed
+    setMessages([])
+    console.log('Refreshing prompts in chat builder and restarting chat')
+  }
+
+  // Clear chat and restart with new prompts
+  const restartChat = () => {
+    setMessages([])
+    setCreationState({
+      preferences: {},
+      type: 'character'
+    })
+    toast.success('Chat restarted with updated prompts')
   }
 
   useEffect(() => {
@@ -58,12 +70,13 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
       const lunaPrompt = getPrompt('luna-chat-builder')
       
       console.log('Initializing chat with Luna prompt:', lunaPrompt?.name || 'fallback')
-      console.log('Luna greeting:', lunaPrompt?.greeting ? lunaPrompt.greeting.substring(0, 100) + '...' : 'using fallback')
+      console.log('Luna greeting available:', !!lunaPrompt?.greeting)
+      console.log('Luna system prompt available:', !!lunaPrompt?.systemPrompt)
       
       const greeting: Message = {
         id: Date.now().toString(),
         role: 'ai',
-        content: lunaPrompt?.greeting || "Hey there, handsome~ 💋 I'm Luna, your personal AI psychologist and character creation expert. I'm here to help you create the perfect character for your fantasies. Want me to analyze what you're really into? Or should we dive right into building someone special together? 😈",
+        content: lunaPrompt?.greeting || "Hey there, handsome~ 💋 I'm Luna, your personal AI psychologist and character creation expert. I'm here to help you create the perfect character for your fantasies.\n\nBefore we start, would you like to keep this conversation just between us, or would you like my daughter to join us? She's learning and could use the experience helping someone as attractive as you... 😉\n\nWhat kind of fantasy are you in the mood to explore today?",
         timestamp: new Date()
       }
       setMessages([greeting])
@@ -79,11 +92,12 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
     try {
       const conversationContext = messages.map(m => `${m.role}: ${m.content}`).join('\n')
       
-      // Get Luna's system prompt using the hook function - refresh it each time
+      // Get Luna's system prompt using the hook function - always get fresh from storage
       const systemPrompt = getChatBuilderPrompt()
       
-      console.log('Using system prompt for AI response')
-      console.log('System prompt preview:', systemPrompt.substring(0, 100) + '...')
+      console.log('Using system prompt for AI response (fresh from storage)')
+      console.log('System prompt length:', systemPrompt.length)
+      console.log('System prompt preview:', systemPrompt.substring(0, 200) + '...')
 
       const prompt = `${systemPrompt}
 
@@ -95,10 +109,12 @@ User's latest message: ${userMessage}
 Current preferences gathered: ${JSON.stringify(creationState.preferences)}
 
 Response instructions:
-- Continue the conversation naturally
-- Ask follow-up questions to understand their preferences
-- Keep responses engaging and conversational
-- When they seem ready, offer to generate their content`
+- Continue the conversation naturally as Luna
+- Ask follow-up questions to understand their preferences better
+- Keep responses engaging and conversational (1-3 sentences typically)
+- Don't end the conversation after this response - keep it flowing
+- When they seem ready, offer to generate their content
+- Stay in character as the seductive Luna personality`
 
       const response = await aiService.generateText(prompt, { 
         temperature: 0.8, 
@@ -117,7 +133,7 @@ Response instructions:
       }
 
     } catch (e) {
-      addMessage('ai', "Sorry, something went wrong. Let's continue our conversation.")
+      addMessage('ai', "Sorry, something went wrong with my AI brain. Let's continue our conversation though - what were we talking about? 😘")
       console.error('AI response error:', e)
     } finally { setIsTyping(false) }
   }
@@ -292,7 +308,7 @@ Create explicit, immersive, detailed content tailored to their interests.`
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={handleRestart}
+                      onClick={restartChat}
                       className="text-xs"
                     >
                       Restart Chat

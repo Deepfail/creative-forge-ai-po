@@ -177,22 +177,13 @@ export class AIService {
         return this.generateAdvancedPlaceholder(prompt, options?.width || 400, options?.height || 400)
       }
       
-      // First, enhance the prompt using internal AI
-      let enhancedPrompt = prompt
-      try {
-        const promptBuilder = (window as any).spark.llmPrompt`Create a detailed, professional image generation prompt for: "${prompt}". Include specific visual details like lighting, composition, camera angle, and quality descriptors. Focus on realistic portrait photography. Respond with just the prompt, no additional text.`
-        enhancedPrompt = await (window as any).spark.llm(promptBuilder)
-        console.log('Enhanced prompt from LLM:', enhancedPrompt)
-      } catch (err) {
-        console.log('Failed to enhance prompt, using original:', err)
-        enhancedPrompt = prompt
-      }
-      
-      const finalPrompt = `${enhancedPrompt.trim()}, ${options?.style || 'photorealistic, high quality, detailed, professional portrait photography'}`
+      // Prepare clean prompt for Venice AI
+      const cleanPrompt = prompt.replace(/[^\w\s,.!?-]/g, '').trim()
+      const finalPrompt = `${cleanPrompt}, ${options?.style || 'photorealistic, high quality, detailed, professional portrait photography'}`
       console.log('Final prompt for Venice AI:', finalPrompt)
       console.log('Using Venice AI image model:', this.config.imageModel)
       
-      // Use only valid Venice AI image models
+      // Use correct Venice AI image models based on their current API
       const validModels = [
         'venice-sd35',
         'flux-dev', 
@@ -205,11 +196,10 @@ export class AIService {
       ]
       
       const modelsToTry = [
-        this.config.imageModel,
-        'venice-sd35', // Default fallback
-        'flux-dev',
-        'hidream'
-      ].filter(model => validModels.includes(model))
+        this.config.imageModel && validModels.includes(this.config.imageModel) ? this.config.imageModel : 'venice-sd35',
+        'venice-sd35', // Always try default
+        'flux-dev'
+      ].filter((model, index, arr) => arr.indexOf(model) === index) // Remove duplicates
       
       let lastError: any = null
       
@@ -217,10 +207,13 @@ export class AIService {
         try {
           console.log(`Trying Venice AI image model: ${model}`)
           
+          // Use the correct request body format for Venice AI
           const requestBody = {
             model: model,
             prompt: finalPrompt,
-            hide_watermark: true
+            hide_watermark: true,
+            width: options?.width || 1024,
+            height: options?.height || 1024
           }
           
           console.log('Sending request to Venice AI image/generate:', requestBody)
@@ -239,36 +232,49 @@ export class AIService {
           if (response.ok) {
             const data = await response.json()
             console.log('Venice AI Response data structure:', Object.keys(data))
+            console.log('Venice AI Full Response:', data)
             
-            // Handle different possible response formats from Venice AI
-            if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-              const imageData = data.images[0]
-              console.log('Found images array, first image type:', typeof imageData)
+            // Handle Venice AI response format - they use 'data' field with images array
+            if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+              const imageData = data.data[0]
+              console.log('Found data array, first image type:', typeof imageData)
               
               if (typeof imageData === 'string') {
+                // Venice AI returns base64 strings
                 const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
                 console.log(`Successfully generated image via Venice AI with model ${model}`)
+                return imageUrl
+              }
+              
+              // If it's an object, look for url or b64_json fields
+              if (imageData && typeof imageData === 'object') {
+                if (imageData.url) {
+                  console.log(`Found image URL: ${imageData.url}`)
+                  return imageData.url
+                }
+                if (imageData.b64_json) {
+                  return `data:image/png;base64,${imageData.b64_json}`
+                }
+              }
+            }
+            
+            // Fallback checks for other possible formats
+            if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+              const imageData = data.images[0]
+              if (typeof imageData === 'string') {
+                const imageUrl = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
                 return imageUrl
               }
             }
             
             // Check for single image field
             if (data.image && typeof data.image === 'string') {
-              console.log('Found image field')
               const finalImage = data.image.startsWith('data:') ? data.image : `data:image/png;base64,${data.image}`
-              console.log(`Successfully generated image via Venice AI with model ${model}`)
               return finalImage
-            }
-            
-            // Check for data field (raw base64)
-            if (data.data && typeof data.data === 'string') {
-              console.log('Found data field, converting to data URL')
-              return `data:image/png;base64,${data.data}`
             }
             
             // Check for url field
             if (data.url && typeof data.url === 'string') {
-              console.log('Found url field:', data.url)
               return data.url
             }
             
@@ -299,7 +305,7 @@ export class AIService {
       }
       
       // If all models failed, log the error and return placeholder
-      console.log('All Venice AI image models failed, generating placeholder...')
+      console.log('All Venice AI image models failed, generating enhanced placeholder...')
       return this.generateAdvancedPlaceholder(prompt, options?.width || 400, options?.height || 400)
       
     } catch (error) {
