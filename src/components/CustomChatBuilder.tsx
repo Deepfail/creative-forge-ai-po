@@ -91,7 +91,11 @@ Response instructions:
 - Keep responses engaging and conversational
 - When they seem ready, offer to generate their content`
 
-      const response = await aiService.generateText(prompt, { temperature: 0.8, maxTokens: 400 })
+      const response = await aiService.generateText(prompt, { 
+        temperature: 0.8, 
+        maxTokens: 400,
+        hideReasoning: true // Hide reasoning for smoother conversation
+      })
       addMessage('ai', response)
       updatePreferences(userMessage, response)
 
@@ -186,7 +190,11 @@ ${conversationSummary}
 
 Create explicit, immersive, detailed content tailored to their interests.`
       
-      const generatedContent = await aiService.generateText(prompt, { temperature: 0.8, maxTokens: 2000 })
+      const generatedContent = await aiService.generateText(prompt, { 
+        temperature: 0.8, 
+        maxTokens: 2000,
+        hideReasoning: true // Hide reasoning for cleaner content generation
+      })
       setCreationState(prev => ({ ...prev, generatedContent }))
       addMessage('ai', "Perfect! I've created your personalized content. Would you like me to export it for you?")
       toast.success("Your custom content has been generated!")

@@ -153,7 +153,9 @@ export default function SimpleMode({ type, onBack }: SimpleModeProps) {
         Make it engaging, well-structured, and ready to use. Format it with clear sections and bullet points where appropriate.
       `
       
-      const result = await aiService.generateText(prompt)
+      const result = await aiService.generateText(prompt, {
+        hideReasoning: true // Hide reasoning for cleaner content generation
+      })
       setGeneratedContent(result)
       toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully!`)
     } catch (error) {

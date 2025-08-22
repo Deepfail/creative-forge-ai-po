@@ -88,9 +88,9 @@ export class AIService {
             max_tokens: options?.maxTokens ?? 2000
           }
 
-          // For reasoning models, add hide_reasoning parameter if specified
-          if (this.config.textModel === 'deepseek-r1-671b' && options?.hideReasoning !== undefined) {
-            requestBody.hide_reasoning = options.hideReasoning
+          // For reasoning models, add hide_reasoning parameter
+          if (this.config.textModel === 'deepseek-r1-671b') {
+            requestBody.hide_reasoning = options?.hideReasoning ?? true // Default to hiding reasoning
           }
 
           const response = await fetch('https://api.venice.ai/api/v1/chat/completions', {

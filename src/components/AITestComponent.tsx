@@ -64,7 +64,9 @@ export default function AITestComponent({ onBack }: AITestComponentProps) {
 
       // Test through AI service
       console.log('Testing AI service...')
-      const serviceResult = await aiService.generateText(testPrompt)
+      const serviceResult = await aiService.generateText(testPrompt, {
+        hideReasoning: true // Hide reasoning for test output
+      })
       console.log('AI service result:', serviceResult)
       setResult(prev => prev + `AI Service Result:\n${serviceResult}`)
       
