@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Shuffle, Sparkle, Heart, Download, Crown, ArrowLeft } from '@phosphor-icons/react'
-import AIPortraitGenerator from './AIPortraitGenerator'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Shuffle, Sparkle, Heart, Download, Crown, ArrowLeft, Image, Settings } from '@phosphor-icons/react'
 import ExportDialog from './ExportDialog'
 import { aiService } from '@/lib/ai-service'
 import { useKV } from '@github/spark/hooks'
@@ -17,13 +19,20 @@ interface GeneratedGirl {
   type: string
   personality: string
   summary: string
-  imageUrl: string
+  imageUrl?: string
   aiPortraitPrompt?: string
   physicalDescription?: string
+  isGeneratingImage?: boolean
 }
 
 interface GenerateGirlsProps {
   onBack: () => void
+}
+
+interface PromptTemplates {
+  summaryPrompt: string
+  physicalPrompt: string
+  imagePrompt: string
 }
 
 const girlTypes = [
@@ -48,69 +57,33 @@ const femaleNames = [
   'Stella', 'Hazel', 'Ellie', 'Paisley', 'Audrey', 'Skylar', 'Violet', 'Claire'
 ]
 
-// Generate portrait using built-in Venice AI image generation
-const generatePlaceholderImage = async (name: string, type: string, physicalDescription?: string): Promise<string> => {
-  console.log('=== GENERATING PORTRAIT FOR:', name, type, '===')
-  console.log('Physical description:', physicalDescription)
-  
-  // Create a detailed prompt for Venice AI
-  const characterTraits = []
-  if (type.toLowerCase().includes('cheerleader')) characterTraits.push('athletic, energetic')
-  if (type.toLowerCase().includes('goth')) characterTraits.push('dark makeup, alternative style')
-  if (type.toLowerCase().includes('nerd')) characterTraits.push('intellectual appearance, glasses')
-  if (type.toLowerCase().includes('milf')) characterTraits.push('mature, sophisticated')
-  if (type.toLowerCase().includes('emo')) characterTraits.push('alternative style, emotional')
-  
-  const basePrompt = `Portrait of ${name}, a beautiful ${type}`
-  const detailedPrompt = physicalDescription 
-    ? `${basePrompt}, ${physicalDescription}` 
-    : `${basePrompt}, ${characterTraits.join(', ') || 'attractive young woman'}`
-  
-  console.log('Full prompt for AI generation:', detailedPrompt)
-  
-  try {
-    const result = await aiService.generateImage(detailedPrompt, { 
-      width: 300, 
-      height: 400, 
-      style: 'realistic portrait, detailed, high quality, professional photography' 
-    })
-    
-    console.log('=== PORTRAIT GENERATION RESULT ===')
-    console.log('Type:', typeof result)
-    console.log('Length:', result.length)
-    console.log('Starts with data:', result.startsWith('data:'))
-    console.log('Starts with http:', result.startsWith('http'))
-    console.log('Is SVG placeholder:', result.includes('data:image/svg'))
-    console.log('Preview:', result.substring(0, 100))
-    
-    return result
-  } catch (error) {
-    console.error('Portrait generation failed:', error)
-    // Return a simple fallback
-    return 'data:image/svg+xml;base64,' + btoa(`
-      <svg width="300" height="400" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100%" height="100%" fill="#2a2a2a"/>
-        <text x="50%" y="50%" text-anchor="middle" fill="white" font-size="14">${name}</text>
-        <text x="50%" y="60%" text-anchor="middle" fill="#888" font-size="12">${type}</text>
-      </svg>
-    `)
-  }
+const defaultPromptTemplates: PromptTemplates = {
+  summaryPrompt: `Create a brief, engaging character summary for an adult character named {name}, age {age}, who is a {type} with a {personality} personality. Make it intriguing and hint at her appeal and backstory. Keep it under 50 words and make it slightly suggestive but tasteful.`,
+  physicalPrompt: `Describe the physical appearance of {name}, a {age}-year-old {type} with a {personality} personality. Include details about her hair, eyes, body type, style, and any distinctive features. Keep it detailed but appropriate, focusing on what makes her attractive and memorable. About 2-3 sentences.`,
+  imagePrompt: `Portrait of {name}, a beautiful {type}, {physicalDescription}, realistic portrait, detailed, high quality, professional photography, attractive, {personality} expression`
 }
 
-const generateRandomGirl = async (): Promise<GeneratedGirl> => {
+const generateRandomGirl = async (templates: PromptTemplates): Promise<GeneratedGirl> => {
   const name = femaleNames[Math.floor(Math.random() * femaleNames.length)]
   const age = Math.floor(Math.random() * 13) + 18 // 18-30
   const type = girlTypes[Math.floor(Math.random() * girlTypes.length)]
   const personality = personalities[Math.floor(Math.random() * personalities.length)]
   
-  // Generate AI summary and physical description using Venice AI
-  const summaryPrompt = `Create a brief, engaging character summary for an adult character named ${name}, age ${age}, who is a ${type} with a ${personality} personality. Make it intriguing and hint at her appeal and backstory. Keep it under 50 words and make it slightly suggestive but tasteful.`
+  // Replace template variables
+  const summaryPrompt = templates.summaryPrompt
+    .replace('{name}', name)
+    .replace('{age}', age.toString())
+    .replace('{type}', type)
+    .replace('{personality}', personality)
   
-  const physicalPrompt = `Describe the physical appearance of ${name}, a ${age}-year-old ${type} with a ${personality} personality. Include details about her hair, eyes, body type, style, and any distinctive features. Keep it detailed but appropriate, focusing on what makes her attractive and memorable. About 2-3 sentences.`
+  const physicalPrompt = templates.physicalPrompt
+    .replace('{name}', name)
+    .replace('{age}', age.toString())
+    .replace('{type}', type)
+    .replace('{personality}', personality)
   
   let summary = ''
   let physicalDescription = ''
-  let imageUrl = ''
   
   try {
     // Generate text descriptions
@@ -124,9 +97,6 @@ const generateRandomGirl = async (): Promise<GeneratedGirl> => {
       temperature: 0.8,
       maxTokens: 150
     })
-    
-    // Generate image
-    imageUrl = await generatePlaceholderImage(name, type, physicalDescription)
   } catch (error) {
     console.warn('AI generation failed, using fallback:', error)
     // Fallback to predefined summaries if AI fails
@@ -138,7 +108,6 @@ const generateRandomGirl = async (): Promise<GeneratedGirl> => {
     ]
     summary = fallbackSummaries[Math.floor(Math.random() * fallbackSummaries.length)]
     physicalDescription = `${name} has an alluring presence that perfectly matches her ${personality.toLowerCase()} personality. Her style reflects her ${type.toLowerCase()} nature, with features that are both striking and memorable.`
-    imageUrl = await generatePlaceholderImage(name, type, physicalDescription)
   }
   
   return {
@@ -148,8 +117,7 @@ const generateRandomGirl = async (): Promise<GeneratedGirl> => {
     type,
     personality,
     summary: summary.replace(/"/g, ''), // Clean up any quotes
-    physicalDescription: physicalDescription.replace(/"/g, ''),
-    imageUrl
+    physicalDescription: physicalDescription.replace(/"/g, '')
   }
 }
 
@@ -159,15 +127,18 @@ export default function GenerateGirls({ onBack }: GenerateGirlsProps) {
   const [selectedGirl, setSelectedGirl] = useState<GeneratedGirl | null>(null)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [savedGirls, setSavedGirls] = useKV<SavedGirl[]>('saved-girls', [])
-  const [apiConfig] = useKV<any>('api-config', { apiKey: '', textModel: 'default', imageModel: 'flux-1.1-pro' })
+  const [promptTemplates, setPromptTemplates] = useKV<PromptTemplates>('girl-prompt-templates', defaultPromptTemplates)
+  const [showTemplateEditor, setShowTemplateEditor] = useState(false)
+  const [tempTemplates, setTempTemplates] = useState<PromptTemplates>(defaultPromptTemplates)
+  const [apiConfig] = useKV<any>('api-config', { apiKey: '', textModel: 'default', imageModel: 'flux-dev' })
 
   const generateNewGirls = async () => {
     setIsGenerating(true)
     
     try {
-      // Generate girls with AI summaries and descriptions
+      // Generate girls without images initially
       const newGirls = await Promise.all(
-        Array.from({ length: 4 }, () => generateRandomGirl())
+        Array.from({ length: 4 }, () => generateRandomGirl(promptTemplates))
       )
       setGirls(newGirls)
     } catch (error) {
@@ -187,8 +158,7 @@ export default function GenerateGirls({ onBack }: GenerateGirlsProps) {
             type,
             personality,
             summary: `${name} is a captivating ${age}-year-old ${type.toLowerCase()} with a ${personality.toLowerCase()} personality that draws people in.`,
-            physicalDescription: `${name} has an alluring presence that perfectly matches her ${personality.toLowerCase()} personality.`,
-            imageUrl: await generatePlaceholderImage(name, type)
+            physicalDescription: `${name} has an alluring presence that perfectly matches her ${personality.toLowerCase()} personality.`
           }
         })
       )
@@ -198,12 +168,54 @@ export default function GenerateGirls({ onBack }: GenerateGirlsProps) {
     setIsGenerating(false)
   }
 
-  const handlePortraitGenerated = (girlId: string, imageUrl: string, prompt: string) => {
-    setGirls(prev => prev.map(girl => 
-      girl.id === girlId 
-        ? { ...girl, imageUrl, aiPortraitPrompt: prompt }
-        : girl
+  const generateImageForGirl = async (girl: GeneratedGirl) => {
+    // Set loading state
+    setGirls(prev => prev.map(g => 
+      g.id === girl.id ? { ...g, isGeneratingImage: true } : g
     ))
+
+    try {
+      // Build prompt from template
+      const imagePrompt = promptTemplates.imagePrompt
+        .replace('{name}', girl.name)
+        .replace('{type}', girl.type)
+        .replace('{physicalDescription}', girl.physicalDescription || 'attractive appearance')
+        .replace('{personality}', girl.personality)
+
+      console.log('Generating image with prompt:', imagePrompt)
+
+      const imageUrl = await aiService.generateImage(imagePrompt, {
+        width: 300,
+        height: 400,
+        hide_watermark: true
+      })
+
+      // Update girl with image
+      setGirls(prev => prev.map(g => 
+        g.id === girl.id 
+          ? { ...g, imageUrl, aiPortraitPrompt: imagePrompt, isGeneratingImage: false }
+          : g
+      ))
+
+      toast.success(`Image generated for ${girl.name}!`)
+    } catch (error) {
+      console.error('Image generation failed:', error)
+      setGirls(prev => prev.map(g => 
+        g.id === girl.id ? { ...g, isGeneratingImage: false } : g
+      ))
+      toast.error('Failed to generate image: ' + (error instanceof Error ? error.message : 'Unknown error'))
+    }
+  }
+
+  const saveTemplates = () => {
+    setPromptTemplates(tempTemplates)
+    setShowTemplateEditor(false)
+    toast.success('Prompt templates saved!')
+  }
+
+  const resetTemplates = () => {
+    setTempTemplates(defaultPromptTemplates)
+    toast.info('Templates reset to defaults')
   }
 
   const saveToHarem = (girl: GeneratedGirl) => {
@@ -214,7 +226,7 @@ export default function GenerateGirls({ onBack }: GenerateGirlsProps) {
       type: girl.type,
       personality: girl.personality,
       summary: girl.summary,
-      image: girl.imageUrl,
+      image: girl.imageUrl || '', // Use empty string if no image
       createdAt: Date.now(),
       roles: [],
       tags: [],
@@ -276,6 +288,12 @@ This character was designed for adult interactive experiences and can be adapted
     generateNewGirls()
   }, [])
 
+  useEffect(() => {
+    if (promptTemplates && promptTemplates !== tempTemplates) {
+      setTempTemplates(promptTemplates)
+    }
+  }, [promptTemplates])
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -295,33 +313,66 @@ This character was designed for adult interactive experiences and can be adapted
             <h1 className="text-3xl font-bold text-foreground">Generate Girls</h1>
           </div>
           <div className="ml-auto flex gap-2">
-            <Button 
-              onClick={async () => {
-                console.log('=== TESTING SINGLE IMAGE GENERATION ===')
-                const testPrompt = 'Beautiful blonde cheerleader named Jessica, athletic build, blue eyes'
-                try {
-                  const result = await aiService.generateImage(testPrompt, { 
-                    width: 300, 
-                    height: 400, 
-                    style: 'realistic portrait, detailed, high quality' 
-                  })
-                  console.log('Test generation completed. Result type:', typeof result)
-                  console.log('Result length:', result.length)
-                  console.log('Is SVG:', result.includes('svg'))
-                  console.log('Preview:', result.substring(0, 200))
-                  toast.success('Test image generated! Check console for details.')
-                } catch (error) {
-                  console.error('Test generation failed:', error)
-                  toast.error('Test failed: ' + (error instanceof Error ? error.message : 'Unknown error'))
-                }
-              }}
-              variant="outline"
-              size="sm"
-              className="border-accent/30 hover:bg-accent/10"
-            >
-              <Sparkle size={16} className="mr-2" />
-              Test AI Image
-            </Button>
+            <Dialog open={showTemplateEditor} onOpenChange={setShowTemplateEditor}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  className="border-accent/30 hover:bg-accent/10"
+                >
+                  <Settings size={16} className="mr-2" />
+                  Templates
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Edit Prompt Templates</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6">
+                  <div>
+                    <Label>Summary Prompt Template</Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Variables: {'{name}'}, {'{age}'}, {'{type}'}, {'{personality}'}
+                    </p>
+                    <Textarea
+                      value={tempTemplates.summaryPrompt}
+                      onChange={(e) => setTempTemplates(prev => ({ ...prev, summaryPrompt: e.target.value }))}
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                  <div>
+                    <Label>Physical Description Template</Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Variables: {'{name}'}, {'{age}'}, {'{type}'}, {'{personality}'}
+                    </p>
+                    <Textarea
+                      value={tempTemplates.physicalPrompt}
+                      onChange={(e) => setTempTemplates(prev => ({ ...prev, physicalPrompt: e.target.value }))}
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                  <div>
+                    <Label>Image Generation Template</Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Variables: {'{name}'}, {'{type}'}, {'{physicalDescription}'}, {'{personality}'}
+                    </p>
+                    <Textarea
+                      value={tempTemplates.imagePrompt}
+                      onChange={(e) => setTempTemplates(prev => ({ ...prev, imagePrompt: e.target.value }))}
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={saveTemplates} className="bg-primary hover:bg-primary/90">
+                      Save Templates
+                    </Button>
+                    <Button onClick={resetTemplates} variant="outline">
+                      Reset to Defaults
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
             <Button 
               onClick={generateNewGirls}
               disabled={isGenerating}
@@ -336,7 +387,7 @@ This character was designed for adult interactive experiences and can be adapted
         <div className="text-center mb-8">
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Discover randomly generated characters with unique personalities and traits. 
-            Each girl is created with detailed characteristics perfect for your scenarios.
+            Generate images individually for the girls you're interested in.
           </p>
           
           {/* Debug Info */}
@@ -346,7 +397,7 @@ This character was designed for adult interactive experiences and can be adapted
               <div>Text Model: {apiConfig?.textModel || 'Not set'}</div>
               <div>Image Model: {apiConfig?.imageModel || 'Not set'}</div>
               <div>Has API Key: {apiConfig?.apiKey ? 'Yes' : 'No'}</div>
-              <div>Images will be: {apiConfig?.apiKey ? 'AI Generated' : 'SVG Placeholders'}</div>
+              <div>Mode: Generate text only, images on demand</div>
             </CardContent>
           </Card>
         </div>
@@ -358,18 +409,52 @@ This character was designed for adult interactive experiences and can be adapted
             key={girl.id} 
             className="h-full hover:shadow-lg hover:shadow-secondary/20 transition-all duration-300 border-2 hover:border-secondary/50 overflow-hidden"
           >
-            {/* Image */}
+            {/* Image Section */}
             <div className="relative">
-              <img 
-                src={girl.imageUrl} 
-                alt={girl.name}
-                className="w-full h-48 object-cover"
-              />
-              <div className="absolute top-2 right-2">
-                <Badge variant="secondary" className="bg-secondary/90 text-secondary-foreground">
-                  {girl.age}
-                </Badge>
-              </div>
+              {girl.imageUrl ? (
+                <>
+                  <img 
+                    src={girl.imageUrl} 
+                    alt={girl.name}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="absolute top-2 right-2">
+                    <Badge variant="secondary" className="bg-secondary/90 text-secondary-foreground">
+                      {girl.age}
+                    </Badge>
+                  </div>
+                </>
+              ) : (
+                <div className="w-full h-48 bg-muted/30 flex flex-col items-center justify-center border-b">
+                  <div className="text-center p-4">
+                    <Sparkle className="mx-auto mb-2 text-muted-foreground/50" size={32} />
+                    <p className="text-sm text-muted-foreground mb-3">No image generated</p>
+                    <Button
+                      size="sm"
+                      onClick={() => generateImageForGirl(girl)}
+                      disabled={girl.isGeneratingImage}
+                      className="bg-primary hover:bg-primary/90"
+                    >
+                      {girl.isGeneratingImage ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Image size={14} className="mr-2" />
+                          Generate Image
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <div className="absolute top-2 right-2">
+                    <Badge variant="secondary" className="bg-secondary/90 text-secondary-foreground">
+                      {girl.age}
+                    </Badge>
+                  </div>
+                </div>
+              )}
             </div>
             
             <CardHeader className="pb-3">
@@ -402,19 +487,7 @@ This character was designed for adult interactive experiences and can be adapted
                 </div>
               )}
 
-              {/* AI Portrait Generator */}
-              <AIPortraitGenerator
-                character={{
-                  name: girl.name,
-                  age: girl.age,
-                  type: girl.type,
-                  personality: girl.personality,
-                  physicalDescription: girl.physicalDescription
-                }}
-                onPortraitGenerated={(imageUrl, prompt) => handlePortraitGenerated(girl.id, imageUrl, prompt)}
-                className="mt-4"
-              />
-              
+              {/* Action Buttons */}
               <div className="grid grid-cols-3 gap-2 mt-4">
                 <Button 
                   variant="outline" 
@@ -438,14 +511,28 @@ This character was designed for adult interactive experiences and can be adapted
                   <Crown size={14} className="mr-1" />
                   {isInHarem(girl.id) ? 'Saved' : 'Harem'}
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-secondary text-secondary hover:bg-secondary/10"
-                >
-                  <Sparkle size={14} className="mr-1" />
-                  Scene
-                </Button>
+                {girl.imageUrl && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-secondary text-secondary hover:bg-secondary/10"
+                    onClick={() => generateImageForGirl(girl)}
+                    disabled={girl.isGeneratingImage}
+                  >
+                    <Image size={14} className="mr-1" />
+                    Regen
+                  </Button>
+                )}
+                {!girl.imageUrl && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-secondary text-secondary hover:bg-secondary/10"
+                  >
+                    <Sparkle size={14} className="mr-1" />
+                    Scene
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
