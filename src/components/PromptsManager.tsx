@@ -57,9 +57,15 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
   // Initialize with defaults if needed
   const initializeDefaults = () => {
     console.log('Force initializing default prompts...')
+    // Force update the Ali prompt
+    const aliPrompt = defaultPrompts['luna-chat-builder']
+    if (aliPrompt) {
+      updatePrompt('luna-chat-builder', aliPrompt)
+      console.log('Updated Ali prompt specifically')
+    }
     initializePrompts()
     setRefreshKey(prev => prev + 1)
-    toast.success('All default prompts initialized!')
+    toast.success('All default prompts initialized! Ali prompt updated.')
   }
 
   // Load all comprehensive prompts 
@@ -217,6 +223,23 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
                   className="bg-primary hover:bg-primary/90"
                 >
                   ⭐ Load All Prompts ({Object.keys(defaultPrompts).length})
+                </Button>
+                <Button 
+                  onClick={() => {
+                    console.log('Force updating Ali prompt...')
+                    const aliPrompt = defaultPrompts['luna-chat-builder']
+                    if (aliPrompt) {
+                      updatePrompt('luna-chat-builder', aliPrompt)
+                      console.log('Ali prompt updated with latest version')
+                      toast.success('Ali prompt updated to latest version!')
+                    } else {
+                      toast.error('Ali prompt not found in defaults')
+                    }
+                  }}
+                  size="sm"
+                  className="bg-secondary hover:bg-secondary/90"
+                >
+                  🔄 Update Ali
                 </Button>
                 <Button 
                   onClick={initializeDefaults}

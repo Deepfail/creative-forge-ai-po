@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
+import PromptsDebug from './PromptsDebug'
 import { aiService } from '@/lib/ai-service'
 import { usePrompts } from '@/lib/prompts'
 
@@ -41,7 +42,7 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
   const [showExport, setShowExport] = useState(false)
   const [promptRefreshKey, setPromptRefreshKey] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { getPrompt, getChatBuilderPrompt } = usePrompts()
+  const { getPrompt, getChatBuilderPrompt, forceClear, resetToDefaults } = usePrompts()
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   useEffect(() => { scrollToBottom() }, [messages])
@@ -51,6 +52,8 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
     setPromptRefreshKey(prev => prev + 1)
     // Reset the chat when prompts are refreshed
     setMessages([])
+    // Force clear the cached prompts to reload fresh from storage
+    window.location.reload() // Simple but effective way to ensure fresh prompt load
     console.log('Refreshing prompts in chat builder and restarting chat')
   }
 
@@ -72,11 +75,12 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
       console.log('Initializing chat with Luna prompt:', lunaPrompt?.name || 'fallback')
       console.log('Luna greeting available:', !!lunaPrompt?.greeting)
       console.log('Luna system prompt available:', !!lunaPrompt?.systemPrompt)
+      console.log('Luna system prompt preview:', lunaPrompt?.systemPrompt?.substring(0, 200) + '...')
       
       const greeting: Message = {
         id: Date.now().toString(),
         role: 'ai',
-        content: lunaPrompt?.greeting || "Hey there! 💋 I'm Luna, your AI assistant for creating custom characters and scenarios.\n\nI specialize in helping you design exactly what you're looking for through our conversation. Just tell me what kind of character or scenario you have in mind, and I'll guide you through creating something perfect!\n\nWhat would you like to create today?",
+        content: lunaPrompt?.greeting || "Hey there! 💋 I'm Ali, your AI assistant for creating custom characters and scenarios.\n\nI specialize in helping you design exactly what you're looking for through our conversation. Just tell me what kind of character or scenario you have in mind, and I'll guide you through creating something perfect!\n\nWhat would you like to create today?",
         timestamp: new Date()
       }
       setMessages([greeting])
@@ -305,6 +309,19 @@ Create engaging, detailed content tailored to their interests. Include personali
                     <Button 
                       variant="outline" 
                       size="sm"
+                      onClick={() => {
+                        console.log('Force resetting prompts to defaults...')
+                        resetToDefaults()
+                        setTimeout(() => window.location.reload(), 100)
+                      }}
+                      className="text-xs"
+                      title="Reset to defaults and refresh"
+                    >
+                      🔄 Reset Ali
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
                       onClick={refreshPrompts}
                       className="text-xs"
                       title="Refresh AI prompts"
@@ -373,6 +390,9 @@ Create engaging, detailed content tailored to their interests. Include personali
 
           {/* Side Panel */}
           <div className="space-y-6">
+            {/* Debug Panel */}
+            <PromptsDebug />
+            
             <Card>
               <CardHeader><CardTitle className="text-lg">Content Type</CardTitle></CardHeader>
               <CardContent>
