@@ -81,9 +81,16 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
   }
 
   const handleSave = (promptId: string, updates: Partial<ChatPrompt>) => {
-    updatePrompt(promptId, updates)
-    setEditingPrompt(null)
-    toast.success('Prompt updated successfully!')
+    try {
+      console.log('PromptsManager: Saving prompt', promptId, 'with updates:', updates)
+      updatePrompt(promptId, updates)
+      setEditingPrompt(null)
+      toast.success('Prompt updated successfully!')
+      console.log('PromptsManager: Prompt saved successfully')
+    } catch (error) {
+      console.error('PromptsManager: Error saving prompt:', error)
+      toast.error('Failed to save prompt: ' + error.message)
+    }
   }
 
   const handleCreate = () => {

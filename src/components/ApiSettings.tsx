@@ -22,21 +22,21 @@ interface ApiSettingsProps {
 
 // Venice AI text models (using correct model IDs)
 const veniceTextModels = [
-  { id: 'default', name: 'Venice Auto (Default)', description: 'Auto-selects best model' },
-  { id: 'venice-uncensored', name: 'Venice Uncensored 1.1', description: 'Uncensored model' },
-  { id: 'qwen-2.5-qwq-32b', name: 'Venice Reasoning', description: 'Reasoning focused' },
-  { id: 'qwen3-4b', name: 'Venice Small', description: 'Fast and efficient' },
-  { id: 'mistral-32-24b', name: 'Venice Medium (3.2 beta)', description: 'Balanced performance' },
-  { id: 'mistral-31-24b', name: 'Venice Medium (3.1)', description: 'Stable performance' },
-  { id: 'qwen3-235b', name: 'Venice Large 1.1', description: 'Highest quality' },
-  { id: 'llama-3.2-3b', name: 'Llama 3.2 3B', description: 'Fast model' },
-  { id: 'llama-3.3-70b', name: 'Llama 3.3 70B', description: 'Default option' },
-  { id: 'llama-3.1-405b', name: 'Llama 3.1 405B', description: 'Most intelligent' },
-  { id: 'dolphin-2.9.2-qwen2-72b', name: 'Dolphin 72B', description: 'Most uncensored' },
-  { id: 'qwen-2.5-vl', name: 'Qwen 2.5 VL 72B', description: 'Vision capable' },
-  { id: 'qwen-2.5-coder-32b', name: 'Qwen 2.5 Coder 32B', description: 'Code focused' },
-  { id: 'deepseek-r1-671b', name: 'DeepSeek R1 671B', description: 'Reasoning model' },
-  { id: 'deepseek-coder-v2-lite', name: 'DeepSeek Coder V2 Lite', description: 'Lite coding model' }
+  { id: 'default', name: 'Venice Auto (Default)', description: 'Auto-selects best model', category: 'recommended' },
+  { id: 'llama-3.3-70b', name: 'Llama 3.3 70B', description: 'Excellent balance, default choice', category: 'recommended' },
+  { id: 'venice-uncensored', name: 'Venice Uncensored 1.1', description: 'Uncensored model', category: 'uncensored' },
+  { id: 'dolphin-2.9.2-qwen2-72b', name: 'Dolphin 72B', description: 'Most uncensored', category: 'uncensored' },
+  { id: 'qwen3-235b', name: 'Venice Large 1.1', description: 'Highest quality', category: 'advanced' },
+  { id: 'llama-3.1-405b', name: 'Llama 3.1 405B', description: 'Most intelligent', category: 'advanced' },
+  { id: 'mistral-31-24b', name: 'Venice Medium (3.1)', description: 'Stable performance', category: 'standard' },
+  { id: 'mistral-32-24b', name: 'Venice Medium (3.2 beta)', description: 'Balanced performance', category: 'standard' },
+  { id: 'qwen3-4b', name: 'Venice Small', description: 'Fast and efficient', category: 'fast' },
+  { id: 'llama-3.2-3b', name: 'Llama 3.2 3B', description: 'Fastest model', category: 'fast' },
+  { id: 'qwen-2.5-coder-32b', name: 'Qwen 2.5 Coder 32B', description: 'Code focused', category: 'specialized' },
+  { id: 'deepseek-coder-v2-lite', name: 'DeepSeek Coder V2 Lite', description: 'Lite coding model', category: 'specialized' },
+  { id: 'qwen-2.5-vl', name: 'Qwen 2.5 VL 72B', description: 'Vision capable', category: 'specialized' },
+  { id: 'qwen-2.5-qwq-32b', name: 'Venice Reasoning', description: '⚠️ Shows reasoning steps', category: 'reasoning' },
+  { id: 'deepseek-r1-671b', name: 'DeepSeek R1 671B', description: '⚠️ Shows reasoning steps', category: 'reasoning' }
 ]
 
 // Venice AI image models (from their official API docs)
@@ -281,7 +281,11 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
                     <SelectValue placeholder="Select a text model" />
                   </SelectTrigger>
                   <SelectContent>
-                    {veniceTextModels.map(model => (
+                    {/* Recommended Models */}
+                    <div className="px-2 py-1 text-xs font-medium text-muted-foreground border-b border-border">
+                      Recommended
+                    </div>
+                    {veniceTextModels.filter(model => model.category === 'recommended').map(model => (
                       <SelectItem key={model.id} value={model.id}>
                         <div className="flex flex-col">
                           <span>{model.name}</span>
@@ -289,8 +293,101 @@ export default function ApiSettings({ onClose, onSave }: ApiSettingsProps) {
                         </div>
                       </SelectItem>
                     ))}
+                    
+                    {/* Uncensored Models */}
+                    <div className="px-2 py-1 text-xs font-medium text-muted-foreground border-b border-border mt-2">
+                      Uncensored
+                    </div>
+                    {veniceTextModels.filter(model => model.category === 'uncensored').map(model => (
+                      <SelectItem key={model.id} value={model.id}>
+                        <div className="flex flex-col">
+                          <span>{model.name}</span>
+                          <span className="text-xs text-muted-foreground">{model.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    
+                    {/* Advanced Models */}
+                    <div className="px-2 py-1 text-xs font-medium text-muted-foreground border-b border-border mt-2">
+                      Advanced
+                    </div>
+                    {veniceTextModels.filter(model => model.category === 'advanced').map(model => (
+                      <SelectItem key={model.id} value={model.id}>
+                        <div className="flex flex-col">
+                          <span>{model.name}</span>
+                          <span className="text-xs text-muted-foreground">{model.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    
+                    {/* Standard Models */}
+                    <div className="px-2 py-1 text-xs font-medium text-muted-foreground border-b border-border mt-2">
+                      Standard
+                    </div>
+                    {veniceTextModels.filter(model => model.category === 'standard').map(model => (
+                      <SelectItem key={model.id} value={model.id}>
+                        <div className="flex flex-col">
+                          <span>{model.name}</span>
+                          <span className="text-xs text-muted-foreground">{model.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    
+                    {/* Fast Models */}
+                    <div className="px-2 py-1 text-xs font-medium text-muted-foreground border-b border-border mt-2">
+                      Fast
+                    </div>
+                    {veniceTextModels.filter(model => model.category === 'fast').map(model => (
+                      <SelectItem key={model.id} value={model.id}>
+                        <div className="flex flex-col">
+                          <span>{model.name}</span>
+                          <span className="text-xs text-muted-foreground">{model.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    
+                    {/* Specialized Models */}
+                    <div className="px-2 py-1 text-xs font-medium text-muted-foreground border-b border-border mt-2">
+                      Specialized
+                    </div>
+                    {veniceTextModels.filter(model => model.category === 'specialized').map(model => (
+                      <SelectItem key={model.id} value={model.id}>
+                        <div className="flex flex-col">
+                          <span>{model.name}</span>
+                          <span className="text-xs text-muted-foreground">{model.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    
+                    {/* Reasoning Models with Warning */}
+                    <div className="px-2 py-1 text-xs font-medium text-destructive border-b border-border mt-2">
+                      Reasoning (Shows Thinking Steps)
+                    </div>
+                    {veniceTextModels.filter(model => model.category === 'reasoning').map(model => (
+                      <SelectItem key={model.id} value={model.id}>
+                        <div className="flex flex-col">
+                          <span className="text-destructive">{model.name}</span>
+                          <span className="text-xs text-destructive">{model.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                
+                {/* Warning for reasoning models */}
+                {apiConfig?.textModel && ['qwen-2.5-qwq-32b', 'deepseek-r1-671b'].includes(apiConfig.textModel) && (
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <X className="text-destructive mt-0.5" size={16} />
+                      <div className="text-sm">
+                        <div className="font-medium text-destructive">Warning: Reasoning Model Selected</div>
+                        <div className="text-destructive/80 mt-1">
+                          This model will show its reasoning steps in responses. The app tries to filter these out, but some may still appear.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

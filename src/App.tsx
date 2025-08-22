@@ -65,7 +65,7 @@ function App() {
   
   const [apiConfig] = useKV<ApiConfig>('api-config', {
     apiKey: '',
-    textModel: 'default',
+    textModel: 'llama-3.3-70b', // Use a stable, non-reasoning model by default
     imageModel: 'flux-dev'
   })
 

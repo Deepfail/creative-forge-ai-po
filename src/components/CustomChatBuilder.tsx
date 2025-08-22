@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import ExportDialog from './ExportDialog'
-import PromptsDebug from './PromptsDebug'
 import { aiService } from '@/lib/ai-service'
 import { usePrompts } from '@/lib/prompts'
 
@@ -390,9 +389,6 @@ Create engaging, detailed content tailored to their interests. Include personali
 
           {/* Side Panel */}
           <div className="space-y-6">
-            {/* Debug Panel */}
-            <PromptsDebug />
-            
             <Card>
               <CardHeader><CardTitle className="text-lg">Content Type</CardTitle></CardHeader>
               <CardContent>
