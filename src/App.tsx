@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Sparkle, Lightning, User, GameController, DiceOne, ChatCircle, Users, Gear, Crown, Chat, Brain, Wrench } from '@phosphor-icons/react'
+import { Sparkle, Lightning, User, GameController, DiceOne, ChatCircle, Users, Gear, Crown, Chat } from '@phosphor-icons/react'
 import { ErrorBoundary } from 'react-error-boundary'
 import SafeApp from './components/SafeApp'
 
@@ -16,11 +16,6 @@ const GenerateGirls = React.lazy(() => import('./components/GenerateGirls'))
 const ApiSettings = React.lazy(() => import('./components/ApiSettings'))
 const Harem = React.lazy(() => import('./components/Harem'))
 const PromptsManager = React.lazy(() => import('./components/PromptsManager'))
-const PromptsDebug = React.lazy(() => import('./components/PromptsDebug'))
-const PromptsTest = React.lazy(() => import('./components/PromptsTest'))
-const ImageGenerationTest = React.lazy(() => import('./components/ImageGenerationTest'))
-const AITestComponent = React.lazy(() => import('./components/AITestComponent'))
-const ReasoningTest = React.lazy(() => import('./components/ReasoningTest'))
 const TemplateEditor = React.lazy(() => import('./components/TemplateEditor'))
 
 import { aiService } from './lib/ai-service'
@@ -36,7 +31,7 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error, resetError
 }
 
 type CreationType = 'character' | 'scenario'
-type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'prompts-test' | 'image-test' | 'prompts-debug' | 'ai-test' | 'reasoning-test' | 'template-editor'
+type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'template-editor'
 
 const creationTypes: Array<{
   id: CreationType
@@ -187,50 +182,10 @@ function App() {
       )
     }
 
-    if (mode === 'prompts-test') {
-      return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
-          <PromptsTest onBack={handleBack} />
-        </React.Suspense>
-      )
-    }
-
-    if (mode === 'image-test') {
-      return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
-          <ImageGenerationTest onBack={handleBack} />
-        </React.Suspense>
-      )
-    }
-
-    if (mode === 'ai-test') {
-      return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
-          <AITestComponent onBack={handleBack} />
-        </React.Suspense>
-      )
-    }
-
-    if (mode === 'reasoning-test') {
-      return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
-          <ReasoningTest onBack={handleBack} />
-        </React.Suspense>
-      )
-    }
-
     if (mode === 'template-editor') {
       return (
         <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
           <TemplateEditor onBack={handleBack} />
-        </React.Suspense>
-      )
-    }
-
-    if (mode === 'prompts-debug') {
-      return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
-          <PromptsDebug />
         </React.Suspense>
       )
     }
@@ -266,55 +221,10 @@ function App() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setMode('ai-test')}
-                className="border-accent/30 hover:bg-accent/10"
-              >
-                <Sparkle size={16} className="mr-2" />
-                Test AI
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setMode('reasoning-test')}
-                className="border-accent/30 hover:bg-accent/10"
-              >
-                <Brain size={16} className="mr-2" />
-                Test Reasoning
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setMode('image-test')}
-                className="border-accent/30 hover:bg-accent/10"
-              >
-                <Sparkle size={16} className="mr-2" />
-                Test Images
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setMode('prompts-test')}
-                className="border-accent/30 hover:bg-accent/10"
-              >
-                <Sparkle size={16} className="mr-2" />
-                Test Prompts
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setMode('prompts-debug')}
-                className="border-secondary/30 hover:bg-secondary/10"
-              >
-                <Sparkle size={16} className="mr-2" />
-                Debug Prompts
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
                 onClick={() => setMode('template-editor')}
                 className="border-accent/30 hover:bg-accent/10"
               >
-                <Wrench size={16} className="mr-2" />
+                <Chat size={16} className="mr-2" />
                 Templates
               </Button>
               <Button
