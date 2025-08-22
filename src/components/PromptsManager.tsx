@@ -14,7 +14,7 @@ interface PromptsManagerProps {
 }
 
 export default function PromptsManager({ onBack }: PromptsManagerProps) {
-  const { prompts, sortedPrompts, updatePrompt, addPrompt, deletePrompt, setPrompts, forceClear } = usePrompts()
+  const { prompts, sortedPrompts, updatePrompt, addPrompt, deletePrompt, setPrompts, forceClear, initializePrompts } = usePrompts()
   const [editingPrompt, setEditingPrompt] = useState<string | null>(null)
   const [newPrompt, setNewPrompt] = useState<Partial<ChatPrompt>>({
     id: '',
@@ -57,9 +57,9 @@ export default function PromptsManager({ onBack }: PromptsManagerProps) {
   // Initialize with defaults if needed
   const initializeDefaults = () => {
     console.log('Force initializing default prompts...')
-    setPrompts(defaultPrompts)
+    initializePrompts()
     setRefreshKey(prev => prev + 1)
-    toast.success('All default prompts loaded!')
+    toast.success('All default prompts initialized!')
   }
 
   // Load all comprehensive prompts 

@@ -39,11 +39,18 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
     type: 'character'
   })
   const [showExport, setShowExport] = useState(false)
+  const [promptRefreshKey, setPromptRefreshKey] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { getPrompt, getChatBuilderPrompt } = usePrompts()
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   useEffect(() => { scrollToBottom() }, [messages])
+
+  // Force refresh prompts
+  const refreshPrompts = () => {
+    setPromptRefreshKey(prev => prev + 1)
+    console.log('Refreshing prompts in chat builder')
+  }
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -51,6 +58,7 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
       const lunaPrompt = getPrompt('luna-chat-builder')
       
       console.log('Initializing chat with Luna prompt:', lunaPrompt?.name || 'fallback')
+      console.log('Luna greeting:', lunaPrompt?.greeting ? lunaPrompt.greeting.substring(0, 100) + '...' : 'using fallback')
       
       const greeting: Message = {
         id: Date.now().toString(),
@@ -60,7 +68,7 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
       }
       setMessages([greeting])
     }
-  }, [messages.length, getPrompt])
+  }, [messages.length, getPrompt, promptRefreshKey])
 
   const addMessage = (role: 'user' | 'ai', content: string) =>
     setMessages(prev => [...prev, { id: Date.now().toString(), role, content, timestamp: new Date() }])
@@ -71,10 +79,11 @@ export default function CustomChatBuilder({ onBack }: { onBack: () => void }) {
     try {
       const conversationContext = messages.map(m => `${m.role}: ${m.content}`).join('\n')
       
-      // Get Luna's system prompt using the hook function
+      // Get Luna's system prompt using the hook function - refresh it each time
       const systemPrompt = getChatBuilderPrompt()
       
       console.log('Using system prompt for AI response')
+      console.log('System prompt preview:', systemPrompt.substring(0, 100) + '...')
 
       const prompt = `${systemPrompt}
 
@@ -228,12 +237,14 @@ Create explicit, immersive, detailed content tailored to their interests.`
       preferences: {},
       type: 'character'
     })
-    // Add greeting after state reset
+    // Force refresh prompts and add greeting after state reset
+    refreshPrompts()
     setTimeout(() => {
+      const lunaPrompt = getPrompt('luna-chat-builder')
       const greeting: Message = {
         id: Date.now().toString(),
         role: 'ai',
-        content: "Hello! I'm here to help you create custom NSFW characters and scenarios. Tell me what kind of content you'd like to create - what themes, settings, or character types interest you?",
+        content: lunaPrompt?.greeting || "Hey there, handsome~ 💋 I'm Luna, your personal AI psychologist and character creation expert. I'm here to help you create the perfect character for your fantasies. Want me to analyze what you're really into? Or should we dive right into building someone special together? 😈",
         timestamp: new Date()
       }
       setMessages([greeting])
@@ -269,6 +280,15 @@ Create explicit, immersive, detailed content tailored to their interests.`
                     <CardDescription>Custom content creator</CardDescription>
                   </div>
                   <div className="ml-auto flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={refreshPrompts}
+                      className="text-xs"
+                      title="Refresh AI prompts"
+                    >
+                      🔄 Refresh
+                    </Button>
                     <Button 
                       variant="outline" 
                       size="sm"

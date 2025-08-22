@@ -214,6 +214,13 @@ export function usePrompts() {
     }
   }, [prompts, setPrompts, initialized])
   
+  // Force initialize prompts if needed
+  const initializePrompts = () => {
+    console.log('Force initializing prompts...')
+    setPrompts(defaultPrompts)
+    setInitialized(true)
+  }
+  
   // Use current prompts directly from KV store with better error handling
   const safePrompts = useMemo(() => {
     try {
@@ -237,17 +244,30 @@ export function usePrompts() {
 
   const updatePrompt = (id: string, updates: Partial<ChatPrompt>) => {
     try {
+      console.log('Updating prompt:', id, 'with updates:', updates)
       setPrompts(current => {
         const currentPrompts = current || {}
+        const existingPrompt = currentPrompts[id]
+        
+        if (!existingPrompt) {
+          console.warn('Prompt not found for update:', id)
+          return current
+        }
+        
+        const updatedPrompt = {
+          ...existingPrompt,
+          ...updates,
+          id, // Ensure ID doesn't change
+          updatedAt: Date.now()
+        }
+        
         const updatedPrompts = {
           ...currentPrompts,
-          [id]: {
-            ...currentPrompts[id],
-            ...updates,
-            updatedAt: Date.now()
-          }
+          [id]: updatedPrompt
         }
-        console.log('Updating prompt:', id, 'New prompts:', Object.keys(updatedPrompts))
+        
+        console.log('Updated prompt result:', updatedPrompt)
+        console.log('All prompts after update:', Object.keys(updatedPrompts))
         return updatedPrompts
       })
     } catch (error) {
@@ -334,15 +354,19 @@ export function usePrompts() {
       console.log('Getting chat builder prompt...')
       console.log('Available prompts:', Object.keys(safePrompts))
       
-      // First try to get Luna specifically
-      const lunaPrompt = safePrompts['luna-chat-builder']
+      // Force refresh current prompts to make sure we have latest
+      const currentPrompts = prompts || {}
+      
+      // First try to get Luna specifically from current prompts
+      const lunaPrompt = currentPrompts['luna-chat-builder']
       if (lunaPrompt && lunaPrompt.systemPrompt) {
         console.log('Found Luna prompt:', lunaPrompt.name)
+        console.log('Luna system prompt preview:', lunaPrompt.systemPrompt.substring(0, 100) + '...')
         return lunaPrompt.systemPrompt
       }
       
-      // Look for any chat builder prompts
-      const chatBuilderPrompts = Object.values(safePrompts).filter(p => 
+      // Look for any chat builder prompts in current prompts
+      const chatBuilderPrompts = Object.values(currentPrompts).filter(p => 
         p && p.systemPrompt && (
           p.id.includes('chat') || 
           p.id.includes('builder') || 
@@ -445,6 +469,7 @@ Remember: You're conducting a psychological evaluation while being seductive. Ev
     savePrompts,
     resetToDefaults,
     forceClear,
+    initializePrompts,
     getPrompt,
     getChatBuilderPrompt,
     getPromptByType,
