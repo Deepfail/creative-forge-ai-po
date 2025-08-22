@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Sparkle, Lightning, User, GameController, DiceOne, ChatCircle, Users, Gear, Crown, Chat, Brain, Settings } from '@phosphor-icons/react'
+import { Sparkle, Lightning, User, GameController, DiceOne, ChatCircle, Users, Gear, Crown, Chat, Brain, Wrench } from '@phosphor-icons/react'
 import { ErrorBoundary } from 'react-error-boundary'
 import SafeApp from './components/SafeApp'
 
@@ -314,7 +314,7 @@ function App() {
                 onClick={() => setMode('template-editor')}
                 className="border-accent/30 hover:bg-accent/10"
               >
-                <Settings size={16} className="mr-2" />
+                <Wrench size={16} className="mr-2" />
                 Templates
               </Button>
               <Button
