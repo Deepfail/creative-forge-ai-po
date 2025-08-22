@@ -59,7 +59,6 @@ export class AIService {
     systemPrompt?: string
     temperature?: number
     maxTokens?: number
-    hideReasoning?: boolean
   }): Promise<string> {
     await this.semaphore.acquire()
     try {
@@ -88,11 +87,6 @@ export class AIService {
             max_tokens: options?.maxTokens ?? 2000
           }
 
-          // For reasoning models, add hide_reasoning parameter
-          if (this.config.textModel === 'deepseek-r1-671b') {
-            requestBody.hide_reasoning = options?.hideReasoning ?? true // Default to hiding reasoning
-          }
-
           const response = await fetch('https://api.venice.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -119,7 +113,16 @@ export class AIService {
           return result
         } catch (veniceError) {
           console.error('Venice AI error, falling back to internal:', veniceError)
-          // Fall through to internal fallback
+          const errorMessage = veniceError.toString().toLowerCase()
+          if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
+            throw new Error('Venice AI API key is invalid. Please check your API settings.')
+          } else if (errorMessage.includes('400') || errorMessage.includes('bad request')) {
+            console.log('Venice AI bad request, trying internal fallback...')
+            // Continue to internal fallback
+          } else {
+            console.log('Venice AI error, trying internal fallback...')
+            // Continue to internal fallback  
+          }
         }
       }
 
@@ -153,6 +156,10 @@ export class AIService {
         return result
       } catch (sparkError) {
         console.error('Internal AI error:', sparkError)
+        const errorMessage = sparkError.toString().toLowerCase()
+        if (errorMessage.includes('content_filter') || errorMessage.includes('responsibleai')) {
+          throw new Error('Content was filtered by internal AI. Please configure Venice AI with an uncensored model for NSFW content.')
+        }
         throw new Error('Failed to generate content with internal AI')
       }
     } catch (error) {

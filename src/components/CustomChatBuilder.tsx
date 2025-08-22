@@ -118,8 +118,7 @@ Response instructions:
 
       const response = await aiService.generateText(prompt, { 
         temperature: 0.8, 
-        maxTokens: 400,
-        hideReasoning: true // Hide reasoning for smoother conversation
+        maxTokens: 400
       })
       addMessage('ai', response)
       updatePreferences(userMessage, response)
@@ -217,8 +216,7 @@ Create explicit, immersive, detailed content tailored to their interests.`
       
       const generatedContent = await aiService.generateText(prompt, { 
         temperature: 0.8, 
-        maxTokens: 2000,
-        hideReasoning: true // Hide reasoning for cleaner content generation
+        maxTokens: 2000
       })
       setCreationState(prev => ({ ...prev, generatedContent }))
       addMessage('ai', "Perfect! I've created your personalized content. Would you like me to export it for you?")

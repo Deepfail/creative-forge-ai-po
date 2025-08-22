@@ -88,14 +88,12 @@ const generateRandomGirl = async (templateSystem: ReturnType<typeof useTemplateS
     summary = await aiService.generateText(summaryPrompt, {
       systemPrompt: "You are an expert at creating engaging character descriptions for adult content. Be creative and slightly suggestive while remaining tasteful.",
       temperature: 0.8,
-      maxTokens: 100,
-      hideReasoning: true
+      maxTokens: 100
     })
     physicalDescription = await aiService.generateText(physicalPrompt, {
       systemPrompt: "You are an expert at creating detailed physical descriptions for adult characters. Focus on attractive, memorable features.",
       temperature: 0.8,
-      maxTokens: 150,
-      hideReasoning: true
+      maxTokens: 150
     })
   } catch (error) {
     console.warn('AI generation failed, using fallback:', error)

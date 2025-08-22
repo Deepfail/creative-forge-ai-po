@@ -276,9 +276,7 @@ export default function InteractiveMode({ type, onBack }: InteractiveModeProps) 
         Format with clear sections and make it immediately usable.
       `
 
-      const result = await aiService.generateText(prompt, {
-        hideReasoning: true // Hide reasoning for cleaner content generation
-      })
+      const result = await aiService.generateText(prompt)
       setGeneratedContent(result)
       toast.success('Your creation is ready!')
     } catch (error) {

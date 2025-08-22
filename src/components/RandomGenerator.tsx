@@ -127,8 +127,7 @@ export default function RandomGenerator({ type, onBack }: RandomGeneratorProps) 
       const content = await aiService.generateText(prompt, {
         systemPrompt: "You are an expert at creating high-quality adult content. Generate creative, detailed NSFW characters and scenarios with explicit sexual themes. Be creative and unexpected while maintaining quality.",
         temperature: 0.9,
-        maxTokens: 2000,
-        hideReasoning: true
+        maxTokens: 2000
       })
       
       // Extract title from content (look for first line or "Title:" section)
