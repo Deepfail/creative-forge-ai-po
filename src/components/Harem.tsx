@@ -7,9 +7,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, Heart, HeartStraight, Plus, Trash, Pencil, Tag, Star, Crown, Shield, X } from '@phosphor-icons/react'
+import { ArrowLeft, Heart, HeartStraight, Plus, Trash, Pencil, Tag, Star, Crown, Shield, X, Play, GameController, ChatCircle, Sparkles } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
+import { aiService } from '../lib/ai-service'
 
 export interface SavedGirl {
   id: string
@@ -25,6 +26,28 @@ export interface SavedGirl {
   tasks: string[]
   favorited: boolean
   rating: number
+}
+
+export interface GeneratedScenario {
+  id: string
+  girlId: string
+  title: string
+  description: string
+  setting: string
+  mood: string
+  scenario: string
+  createdAt: number
+}
+
+interface ScenarioChat {
+  id: string
+  messages: Array<{
+    role: 'user' | 'assistant'
+    content: string
+    timestamp: number
+  }>
+  girl: SavedGirl
+  scenario: GeneratedScenario
 }
 
 interface HaremProps {
@@ -54,6 +77,7 @@ export default function Harem({ onBack }: HaremProps) {
   const [customTags, setCustomTags] = useKV<string[]>('custom-tags', [])
   const [customRoles, setCustomRoles] = useKV<string[]>('custom-roles', [])
   const [customTasks, setCustomTasks] = useKV<string[]>('custom-tasks', [])
+  const [savedScenarios, setSavedScenarios] = useKV<GeneratedScenario[]>('girl-scenarios', [])
   const [selectedGirl, setSelectedGirl] = useState<SavedGirl | null>(null)
   const [editMode, setEditMode] = useState(false)
   const [editedGirl, setEditedGirl] = useState<SavedGirl | null>(null)
@@ -65,6 +89,13 @@ export default function Harem({ onBack }: HaremProps) {
   const [newCustomRole, setNewCustomRole] = useState('')
   const [newCustomTask, setNewCustomTask] = useState('')
   const [showCustomTagManager, setShowCustomTagManager] = useState(false)
+  const [showScenarioBuilder, setShowScenarioBuilder] = useState(false)
+  const [scenarioGirl, setScenarioGirl] = useState<SavedGirl | null>(null)
+  const [activeScenario, setActiveScenario] = useState<ScenarioChat | null>(null)
+  const [scenarioInput, setScenarioInput] = useState('')
+  const [isGeneratingScenario, setIsGeneratingScenario] = useState(false)
+  const [userMessage, setUserMessage] = useState('')
+  const [isGeneratingResponse, setIsGeneratingResponse] = useState(false)
 
   // Get all available tags (predefined + custom)
   const allTags = [...predefinedTags, ...(customTags || [])]
@@ -217,6 +248,163 @@ export default function Harem({ onBack }: HaremProps) {
   const setRating = (rating: number) => {
     if (!editedGirl) return
     setEditedGirl(prev => prev ? { ...prev, rating } : null)
+  }
+
+  const generateScenario = async (girl: SavedGirl, userPrompt: string) => {
+    setIsGeneratingScenario(true)
+    
+    try {
+      const prompt = spark.llmPrompt`Create a detailed NSFW interactive scenario for this character:
+
+Character Profile:
+- Name: ${girl.name}
+- Age: ${girl.age}
+- Type: ${girl.type}
+- Personality: ${girl.personality}
+- Summary: ${girl.summary}
+- Roles: ${girl.roles.join(', ')}
+- Tags: ${girl.tags.join(', ')}
+
+User Request: ${userPrompt}
+
+Generate a scenario with:
+1. Title: A compelling title for the scenario
+2. Setting: Where this takes place
+3. Mood: The overall tone/mood
+4. Opening: The opening scene/situation in first person perspective
+
+Make it engaging, immersive, and true to the character's personality. Keep it NSFW appropriate but tasteful.
+
+Return as JSON:
+{
+  "title": "scenario title",
+  "setting": "location description",
+  "mood": "mood/tone",
+  "scenario": "opening scene description"
+}`
+
+      const response = await aiService.generateText(prompt)
+      const scenarioData = JSON.parse(response)
+      
+      const newScenario: GeneratedScenario = {
+        id: Date.now().toString(),
+        girlId: girl.id,
+        title: scenarioData.title,
+        description: userPrompt,
+        setting: scenarioData.setting,
+        mood: scenarioData.mood,
+        scenario: scenarioData.scenario,
+        createdAt: Date.now()
+      }
+      
+      setSavedScenarios(current => [...(current || []), newScenario])
+      
+      // Start the interactive chat
+      const scenarioChat: ScenarioChat = {
+        id: Date.now().toString(),
+        messages: [
+          {
+            role: 'assistant',
+            content: scenarioData.scenario,
+            timestamp: Date.now()
+          }
+        ],
+        girl,
+        scenario: newScenario
+      }
+      
+      setActiveScenario(scenarioChat)
+      setShowScenarioBuilder(false)
+      toast.success('Scenario generated! Start interacting!')
+      
+    } catch (error) {
+      console.error('Error generating scenario:', error)
+      toast.error('Failed to generate scenario')
+    } finally {
+      setIsGeneratingScenario(false)
+    }
+  }
+
+  const sendMessage = async () => {
+    if (!userMessage.trim() || !activeScenario || isGeneratingResponse) return
+    
+    setIsGeneratingResponse(true)
+    
+    try {
+      // Add user message
+      const newUserMessage = {
+        role: 'user' as const,
+        content: userMessage,
+        timestamp: Date.now()
+      }
+      
+      setActiveScenario(prev => prev ? {
+        ...prev,
+        messages: [...prev.messages, newUserMessage]
+      } : null)
+      
+      setUserMessage('')
+      
+      // Generate AI response
+      const chatHistory = [...activeScenario.messages, newUserMessage]
+        .map(msg => `${msg.role}: ${msg.content}`)
+        .join('\n\n')
+      
+      const prompt = spark.llmPrompt`You are roleplaying as ${activeScenario.girl.name}, a ${activeScenario.girl.age}-year-old ${activeScenario.girl.type}.
+
+Character Details:
+- Personality: ${activeScenario.girl.personality}
+- Summary: ${activeScenario.girl.summary}
+- Roles: ${activeScenario.girl.roles.join(', ')}
+- Tags: ${activeScenario.girl.tags.join(', ')}
+
+Current Scenario: ${activeScenario.scenario.title}
+Setting: ${activeScenario.scenario.setting}
+Mood: ${activeScenario.scenario.mood}
+
+Chat History:
+${chatHistory}
+
+Respond as ${activeScenario.girl.name} in character. Be engaging, immersive, and true to her personality. Keep responses conversational and interactive. This is NSFW content, so be appropriately mature but tasteful.`
+
+      const response = await aiService.generateText(prompt)
+      
+      // Add AI response
+      const newAIMessage = {
+        role: 'assistant' as const,
+        content: response,
+        timestamp: Date.now()
+      }
+      
+      setActiveScenario(prev => prev ? {
+        ...prev,
+        messages: [...prev.messages, newAIMessage]
+      } : null)
+      
+    } catch (error) {
+      console.error('Error generating response:', error)
+      toast.error('Failed to generate response')
+    } finally {
+      setIsGeneratingResponse(false)
+    }
+  }
+
+  const startScenarioBuilder = (girl: SavedGirl) => {
+    setScenarioGirl(girl)
+    setShowScenarioBuilder(true)
+    setScenarioInput('')
+  }
+
+  const quickScenario = async (girl: SavedGirl, type: string) => {
+    const prompts = {
+      romantic: "Create a romantic date scenario",
+      adventure: "Create an exciting adventure scenario", 
+      intimate: "Create an intimate bedroom scenario",
+      playful: "Create a fun, playful scenario",
+      fantasy: "Create a fantasy roleplay scenario"
+    }
+    
+    await generateScenario(girl, prompts[type as keyof typeof prompts] || prompts.romantic)
   }
 
   return (
@@ -530,6 +718,106 @@ export default function Harem({ onBack }: HaremProps) {
                         />
                       </Button>
                     </div>
+
+                    {/* Interactive Actions */}
+                    <div className="pt-4 border-t border-border space-y-3">
+                      <h4 className="font-medium flex items-center gap-2">
+                        <Play size={16} className="text-accent" />
+                        Interactive Scenarios
+                      </h4>
+                      
+                      {/* Quick Scenario Buttons */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => quickScenario(selectedGirl, 'romantic')}
+                          disabled={isGeneratingScenario}
+                          className="border-pink-500/30 hover:bg-pink-500/10 text-pink-400"
+                        >
+                          <Heart size={14} className="mr-1" />
+                          Romantic
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => quickScenario(selectedGirl, 'adventure')}
+                          disabled={isGeneratingScenario}
+                          className="border-blue-500/30 hover:bg-blue-500/10 text-blue-400"
+                        >
+                          <Sparkles size={14} className="mr-1" />
+                          Adventure
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => quickScenario(selectedGirl, 'intimate')}
+                          disabled={isGeneratingScenario}
+                          className="border-red-500/30 hover:bg-red-500/10 text-red-400"
+                        >
+                          <Heart size={14} className="mr-1" weight="fill" />
+                          Intimate
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => quickScenario(selectedGirl, 'playful')}
+                          disabled={isGeneratingScenario}
+                          className="border-yellow-500/30 hover:bg-yellow-500/10 text-yellow-400"
+                        >
+                          <GameController size={14} className="mr-1" />
+                          Playful
+                        </Button>
+                      </div>
+                      
+                      {/* Custom Scenario Button */}
+                      <Button
+                        onClick={() => startScenarioBuilder(selectedGirl)}
+                        disabled={isGeneratingScenario}
+                        className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+                        size="sm"
+                      >
+                        <ChatCircle size={16} className="mr-2" />
+                        Create Custom Scenario
+                      </Button>
+                      
+                      {/* Previous Scenarios */}
+                      {savedScenarios?.filter(s => s.girlId === selectedGirl.id).length > 0 && (
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium text-muted-foreground">Previous Scenarios</h5>
+                          <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {savedScenarios.filter(s => s.girlId === selectedGirl.id).slice(-3).map(scenario => (
+                              <Button
+                                key={scenario.id}
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const scenarioChat: ScenarioChat = {
+                                    id: Date.now().toString(),
+                                    messages: [
+                                      {
+                                        role: 'assistant',
+                                        content: scenario.scenario,
+                                        timestamp: Date.now()
+                                      }
+                                    ],
+                                    girl: selectedGirl,
+                                    scenario
+                                  }
+                                  setActiveScenario(scenarioChat)
+                                }}
+                                className="w-full justify-start text-left h-auto p-2"
+                              >
+                                <div className="truncate">
+                                  <div className="text-xs font-medium">{scenario.title}</div>
+                                  <div className="text-xs text-muted-foreground">{scenario.setting}</div>
+                                </div>
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               )}
@@ -718,6 +1006,127 @@ export default function Harem({ onBack }: HaremProps) {
                   </Button>
                 </div>
               </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Scenario Builder Dialog */}
+        <Dialog open={showScenarioBuilder} onOpenChange={setShowScenarioBuilder}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Create Scenario for {scenarioGirl?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <div>
+                <Label htmlFor="scenario-prompt">Describe the scenario you want:</Label>
+                <Textarea
+                  id="scenario-prompt"
+                  placeholder="e.g., A romantic dinner date that turns intimate, a fantasy adventure in a magical forest, a playful game of truth or dare..."
+                  value={scenarioInput}
+                  onChange={(e) => setScenarioInput(e.target.value)}
+                  rows={4}
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setShowScenarioBuilder(false)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => scenarioGirl && generateScenario(scenarioGirl, scenarioInput)}
+                  disabled={!scenarioInput.trim() || isGeneratingScenario}
+                  className="flex-1"
+                >
+                  {isGeneratingScenario ? 'Generating...' : 'Create Scenario'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Active Scenario Chat Dialog */}
+        <Dialog open={!!activeScenario} onOpenChange={() => setActiveScenario(null)}>
+          <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Play size={20} className="text-accent" />
+                {activeScenario?.scenario.title} - with {activeScenario?.girl.name}
+              </DialogTitle>
+              <div className="text-sm text-muted-foreground">
+                {activeScenario?.scenario.setting} • {activeScenario?.scenario.mood}
+              </div>
+            </DialogHeader>
+            
+            {activeScenario && (
+              <>
+                {/* Chat Messages */}
+                <div className="flex-1 overflow-y-auto space-y-4 py-4 min-h-[300px] max-h-[400px]">
+                  {activeScenario.messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-[80%] p-3 rounded-lg ${
+                          message.role === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-foreground'
+                        }`}
+                      >
+                        <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                        <div className="text-xs opacity-70 mt-1">
+                          {new Date(message.timestamp).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {isGeneratingResponse && (
+                    <div className="flex justify-start">
+                      <div className="bg-muted text-foreground p-3 rounded-lg">
+                        <div className="text-sm">
+                          <span className="opacity-50">{activeScenario.girl.name} is typing...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Message Input */}
+                <div className="border-t border-border pt-4 space-y-3">
+                  <Textarea
+                    placeholder={`Continue the scenario with ${activeScenario.girl.name}...`}
+                    value={userMessage}
+                    onChange={(e) => setUserMessage(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        sendMessage()
+                      }
+                    }}
+                    rows={2}
+                    disabled={isGeneratingResponse}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setActiveScenario(null)}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      End Scenario
+                    </Button>
+                    <Button
+                      onClick={sendMessage}
+                      disabled={!userMessage.trim() || isGeneratingResponse}
+                      className="flex-1"
+                    >
+                      {isGeneratingResponse ? 'Responding...' : 'Send'}
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
           </DialogContent>
         </Dialog>
