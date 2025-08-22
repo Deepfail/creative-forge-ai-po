@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Sparkle, Lightning, User, GameController, DiceOne, ChatCircle, Users, Gear, Crown, Chat } from '@phosphor-icons/react'
+import { Sparkle, Lightning, User, GameController, DiceOne, ChatCircle, Users, Gear, Crown, Chat, Brain } from '@phosphor-icons/react'
 import { ErrorBoundary } from 'react-error-boundary'
 import SafeApp from './components/SafeApp'
 
@@ -20,6 +20,7 @@ const PromptsDebug = React.lazy(() => import('./components/PromptsDebug'))
 const PromptsTest = React.lazy(() => import('./components/PromptsTest'))
 const ImageGenerationTest = React.lazy(() => import('./components/ImageGenerationTest'))
 const AITestComponent = React.lazy(() => import('./components/AITestComponent'))
+const ReasoningTest = React.lazy(() => import('./components/ReasoningTest'))
 
 import { aiService } from './lib/ai-service'
 import { useKV } from '@github/spark/hooks'
@@ -34,7 +35,7 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error, resetError
 }
 
 type CreationType = 'character' | 'scenario'
-type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'prompts-test' | 'image-test' | 'prompts-debug' | 'ai-test'
+type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'prompts-test' | 'image-test' | 'prompts-debug' | 'ai-test' | 'reasoning-test'
 
 const creationTypes: Array<{
   id: CreationType
@@ -209,6 +210,14 @@ function App() {
       )
     }
 
+    if (mode === 'reasoning-test') {
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <ReasoningTest onBack={handleBack} />
+        </React.Suspense>
+      )
+    }
+
     if (mode === 'prompts-debug') {
       return (
         <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
@@ -253,6 +262,15 @@ function App() {
               >
                 <Sparkle size={16} className="mr-2" />
                 Test AI
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setMode('reasoning-test')}
+                className="border-accent/30 hover:bg-accent/10"
+              >
+                <Brain size={16} className="mr-2" />
+                Test Reasoning
               </Button>
               <Button
                 variant="outline"

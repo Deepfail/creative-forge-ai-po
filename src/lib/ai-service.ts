@@ -59,6 +59,7 @@ export class AIService {
     systemPrompt?: string
     temperature?: number
     maxTokens?: number
+    hideReasoning?: boolean
   }): Promise<string> {
     await this.semaphore.acquire()
     try {
@@ -80,18 +81,25 @@ export class AIService {
           }
           messages.push({ role: 'user', content: prompt })
 
+          const requestBody: any = {
+            model: this.config.textModel,
+            messages,
+            temperature: options?.temperature ?? 0.8,
+            max_tokens: options?.maxTokens ?? 2000
+          }
+
+          // For reasoning models, add hide_reasoning parameter if specified
+          if (this.config.textModel === 'deepseek-r1-671b' && options?.hideReasoning !== undefined) {
+            requestBody.hide_reasoning = options.hideReasoning
+          }
+
           const response = await fetch('https://api.venice.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${this.config.apiKey}`
             },
-            body: JSON.stringify({
-              model: this.config.textModel,
-              messages,
-              temperature: options?.temperature ?? 0.8,
-              max_tokens: options?.maxTokens ?? 2000
-            })
+            body: JSON.stringify(requestBody)
           })
 
           if (!response.ok) {
