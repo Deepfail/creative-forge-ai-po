@@ -86,6 +86,13 @@ export class AIService {
             temperature: options?.temperature ?? 0.8,
             max_tokens: options?.maxTokens ?? 2000
           }
+          
+          // Don't include hide_reasoning as it's not supported by Venice AI
+          // Only include reasoning control for reasoning models like deepseek-r1-671b
+          if (this.config.textModel === 'deepseek-r1-671b') {
+            // For reasoning models, we can't disable reasoning output
+            console.log('Using reasoning model - reasoning output will be included')
+          }
 
           const response = await fetch('https://api.venice.ai/api/v1/chat/completions', {
             method: 'POST',
