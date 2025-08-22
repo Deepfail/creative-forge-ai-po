@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Sparkle, Lightning, User, GameController, DiceOne, ChatCircle, Users, Gear, Crown, Chat, Brain } from '@phosphor-icons/react'
+import { Sparkle, Lightning, User, GameController, DiceOne, ChatCircle, Users, Gear, Crown, Chat, Brain, Settings } from '@phosphor-icons/react'
 import { ErrorBoundary } from 'react-error-boundary'
 import SafeApp from './components/SafeApp'
 
