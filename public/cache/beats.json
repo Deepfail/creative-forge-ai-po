@@ -1,0 +1,28 @@
+{
+  "beats": [
+    { "t": 0.5, "strength": 0.8 },
+    { "t": 1.0, "strength": 0.6 },
+    { "t": 1.5, "strength": 0.9 },
+    { "t": 2.0, "strength": 0.4 },
+    { "t": 2.5, "strength": 0.7 },
+    { "t": 3.0, "strength": 0.95 },
+    { "t": 3.5, "strength": 0.3 },
+    { "t": 4.0, "strength": 0.8 },
+    { "t": 4.5, "strength": 0.5 },
+    { "t": 5.0, "strength": 1.0 },
+    { "t": 5.5, "strength": 0.6 },
+    { "t": 6.0, "strength": 0.7 },
+    { "t": 6.5, "strength": 0.4 },
+    { "t": 7.0, "strength": 0.9 },
+    { "t": 7.5, "strength": 0.8 },
+    { "t": 8.0, "strength": 0.6 }
+  ],
+  "tempo": 120,
+  "tempoCurve": [
+    { "t": 0, "bpm": 118 },
+    { "t": 2, "bpm": 120 },
+    { "t": 4, "bpm": 122 },
+    { "t": 6, "bpm": 120 },
+    { "t": 8, "bpm": 119 }
+  ]
+}

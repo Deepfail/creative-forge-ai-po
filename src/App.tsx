@@ -18,6 +18,7 @@ const Harem = React.lazy(() => import('./components/Harem'))
 const PromptsManager = React.lazy(() => import('./components/PromptsManager'))
 const TemplateEditor = React.lazy(() => import('./components/TemplateEditor'))
 const ScenarioTest = React.lazy(() => import('./components/ScenarioTest'))
+const AutoCreate = React.lazy(() => import('./components/AutoCreate'))
 
 import { aiService } from './lib/ai-service'
 import { useKV } from '@github/spark/hooks'
@@ -32,7 +33,7 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error, resetError
 }
 
 type CreationType = 'character' | 'scenario'
-type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'template-editor' | 'scenario-test'
+type AppMode = 'home' | 'simple' | 'interactive' | 'random' | 'custom' | 'girls' | 'settings' | 'harem' | 'prompts' | 'template-editor' | 'scenario-test' | 'auto-create'
 
 const creationTypes: Array<{
   id: CreationType
@@ -202,6 +203,14 @@ function App() {
       )
     }
 
+    if (mode === 'auto-create') {
+      return (
+        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+          <AutoCreate onBack={handleBack} />
+        </React.Suspense>
+      )
+    }
+
     if (showSettings) {
       return (
         <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
@@ -230,6 +239,14 @@ function App() {
               </h1>
             </div>
             <div className="flex-1 flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setMode('auto-create')}
+                className="border-green-500/30 hover:bg-green-500/10"
+              >
+                🎬 Auto-Create
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
