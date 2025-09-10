@@ -1,11 +1,16 @@
 import React from 'react'
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { Sparkle, Lightning, User, GameController, DiceOne, ChatCircle, Users, Gear, Crown, Chat } from '@phosphor-icons/react'
 import { ErrorBoundary } from 'react-error-boundary'
 import SafeApp from './components/SafeApp'
+
+// Modern components
+import { SessionProvider, useSession } from './contexts/SessionContext'
+import { ModernLayout, PageTransition } from './components/ModernLayout'
+import { ModernCard, FeatureCard, InfoCard } from './components/ModernCard'
+import { ModernButton, ModeButton } from './components/ModernButton'
 
 // Lazy load components to prevent initial load crashes
 const SimpleMode = React.lazy(() => import('./components/SimpleMode'))
@@ -57,23 +62,21 @@ const creationTypes: Array<{
   }
 ]
 
-function App() {
-  const [mode, setMode] = useState<AppMode>('home')
-  const [selectedType, setSelectedType] = useState<CreationType>('character')
+function AppContent() {
+  const { state, setMode, setType } = useSession()
   const [showSettings, setShowSettings] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isStable, setIsStable] = useState(false)
   
   const [apiConfig] = useKV<ApiConfig>('api-config', {
     apiKey: '',
-    textModel: 'llama-3.3-70b', // Use a stable, non-reasoning model by default
+    textModel: 'llama-3.3-70b',
     imageModel: 'flux-dev'
   })
 
   // Check system stability
   useEffect(() => {
     try {
-      // Basic stability checks
       const checks = [
         typeof window !== 'undefined',
         window.spark !== undefined,
@@ -84,7 +87,6 @@ function App() {
         console.log('System stability checks passed')
         setIsStable(true)
         
-        // Initialize AI service
         if (apiConfig) {
           aiService.setConfig(apiConfig)
           console.log('AI service configured')
@@ -99,14 +101,13 @@ function App() {
     }
   }, [apiConfig])
 
-  // If system is not stable, use safe mode
   if (!isStable) {
     return <SafeApp />
   }
 
   const handleModeSelect = (newMode: AppMode, type?: CreationType) => {
     try {
-      if (type) setSelectedType(type)
+      if (type) setType(type)
       setMode(newMode)
       setError(null)
     } catch (error) {
@@ -127,75 +128,75 @@ function App() {
 
   // Render based on current mode with Suspense for lazy loading
   const renderCurrentMode = () => {
-    if (mode === 'simple') {
+    if (state.currentMode === 'simple') {
       return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
-          <SimpleMode type={selectedType} onBack={handleBack} />
+        <React.Suspense fallback={<LoadingScreen />}>
+          <SimpleMode type={state.selectedType as CreationType} onBack={handleBack} />
         </React.Suspense>
       )
     }
 
-    if (mode === 'interactive') {
+    if (state.currentMode === 'interactive') {
       return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
-          <InteractiveMode type={selectedType} onBack={handleBack} />
+        <React.Suspense fallback={<LoadingScreen />}>
+          <InteractiveMode type={state.selectedType as CreationType} onBack={handleBack} />
         </React.Suspense>
       )
     }
 
-    if (mode === 'random') {
+    if (state.currentMode === 'random') {
       return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
-          <RandomGenerator type={selectedType} onBack={handleBack} />
+        <React.Suspense fallback={<LoadingScreen />}>
+          <RandomGenerator type={state.selectedType as CreationType} onBack={handleBack} />
         </React.Suspense>
       )
     }
 
-    if (mode === 'custom') {
+    if (state.currentMode === 'custom') {
       return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+        <React.Suspense fallback={<LoadingScreen />}>
           <CustomChatBuilder onBack={handleBack} />
         </React.Suspense>
       )
     }
 
-    if (mode === 'girls') {
+    if (state.currentMode === 'girls') {
       return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+        <React.Suspense fallback={<LoadingScreen />}>
           <GenerateGirls onBack={handleBack} />
         </React.Suspense>
       )
     }
 
-    if (mode === 'harem') {
+    if (state.currentMode === 'harem') {
       return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+        <React.Suspense fallback={<LoadingScreen />}>
           <Harem onBack={handleBack} />
         </React.Suspense>
       )
     }
 
-    if (mode === 'prompts') {
+    if (state.currentMode === 'prompts') {
       return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+        <React.Suspense fallback={<LoadingScreen />}>
           <PromptsManager onBack={handleBack} />
         </React.Suspense>
       )
     }
 
-    if (mode === 'template-editor') {
+    if (state.currentMode === 'template-editor') {
       return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+        <React.Suspense fallback={<LoadingScreen />}>
           <TemplateEditor onBack={handleBack} />
         </React.Suspense>
       )
     }
 
-    if (mode === 'scenario-test') {
+    if (state.currentMode === 'scenario-test') {
       return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
-          <div className="min-h-screen bg-background p-8">
-            <Button onClick={handleBack} className="mb-4">Back</Button>
+        <React.Suspense fallback={<LoadingScreen />}>
+          <div className="min-h-screen p-8">
+            <ModernButton onClick={handleBack} className="mb-4">Back</ModernButton>
             <ScenarioTest />
           </div>
         </React.Suspense>
@@ -204,7 +205,7 @@ function App() {
 
     if (showSettings) {
       return (
-        <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkle className="animate-spin" /></div>}>
+        <React.Suspense fallback={<LoadingScreen />}>
           <ApiSettings 
             onClose={() => setShowSettings(false)} 
             onSave={(config) => {
@@ -216,194 +217,7 @@ function App() {
       )
     }
 
-    return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex-1" />
-            <div className="flex items-center gap-3">
-              <Sparkle className="text-primary" size={40} weight="fill" />
-              <h1 className="text-5xl font-bold text-foreground bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                NSFW AI Generator
-              </h1>
-            </div>
-            <div className="flex-1 flex justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setMode('scenario-test')}
-                className="border-yellow-500/30 hover:bg-yellow-500/10"
-              >
-                🧪 Test
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setMode('template-editor')}
-                className="border-accent/30 hover:bg-accent/10"
-              >
-                <Chat size={16} className="mr-2" />
-                Templates
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setMode('prompts')}
-                className="border-secondary/30 hover:bg-secondary/10"
-              >
-                <Chat size={16} className="mr-2" />
-                Prompts
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSettings(true)}
-                className="border-primary/30 hover:bg-primary/10"
-              >
-                <Gear size={16} className="mr-2" />
-                API Settings
-              </Button>
-            </div>
-          </div>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Create amazing NSFW characters, scenarios, and interactive experiences with AI. 
-            Choose your creation type and preferred mode to get started.
-          </p>
-          <div className="mt-4 text-sm text-accent font-medium">
-            🔞 18+ Adult Content Only
-          </div>
-        </div>
-
-        {/* Quick Access Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-          <Card className="bg-gradient-to-br from-primary/20 to-primary/5 border-primary/30 hover:shadow-lg hover:shadow-primary/10 transition-all cursor-pointer group"
-                onClick={() => handleModeSelect('random')}>
-            <CardContent className="p-6 text-center">
-              <DiceOne className="mx-auto mb-3 text-primary group-hover:scale-110 transition-transform" size={32} weight="duotone" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Random Scenario</h3>
-              <p className="text-sm text-muted-foreground">Get instant random NSFW scenarios</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-secondary/20 to-secondary/5 border-secondary/30 hover:shadow-lg hover:shadow-secondary/10 transition-all cursor-pointer group"
-                onClick={() => handleModeSelect('custom')}>
-            <CardContent className="p-6 text-center">
-              <ChatCircle className="mx-auto mb-3 text-secondary group-hover:scale-110 transition-transform" size={32} weight="duotone" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Build Your Own</h3>
-              <p className="text-sm text-muted-foreground">Chat with AI to design custom content</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-accent/20 to-accent/5 border-accent/30 hover:shadow-lg hover:shadow-accent/10 transition-all cursor-pointer group"
-                onClick={() => handleModeSelect('girls')}>
-            <CardContent className="p-6 text-center">
-              <Users className="mx-auto mb-3 text-accent group-hover:scale-110 transition-transform" size={32} weight="duotone" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Generate Girls</h3>
-              <p className="text-sm text-muted-foreground">Create random female characters</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-pink-500/20 to-pink-500/5 border-pink-500/30 hover:shadow-lg hover:shadow-pink-500/10 transition-all cursor-pointer group"
-                onClick={() => handleModeSelect('harem')}>
-            <CardContent className="p-6 text-center">
-              <Crown className="mx-auto mb-3 text-pink-500 group-hover:scale-110 transition-transform" size={32} weight="duotone" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">My Harem</h3>
-              <p className="text-sm text-muted-foreground">Manage your saved girls collection</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Creation Types */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {creationTypes.map((type) => {
-            const Icon = type.icon
-            return (
-              <Card key={type.id} className="h-full hover:shadow-lg hover:shadow-primary/5 transition-all border-border/50">
-                <CardHeader className="text-center pb-4">
-                  <Icon className="mx-auto mb-3 text-primary" size={40} weight="duotone" />
-                  <CardTitle className="text-xl text-foreground">{type.title}</CardTitle>
-                  <CardDescription className="text-muted-foreground">{type.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {type.examples.map((example) => (
-                      <Badge key={example} variant="secondary" className="text-xs bg-muted/50">
-                        {example}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="space-y-3">
-                    <Button 
-                      onClick={() => handleModeSelect('simple', type.id)}
-                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" 
-                      size="sm"
-                    >
-                      <Lightning size={16} className="mr-2" />
-                      Simple Mode
-                    </Button>
-                    <Button 
-                      onClick={() => handleModeSelect('interactive', type.id)}
-                      variant="outline" 
-                      className="w-full border-primary/30 hover:bg-primary/10" 
-                      size="sm"
-                    >
-                      <Sparkle size={16} className="mr-2" />
-                      Interactive Mode
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-
-        {/* Mode Explanations */}
-        <div className="grid md:grid-cols-2 gap-8">
-          <Card className="border-primary/30 bg-primary/5">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Lightning className="text-primary" size={24} weight="duotone" />
-                <CardTitle className="text-foreground">Simple Mode</CardTitle>
-              </div>
-              <CardDescription className="text-muted-foreground">
-                Quick and direct creation for users who know exactly what they want
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Fill out forms with specific details</li>
-                <li>• Select from predefined characteristics</li>
-                <li>• Fast creation process (under 2 minutes)</li>
-                <li>• Perfect for experienced users</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="border-secondary/30 bg-secondary/5">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Sparkle className="text-secondary" size={24} weight="duotone" />
-                <CardTitle className="text-foreground">Interactive Mode</CardTitle>
-              </div>
-              <CardDescription className="text-muted-foreground">
-                Guided experience with questions and scenarios to spark creativity
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Step-by-step guided questions</li>
-                <li>• Visual choices and scenarios</li>
-                <li>• Great for discovering new ideas</li>
-                <li>• Interactive and inspiring process</li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-    )
+    return <HomePage handleModeSelect={handleModeSelect} setShowSettings={setShowSettings} />
   }
 
   if (error) {
@@ -411,9 +225,287 @@ function App() {
   }
 
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
+    <PageTransition mode={state.currentMode}>
       {renderCurrentMode()}
-    </ErrorBoundary>
+    </PageTransition>
+  )
+}
+
+// Loading screen component with modern styling
+function LoadingScreen() {
+  return (
+    <ModernLayout>
+      <div className="min-h-screen flex items-center justify-center">
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="mx-auto mb-4 w-fit"
+          >
+            <Sparkle className="text-primary" size={48} weight="fill" />
+          </motion.div>
+          <motion.p 
+            className="text-muted-foreground"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            Loading...
+          </motion.p>
+        </motion.div>
+      </div>
+    </ModernLayout>
+  )
+}
+
+// Home page component with modern design
+interface HomePageProps {
+  handleModeSelect: (mode: AppMode, type?: CreationType) => void
+  setShowSettings: (show: boolean) => void
+}
+
+function HomePage({ handleModeSelect, setShowSettings }: HomePageProps) {
+  return (
+    <ModernLayout>
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Header */}
+        <motion.div 
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex-1" />
+            <motion.div 
+              className="flex items-center gap-4"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+            >
+              <motion.div
+                animate={{ 
+                  rotate: [0, 10, -10, 0],
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{ 
+                  duration: 4, 
+                  repeat: Infinity, 
+                  ease: "easeInOut" 
+                }}
+              >
+                <Sparkle className="text-primary" size={48} weight="fill" />
+              </motion.div>
+              <h1 className="text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                Beatleap PC
+              </h1>
+            </motion.div>
+            <div className="flex-1 flex justify-end gap-2">
+              <ModernButton
+                variant="outline"
+                size="sm"
+                onClick={() => handleModeSelect('scenario-test')}
+                className="border-yellow-500/30 hover:bg-yellow-500/10"
+              >
+                🧪 Test
+              </ModernButton>
+              <ModernButton
+                variant="outline"
+                size="sm"
+                onClick={() => handleModeSelect('template-editor')}
+                icon={<Chat size={16} />}
+              >
+                Templates
+              </ModernButton>
+              <ModernButton
+                variant="outline"
+                size="sm"
+                onClick={() => handleModeSelect('prompts')}
+                icon={<Chat size={16} />}
+              >
+                Prompts
+              </ModernButton>
+              <ModernButton
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSettings(true)}
+                icon={<Gear size={16} />}
+                glow
+              >
+                API Settings
+              </ModernButton>
+            </div>
+          </div>
+          
+          <motion.p 
+            className="text-xl text-muted-foreground max-w-3xl mx-auto mb-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+          >
+            Create amazing NSFW characters, scenarios, and interactive experiences with AI. 
+            Choose your creation type and preferred mode to get started.
+          </motion.p>
+          
+          <motion.div 
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-accent/20 to-destructive/20 rounded-full border border-accent/30"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6, type: "spring" }}
+          >
+            <span className="text-2xl">🔞</span>
+            <span className="text-sm font-medium text-accent">18+ Adult Content Only</span>
+          </motion.div>
+        </motion.div>
+
+        {/* Quick Access Cards */}
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+        >
+          <FeatureCard
+            title="Random Scenario"
+            description="Get instant random NSFW scenarios"
+            icon={<DiceOne className="text-primary" size={32} weight="duotone" />}
+            onClick={() => handleModeSelect('random')}
+            variant="primary"
+            delay={0.1}
+          />
+          <FeatureCard
+            title="Build Your Own"
+            description="Chat with AI to design custom content"
+            icon={<ChatCircle className="text-secondary" size={32} weight="duotone" />}
+            onClick={() => handleModeSelect('custom')}
+            variant="secondary"
+            delay={0.2}
+          />
+          <FeatureCard
+            title="Generate Girls"
+            description="Create random female characters"
+            icon={<Users className="text-accent" size={32} weight="duotone" />}
+            onClick={() => handleModeSelect('girls')}
+            variant="accent"
+            delay={0.3}
+          />
+          <FeatureCard
+            title="My Harem"
+            description="Manage your saved girls collection"
+            icon={<Crown className="text-pink-500" size={32} weight="duotone" />}
+            onClick={() => handleModeSelect('harem')}
+            variant="accent"
+            delay={0.4}
+          />
+        </motion.div>
+
+        {/* Creation Types */}
+        <motion.div 
+          className="grid md:grid-cols-2 gap-8 mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0, duration: 0.6 }}
+        >
+          {creationTypes.map((type, index) => {
+            const Icon = type.icon
+            return (
+              <ModernCard
+                key={type.id}
+                variant="highlight"
+                delay={0.1 + index * 0.2}
+                className="h-full"
+              >
+                <div className="p-8 text-center">
+                  <motion.div
+                    className="mx-auto mb-6 w-fit"
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                  >
+                    <Icon className="text-primary" size={48} weight="duotone" />
+                  </motion.div>
+                  <h3 className="text-2xl font-bold text-foreground mb-4">{type.title}</h3>
+                  <p className="text-muted-foreground mb-6">{type.description}</p>
+                  
+                  <div className="flex flex-wrap gap-2 mb-8 justify-center">
+                    {type.examples.map((example) => (
+                      <Badge key={example} variant="secondary" className="bg-muted/50 hover:bg-muted">
+                        {example}
+                      </Badge>
+                    ))}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <ModeButton
+                      title="Simple Mode"
+                      subtitle="Quick creation"
+                      icon={<Lightning size={20} />}
+                      onClick={() => handleModeSelect('simple', type.id)}
+                      variant="primary"
+                    />
+                    <ModeButton
+                      title="Interactive Mode"
+                      subtitle="Guided experience"
+                      icon={<Sparkle size={20} />}
+                      onClick={() => handleModeSelect('interactive', type.id)}
+                      variant="secondary"
+                    />
+                  </div>
+                </div>
+              </ModernCard>
+            )
+          })}
+        </motion.div>
+
+        {/* Mode Explanations */}
+        <motion.div 
+          className="grid md:grid-cols-2 gap-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.4, duration: 0.6 }}
+        >
+          <InfoCard
+            title="Simple Mode"
+            description="Quick and direct creation for users who know exactly what they want"
+            features={[
+              "Fill out forms with specific details",
+              "Select from predefined characteristics", 
+              "Fast creation process (under 2 minutes)",
+              "Perfect for experienced users"
+            ]}
+            icon={<Lightning className="text-primary" size={24} weight="duotone" />}
+            variant="primary"
+            delay={0.1}
+          />
+          <InfoCard
+            title="Interactive Mode"
+            description="Guided experience with questions and scenarios to spark creativity"
+            features={[
+              "Step-by-step guided questions",
+              "Visual choices and scenarios",
+              "Great for discovering new ideas", 
+              "Interactive and inspiring process"
+            ]}
+            icon={<Sparkle className="text-secondary" size={24} weight="duotone" />}
+            variant="secondary"
+            delay={0.2}
+          />
+        </motion.div>
+      </div>
+    </ModernLayout>
+  )
+}
+
+function App() {
+  return (
+    <SessionProvider>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <AppContent />
+      </ErrorBoundary>
+    </SessionProvider>
   )
 }
 
