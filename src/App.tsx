@@ -11,6 +11,7 @@ import { SessionProvider, useSession } from './contexts/SessionContext'
 import { ModernLayout, PageTransition } from './components/ModernLayout'
 import { ModernCard, FeatureCard, InfoCard } from './components/ModernCard'
 import { ModernButton, ModeButton } from './components/ModernButton'
+import { ThemeToggle } from './components/ThemeToggle'
 
 // Lazy load components to prevent initial load crashes
 const SimpleMode = React.lazy(() => import('./components/SimpleMode'))
@@ -305,6 +306,7 @@ function HomePage({ handleModeSelect, setShowSettings }: HomePageProps) {
               </h1>
             </motion.div>
             <div className="flex-1 flex justify-end gap-2">
+              <ThemeToggle />
               <ModernButton
                 variant="outline"
                 size="sm"

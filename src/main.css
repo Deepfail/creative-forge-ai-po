@@ -220,6 +220,14 @@
       linear-gradient(135deg, var(--background) 0%, oklch(0.98 0.01 270) 100%);
     background-attachment: fixed;
   }
+  
+  .dark body {
+    background: 
+      radial-gradient(circle at 25% 25%, oklch(0.7 0.15 270 / 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, oklch(0.75 0.12 45 / 0.06) 0%, transparent 50%),
+      linear-gradient(135deg, var(--background) 0%, oklch(0.14 0.02 270) 100%);
+    background-attachment: fixed;
+  }
 }
 
 /* Modern glass-morphism and gradient effects */
